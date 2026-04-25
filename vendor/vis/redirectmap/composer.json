@@ -1,0 +1,27 @@
+{
+  "name": "vis/redirectmap",
+  "description": "Redirect map for Laravel.",
+  "license": "MIT",
+  "homepage": "https://github.com/arturishe21/redirectmap",
+  "authors": [
+    {
+      "name": "Sergey Litvin",
+      "email": "artur@vis-design.com"
+    }
+  ],
+  "autoload": {
+    "classmap": [
+      "src/Http/Controllers"
+    ],
+    "psr-4": {
+      "Litvin\\Redirectmap\\": "src"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Litvin\\Redirectmap\\ServiceProvider"
+      ]
+    }
+  }
+}

@@ -1,0 +1,37 @@
+@import "../helpers/vars";
+
+
+.account-favorite{
+	width: calc(100% + 16px);
+	margin-left: -16px;
+	row-gap: 16px;
+	@media(max-width: 992px){
+		width: calc(100% + 12px);
+		margin-left: -12px;
+		row-gap: 12px;
+	}
+	.product-card{
+		width: calc(33.3333% - 16px);
+		margin-left: 16px;
+		@media(max-width: 992px){
+			width: calc(50% - 12px);
+			margin-left: 12px;
+		}
+	}
+}
+
+.account-favorite-empty{
+	.top-row{
+		box-shadow: 0px 4px 14px 0px rgba(0, 0, 0, 0.04);
+		@media(max-width: 850px){
+			padding: 16px;
+		}
+		a{
+			transition: .3s;
+			&:hover{
+				text-decoration: underline;
+				color: $blue-100;
+			}
+		}
+	}
+}

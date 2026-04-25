@@ -1,0 +1,12 @@
+{
+  "name": "serjazz/text-lang-correct",
+  "description": "Automatic correction of the language for words in the text because of the wrong keyboard layout.",
+  "require": {
+    "php": ">=5.3"
+  },
+  "autoload": {
+        "psr-4": {
+            "Serjazz\\TextLangCorrect\\": ""
+        }
+    }
+}

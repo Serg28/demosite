@@ -1,0 +1,20 @@
+{
+  "name": "vis/sitemap_generator_l5",
+  "description": "Model based sitemap generator",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "K.Gluschenko",
+      "email": "k.gluschenko@vis-design.com"
+    }
+  ],
+  "autoload": {
+    "classmap": [
+      "src/Http/Controllers",
+      "src/Models"
+    ],
+    "psr-4": {
+      "Vis\\SitemapGenerator\\": "src/"
+    }
+  }
+}

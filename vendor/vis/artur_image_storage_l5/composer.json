@@ -1,0 +1,24 @@
+{
+  "name": "vis/artur_image_storage_l5",
+  "description": "Image storage for L5",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "vis",
+      "email": "artur@vis-design.com"
+    }
+  ],
+  "require": {
+    "vis/curl_client_l5": "1.*"
+  },
+  "autoload": {
+    "classmap": [
+      "src/Models",
+      "src/Http/Controllers",
+      "src/Migrations"
+    ],
+    "psr-4": {
+      "Vis\\ImageStorage\\": "src/"
+    }
+  }
+}

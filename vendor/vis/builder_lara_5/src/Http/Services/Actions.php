@@ -1,0 +1,274 @@
+<?php
+
+namespace Vis\Builder\Services;
+
+use Illuminate\Support\Str;
+use Illuminate\Support\Arr;
+use Vis\Builder\ControllersNew\TreeController;
+
+class Actions
+{
+    protected $definition;
+    protected $actionsList = [];
+    protected $revision;
+    protected $isHideActions = false;
+
+    public function __construct($definition = null)
+    {
+        $this->definition = $definition;
+        $this->revision = new Revisions();
+    }
+
+    public static function make(...$arguments)
+    {
+        return new static(...$arguments);
+    }
+
+    public function fetch($type, $record = null)
+    {
+        return view("admin::list.actions.{$type}", compact('record'));
+    }
+
+    public function list($record)
+    {
+        $collectionActions = $this->definition->actions()->getActionsAccess();
+        $collectionActions = Arr::except($collectionActions, 'insert');
+
+        return view('admin::list.actions.all', [
+            'record' => $record,
+            'action' => $this,
+            'collectionActions' => $collectionActions
+        ]);
+    }
+
+    public function getActionsAccess()
+    {
+        return $this->actionsList;
+    }
+
+    public function hideActions()
+    {
+        $this->isHideActions = true;
+
+        return $this;
+    }
+
+    public function isHideAction()
+    {
+        return $this->isHideActions;
+    }
+
+    public function insert()
+    {
+        $this->checkAccess('insert');
+
+        return $this;
+    }
+
+    public function update()
+    {
+        $this->checkAccess('update');
+
+        return $this;
+    }
+
+    public function preview()
+    {
+        $this->actionsList['preview'] = 'preview';
+
+        return $this;
+    }
+
+    public function delete()
+    {
+        $this->checkAccess('delete');
+
+        return $this;
+    }
+
+    public function clone()
+    {
+        $this->checkAccess('clone');
+
+        return $this;
+    }
+
+    public function revisions()
+    {
+        $this->checkAccess('revisions');
+
+        return $this;
+    }
+
+    private function checkAccess($action)
+    {
+        if (app('user')->hasAccessActionsForCms($action)) {
+            $this->actionsList[$action] = $action;
+        }
+    }
+
+    public function router($action)
+    {
+        $method = Str::camel($action);
+
+        return $this->$method(request()->except('query_type'));
+    }
+
+    private function deleteRow($request)
+    {
+        return $this->definition->remove($request['id']);
+    }
+
+    private function cloneRecord($request)
+    {
+        return $this->definition->clone($request['id']);
+    }
+
+    private function changeOrder($request)
+    {
+        return $this->definition->changeOrder($request['order'], $request['params'] ?? '');
+    }
+
+    private function changeDirection($request)
+    {
+        session()->put($this->definition->getSessionKeyOrder(), $request);
+
+        return [
+            'status' => 'success',
+        ];
+    }
+
+    private function clearOrderBy($request) {
+
+        session()->forget($this->definition->getSessionKeyOrder());
+
+        return [
+            'status' => 'success',
+        ];
+    }
+
+    private function showAddForm($request)
+    {
+        return $this->definition->showAddForm();
+    }
+
+    private function showEditForm($request)
+    {
+        return $this->definition->showEditForm($request['id']);
+    }
+
+    private function saveAddForm($request)
+    {
+        return $this->definition->saveAddForm($request);
+    }
+
+    private function showRevisions($request)
+    {
+        return $this->revision->show($request['id'], $this->definition);
+    }
+
+    private function returnRevisions($request)
+    {
+        return $this->revision->doReturn($request['id']);
+    }
+
+    private function setPerPage($request)
+    {
+        session()->put($this->definition->getSessionKeyPerPage(), $request);
+
+        return [
+            'status' => 'success'
+        ];
+    }
+
+    private function saveEditForm($request)
+    {
+        return $this->definition->saveEditForm($request);
+    }
+
+    private function manyToManyAjaxSearch($request)
+    {
+        return $this->getThisField()->search($this->definition);
+    }
+
+    private function foreignAjaxSearch($request)
+    {
+        return $this->getThisField()->search($this->definition);
+    }
+
+    private function uploadFile($request)
+    {
+        return $this->getThisField()->upload($this->definition);
+    }
+
+    private function getThisField()
+    {
+        return $this->definition->getAllFields()[request('ident')];
+    }
+
+    private function selectWithUploaded($request)
+    {
+        return $this->getThisField()->selectWithUploadedFiles($this->definition);
+    }
+
+    private function doChangePosition($request)
+    {
+       return (new TreeController($this->definition))->doChangePosition();
+    }
+
+    private function doFastChangeField($request)
+    {
+        return $this->getThisField()->fastSave($this->definition, $request);
+    }
+
+    public function fastSave()
+    {
+        $record = $this->definition->model()->find(request()->get('id'));
+        $record->{request()->get('name')} = request()->get('value');
+        $record->save();
+
+    }
+
+    private function search($request)
+    {
+        session()->put($this->definition->getSessionKeyFilter(), $request);
+
+        return [
+            'status' => 'success',
+        ];
+    }
+
+    private function cloneForeignRow($request)
+    {
+        $this->cloneRecord($request);
+
+        return $this->getHtmlForeignDefinition($request);
+    }
+
+    public function getHtmlForeignDefinition($request)
+    {
+        $parseJsonData = (array) json_decode($request['paramsJson']);
+        $field = $this->definition->getAllFields()[$parseJsonData['ident']];
+
+        return $field->getTable($this->definition, $parseJsonData);
+    }
+
+    public function deleteForeignRow($request)
+    {
+        $parseJsonData = (array) json_decode($request['paramsJson']);
+        $field = $this->definition->getAllFields()[$parseJsonData['ident']];
+
+        return $field->remove($this->definition, $parseJsonData);
+    }
+
+    public function doDeleteNode($request)
+    {
+        $this->definition->model()->destroy($request['id']);
+
+        $this->definition->clearCache();
+
+        return [
+            'status' => 'success'
+        ];
+    }
+}

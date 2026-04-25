@@ -1,0 +1,43 @@
+{
+    "name": "agelxnash/seopagination",
+    "description": "Laravel SEO Pagination",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Agel_Nash",
+            "email": "agel_nash@xaker.ru"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "require-dev": {
+        "illuminate/pagination": "5.2.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "AgelxNash\\SEOPagination\\": "src/"
+        }
+    },
+	"support": {
+        "issues": "https://github.com/AgelxNash/SEOPagination/issues"
+    },
+    "keywords": [
+        "laravel",
+        "pagination",
+        "seo",
+        "page",
+        "list",
+        "paginator"
+    ],
+    "minimum-stability": "dev",
+	"extra": {
+        "branch-alias": {
+			"dev-laravel-5.2": "5.2.x-dev",
+			"dev-laravel-5.1": "5.1.x-dev",
+			"dev-laravel-5.0": "5.0.x-dev",
+			"dev-laravel-4.2": "4.2.x-dev",
+			"dev-laravel-4.0": "4.0.x-dev"
+        }
+    }
+}

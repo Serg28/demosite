@@ -1,0 +1,28 @@
+<?php
+
+namespace Vis\Builder\Fields;
+
+class Text extends Field
+{
+    protected $transliterationField;
+    protected $transliterationOnlyEmpty;
+    protected $isAutoTranslate = false;
+
+    public function transliteration(string $field, bool $onlyEmpty = false)
+    {
+        $this->transliterationField = $field;
+        $this->transliterationOnlyEmpty = $onlyEmpty;
+
+        return $this;
+    }
+
+    public function getTraslationField() : ?string
+    {
+        return $this->transliterationField;
+    }
+
+    public function getTraslationOnlyEmpty() : ?bool
+    {
+        return $this->transliterationOnlyEmpty;
+    }
+}

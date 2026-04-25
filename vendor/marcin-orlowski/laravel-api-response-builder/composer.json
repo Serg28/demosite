@@ -1,0 +1,61 @@
+{
+  "name": "marcin-orlowski/laravel-api-response-builder",
+  "description": "Helps building nice, normalized and easy to consume Laravel REST API.",
+  "homepage": "https://github.com/MarcinOrlowski/laravel-api-response-builder",
+  "version": "9.4.0",
+  "keywords": [
+    "laravel",
+    "laravel9",
+    "json",
+    "api",
+    "builder",
+    "rest",
+    "helper",
+    "php",
+    "php8",
+    "php81",
+    "mobile",
+    "android",
+    "ios"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Marcin Orlowski",
+      "homepage": "https://MarcinOrlowski.com/"
+    }
+  ],
+  "support": {
+    "source": "https://github.com/MarcinOrlowski/laravel-api-response-builder/",
+    "issues": "https://github.com/MarcinOrlowski/laravel-api-response-builder/issues"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "MarcinOrlowski\\ResponseBuilder\\ResponseBuilderServiceProvider"
+      ]
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "MarcinOrlowski\\ResponseBuilder\\": "src/",
+      "MarcinOrlowski\\ResponseBuilder\\Tests\\Traits\\": "tests/Traits/",
+      "MarcinOrlowski\\ResponseBuilder\\Tests\\": "tests/phpunit"
+    }
+  },
+  "require": {
+    "php": "^8.0|^8.1",
+    "laravel/framework": "^9.0"
+  },
+  "require-dev": {
+    "marcin-orlowski/phpunit-extra-asserts": "^5.1.0",
+    "orchestra/testbench": "^7.0",
+    "phpunit/phpunit": "^9.6.3",
+    "phpunit/php-code-coverage": "^9.2",
+    "nunomaduro/larastan": "^2.0",
+    "marcin-orlowski/php-lockpick": "^1.0"
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit -c tests/phpunit.xml"
+  }
+}

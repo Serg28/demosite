@@ -1,0 +1,115 @@
+.notification {
+  position: fixed;
+  top: 80px;
+  right: 10px;
+  width: 300px;
+  height: auto;
+  z-index: 1000;
+  background: transparent;
+  border-radius: 5px;
+  .popup {
+    display: flex;
+    padding: 10px;
+    justify-content: flex-start;
+    border-radius: 4px;
+    box-shadow: 1px 1px 7px rgb(123 122 122 / 17%);
+    margin-bottom: 10px;
+    z-index: 100000;
+    font-size: 0.95em;
+    .icon  {
+      margin-right: 10px;
+      svg {
+        width: 32px;
+        height: 32px;
+
+        &.success {
+          color: green
+        }
+        &.error {
+          color: #cf051d
+        }
+        &.info {
+          color: #6e69b1
+        }
+        &.warning {
+          color: #d76f11;
+        }
+      }
+
+      .closer {
+        top: auto;
+        right: 14px;
+        svg {
+          width: 10px;
+          height: 10px;
+        }
+        button {
+          width: 14px;
+          background: transparent;
+        }
+      }
+    }
+
+    .notification-title {
+      font-weight: 600;
+    }
+
+    /* Стили для разных типов сообщений */
+    &.bg-success {
+      background-color: rgb(175 239 175 / 98%);
+      border: 1px solid #93e99e;
+
+      .notification-title{
+        b,strong{
+          color: green;
+          font-weight: 600;
+        }
+      }
+    }
+
+    &.bg-error {
+      background-color: #fdd6d6e8;
+      border: 1px solid #ffd0d09e;
+      .notification-title{
+        b,strong{
+          color: #cf051d;
+          font-weight: 600;
+        }
+      }
+    }
+
+    &.bg-info {
+      background-color: #ffffffeb;
+      .notification-title{
+        b,strong{
+          color: #6e69b1;
+          font-weight: 600;
+        }
+      }
+    }
+
+    &.bg-warning {
+      background-color: #ffe8c6eb;
+      .notification-title{
+        b,strong{
+          color: #d76f11;
+          font-weight: 600;
+        }
+      }
+    }
+
+    &.opacity-0 {
+      opacity: 0;
+    }
+
+    &.opacity-100 {
+      opacity: 1;
+    }
+  }
+}
+
+@media (max-width: 1180px) {
+  .notification {
+    top: 60px;
+  }
+}

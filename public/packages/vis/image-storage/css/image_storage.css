@@ -1,0 +1,343 @@
+.image-storage-filters-row div {
+    position: relative
+}
+
+.image-storage-filters-row td {
+    text-align: center;
+}
+
+.image-storage-filters-row .image-storage-button {
+    width: 66px;
+    margin: auto;
+    display: inline-block;
+}
+
+.image-storage-filters-row .image-storage-select {
+    width: 190px;
+}
+
+.image-storage-filters-row .input-group-addon.form-input-icon.form-input-filter-icon {
+    width: 39px;
+    height: 32px;
+}
+
+.image-storage-process-popup {
+    display: none;
+    height: 100%;
+    width: 100%;
+    position: fixed;
+    z-index: 42;
+}
+
+.image-storage-process-popup .image-storage-smoke {
+    height: 100%;
+    width: 100%;
+    background-color: #000;
+    position: fixed;
+    opacity: 0.6;
+    top: 0;
+    left: 0;
+}
+
+.image-storage-process-popup .image-storage-process-block {
+    margin: 0 -200px 0 auto;
+    height: 250px;
+    width: 400px;
+    background-color: whitesmoke;
+    position: fixed;
+    right: 50%;
+    top: 25%;
+
+}
+
+.image-storage-process-block h2 {
+    text-align: center;
+    font-weight: 500;
+    min-height: 40px;
+}
+
+.image-storage-progress-bar {
+    width: 80%;
+    margin: auto;
+}
+
+.image-storage-upload-finish-btn {
+    display: none;
+    margin-left: 166px;
+}
+
+.image-storage-container {
+    text-align: center;
+    padding-top: 20px;
+}
+
+.superbox-img.image-storage-img {
+    width: 160px;
+    height: auto !important;
+}
+
+.superbox-list {
+    margin-bottom: 5px;
+}
+
+.superbox-list.selected {
+    border: 1px solid #0091d9 !important;
+    position: relative;
+}
+
+.superbox-list.selected:after {
+    width: 25px;
+    height: 25px;
+    line-height: 25px;
+    font-size: 14px;
+    color: #fff;
+    background: #0091d9;
+    position: absolute;
+    display: block;
+    right: 0;
+    content: "\f00c";
+    font-family: FontAwesome;
+    top: 0;
+    z-index: 1;
+}
+
+.input-file.image-storage-images {
+    width: 275px;
+}
+
+.image-storage-images-sizes-control_row {
+    margin-top: 10px;
+    padding-right: 25px;
+}
+
+.image-storage-images-sizes-control_row div.button-block {
+    margin-right: 10px;
+}
+
+#image-storage-images-sizes-tabs {
+    width: 58%;
+}
+
+#image-storage-tabs-content {
+    overflow: auto;
+    width: 60%;
+    float: left;
+    border: none;
+}
+
+#image-storage-tabs-content img.superbox-current-img {
+    width: auto;
+    display: block;
+    margin: 0 auto;
+    float: none;
+}
+
+.superbox-imageinfo {
+    width: 40%;
+    margin-top: -40px;
+    display: inline-block;
+    max-width: 500px;
+    color: #fff;
+    padding: 0 25px 0 0;
+}
+
+.superbox-imageinfo > :first-child {
+    display: none;
+}
+
+.imgInfoBox-container {
+    display: inline;
+    margin: 0;
+}
+
+.imgInfoBox-container-content {
+    background: #fff
+}
+
+.imgInfoBox-container div.action-buttons-row {
+    overflow: auto;
+    padding: 20px 8px 8px;
+    margin: 0;
+}
+
+#imgInfoBox .tabs-pull-right .label {
+    line-height: 32px;
+}
+
+.imgInfoBox-select.image-storage-select {
+    width: 100%;
+}
+
+.imgInfoBox-textarea {
+    width: 95%;
+    resize: none;
+    padding: 5px 10px;
+}
+
+.imgInfoBox-relative-block {
+    position: relative;
+}
+
+.image-storage-operations {
+    display: none;
+    margin: 10px;
+    text-align: center;
+}
+
+.image-storage-operations-row {
+    margin-bottom: 10px;
+}
+
+.image-storage-operations-row .input-group {
+    width: 100%
+}
+
+.image-storage-operations-input {
+    min-width: 500px;
+    display: block;
+    width: 100%;
+}
+
+.image-storage-operations-button {
+    width: 100%;
+}
+
+.imgInfoBox-title {
+    min-height: 40px;
+    font-size: 16px;
+    color: black;
+    background: rgba(255, 255, 255, .9);
+    padding: 5px 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, .1);
+    font-family: "Open Sans", Arial, Helvetica, Sans-Serif;
+    font-weight: 300;
+}
+
+.image-storage-sortable-item.preview:after {
+    width: 25px;
+    height: 25px;
+    line-height: 25px;
+    font-size: 14px;
+    color: #fff;
+    background: #5b835b;
+    position: absolute;
+    display: block;
+    left: 0;
+    content: "\f06e";
+    font-family: FontAwesome;
+    top: 0;
+    z-index: 1;
+}
+
+.image-storage-sortable-no_photo {
+    text-align: center;
+}
+
+.image-storage-video-iframe-wrapper {
+    position: relative;
+    padding-bottom: 56.25%;
+    padding-top: 25px;
+    height: 0;
+    z-index: 3;
+}
+
+.image-storage-video-iframe {
+    width: 100%;
+    padding-right: 25px;
+    height: 500px;
+}
+
+.image-storage-youtube-button {
+    content: '';
+    display: block;
+    width: 53px;
+    height: 38px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: -19px;
+    margin-left: -26px;
+    background: url(/packages/vis/image-storage/img/video-icon-medium.png);
+    z-index: 1;
+}
+
+div.tb-btn-delete-wrap .delete-relation-button {
+    height: 22px !important;
+}
+
+.superbox-file {
+    display: flex;
+}
+
+.superbox-file .file-extension {
+    position: relative;
+    width: 51px;
+    height: 70px;
+    background-image: url(/packages/vis/image-storage/img/super-icon-file-flat.png);
+}
+
+.superbox-file .file-title {
+    position: relative;
+    width: calc(100% - 61px);
+    margin-left: 10px;
+    text-align: left;
+    word-wrap: break-word;
+}
+
+.superbox-file .file-title .file-label {
+    font-weight: 600;
+    width: 175px;
+}
+
+.superbox-file .file-extension:after {
+    position: relative;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    color: #fff;
+    font-size: 14px;
+    text-transform: uppercase;
+    content: attr(data-ext);
+}
+
+.file-extension {
+    text-align: center;
+    background-color: #1e70b6;
+}
+
+.file-extension[data-ext='xls'], .file-extension[data-ext='xlsx'] {
+    background-color: #1d7044;
+}
+
+.file-extension[data-ext='doc'], .file-extension[data-ext='docx'] {
+    background-color: #2a5695;
+}
+
+.file-extension[data-ext='ppt'], .file-extension[data-ext='pptx'] {
+    background-color: #d04423;
+}
+
+.file-extension[data-ext='pdf'] {
+    background-color: #bb0706;
+}
+
+.tab-pane .superbox-file {
+    color: #fff;
+}
+
+.tab-pane .superbox-file .file-extension {
+    background-image: url(/packages/vis/image-storage/img/super-icon-file-flat-dark.png);
+}
+
+.pagination-bottom-wrapper {
+    position: fixed;
+    bottom: 0;
+    left:235px;
+    right:15px;
+    z-index:10;
+}
+
+.new-size-button {
+    margin: 2px;
+}

@@ -1,0 +1,9 @@
+{
+    "fix": true,
+    "rules": {
+        "no-duplicate-selectors": true,
+        "no-duplicate-properties": true,
+        "no-duplicate-at-import-rules": true,
+        "no-duplicate-media-features": true
+    }
+}

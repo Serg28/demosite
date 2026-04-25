@@ -1,0 +1,32 @@
+{
+    "name": "arturishe21/laravel-liqpay",
+    "description": "LiqPay for Laravel",
+    "license": "MIT",
+    "homepage": "https://github.com/arturishe21/laravel-liqpay",
+     "keywords": [
+        "liqpay",
+        "laravel"
+    ],
+    "autoload": {
+        "psr-4": { "Arturishe21\\LiqPay\\" : "src/" }
+    },
+    "minimum-stability": "stable",
+    "require": {
+        "illuminate/support": "5.4.*|5.5.*|5.6.*|5.7.*|5.8.*|^6.0|^7.0|^8.0|^9.0",
+        "nesbot/carbon": "^2.16",
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "extra": {
+      "laravel": {
+        "providers": [
+          "Arturishe21\\LiqPay\\LiqPayServiceProvider"
+        ],
+        "aliases": {
+          "LiqPay": "Arturishe21\\LiqPay\\Facades\\LiqPay"
+        }
+      }
+    },
+    "require-dev": {
+        "symfony/var-dumper": "^6.0"
+    }
+}

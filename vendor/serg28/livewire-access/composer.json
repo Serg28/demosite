@@ -1,0 +1,31 @@
+{
+    "name": "serg28/livewire-access",
+    "description": "Control frontend access to properties/methods in Livewire using PHP 8 attributes.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Samuel Štancl",
+            "email": "samuel.stancl@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Lean\\LivewireAccess\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Lean\\LivewireAccess\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^8.0",
+        "livewire/livewire": "^3.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^7.0|^8.0"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

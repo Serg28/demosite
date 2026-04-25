@@ -1,0 +1,21 @@
+{
+  "name": "vis/curl_client_l5",
+  "description": "PHP cUrl extension wrapper",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "K.Gluschenko",
+      "email": "k.gluschenko@vis-design.com"
+    }
+  ],
+  "require": {
+  },
+  "autoload": {
+    "classmap": [
+      "src/Models"
+    ],
+    "psr-4": {
+      "Vis\\CurlClient\\": "src/"
+    }
+  }
+}

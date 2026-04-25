@@ -1,0 +1,75 @@
+@import "../helpers/vars";
+
+
+.account-reviews{
+	row-gap: 8px;
+	.account-reviews-row{
+		box-shadow: 0px 4px 14px 0px rgba(0, 0, 0, 0.04);
+		.visible{
+			padding: 16px 24px;
+			position: relative;
+			@media(max-width: 850px){
+				padding: 16px;
+			}
+			@media(max-width: 600px){
+				flex-direction: column;
+				align-items: flex-start;
+				row-gap: 16px;
+				.main-btn{
+					width: 100%;
+				}
+			}
+			.left{
+				column-gap: 12px;
+				@media(max-width: 600px){
+					padding-right: 40px;
+				}
+				img{
+					width: 42px;
+					height: 42px;
+					object-fit: contain;
+				}
+			}
+			.icon{
+				width: 24px;
+				height: 24px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer;
+				transition: .3s;
+				@media(max-width: 600px){
+					position: absolute;
+					right: 16px;
+					top: 26px;
+				}
+				&.active{
+					transform: rotate(180deg);
+				}
+			}
+		}
+		.hidden{
+			border-top: 1px solid #F0F1F3;
+			display: none;
+			@media(max-width: 850px){
+				padding: 16px;
+			}
+			.rev{
+				box-shadow: none;
+				.acc-rev-btn{
+					background: transparent;
+					transition: .3s;
+					column-gap: 8px;
+					&:hover{
+						opacity: .7;
+					}
+					img{
+						width: 18px;
+						height: 18px;
+						object-fit: contain;
+					}
+				}
+			}
+		}
+	}
+}
