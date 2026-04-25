@@ -8,20 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('product_characteristic_options')) {
-            Schema::create('product_characteristic_options', function (Blueprint $table) {
+        if (!Schema::hasTable('product_category')) {
+            Schema::create('product_category', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
-                $table->foreignId('characteristic_option_id')->constrained('characteristic_options')->cascadeOnDelete();
+                $table->foreignId('category_id')->constrained('categories')->cascadeOnDelete();
                 $table->timestamps();
 
-                $table->unique(['product_id', 'characteristic_option_id'], 'product_char_option_unique');
+                $table->unique(['product_id', 'category_id'], 'product_category_unique');
             });
         }
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('product_characteristic_options');
+        Schema::dropIfExists('product_category');
     }
 };

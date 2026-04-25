@@ -17,11 +17,14 @@ class BrandFactory extends Factory
      */
     public function definition(): array
     {
+        $name = $this->faker->company();
+
         return [
             'title' => [
-                'ua' => $this->faker->company(),
-                'ru' => $this->faker->company(),
+                'ua' => $name,
+                'ru' => $name,
             ],
+            'slug' => $this->faker->unique()->slug(),
             'description' => [
                 'ua' => $this->faker->paragraph(),
                 'ru' => $this->faker->paragraph(),

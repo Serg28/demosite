@@ -25,21 +25,51 @@ class DatabaseSeeder extends Seeder
         $categories = \App\Models\Category::factory(8)->create();
 
         // Create brands
-        \App\Models\Brand::factory(12)->create();
+        $brands = \App\Models\Brand::factory(12)->create();
 
-        // Create products with random categories
-        \App\Models\Product::factory(50)->create([
+        // Create characteristics
+        $characteristics = \App\Models\Characteristic::factory(8)->create();
+
+        // Create characteristic options
+        $characteristics->each(function ($characteristic) {
+            \App\Models\CharacteristicOption::factory(5)->create([
+                'characteristic_id' => $characteristic->id,
+            ]);
+        });
+
+        // Associate characteristics with categories
+        $categories->each(function ($category) use ($characteristics) {
+            $category->characteristics()->attach($characteristics->random(3)->pluck('id'));
+        });
+
+        // Create products with random categories and brands
+        $products = \App\Models\Product::factory(100)->create([
             'category_id' => fn () => $categories->random()->id,
+            'brand_id' => fn () => $brands->random()->id,
         ]);
 
+        // Associate products with characteristic options
+        $products->each(function ($product) use ($characteristics) {
+            $selectedChars = $characteristics->random(3);
+            foreach ($selectedChars as $char) {
+                $option = $char->options()->inRandomOrder()->first();
+                if ($option) {
+                    $product->characteristics()->attach($option->id);
+                }
+            }
+        });
+
         // Create orders with products
-        \App\Models\Order::factory(15)->create()->each(function ($order) {
+        \App\Models\Order::factory(15)->create()->each(function ($order) use ($products) {
             \App\Models\OrderProduct::factory(3)->create([
                 'order_id' => $order->id,
+                'product_id' => fn () => $products->random()->id,
             ]);
         });
 
         // Create comments for products
-        \App\Models\Comment::factory(100)->create();
+        \App\Models\Comment::factory(100)->create([
+            'product_id' => fn () => $products->random()->id,
+        ]);
     }
 }

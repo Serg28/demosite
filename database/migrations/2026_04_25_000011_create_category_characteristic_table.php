@@ -15,7 +15,7 @@ return new class extends Migration
                 $table->foreignId('characteristic_id')->constrained('characteristics')->cascadeOnDelete();
                 $table->timestamps();
 
-                $table->unique(['category_id', 'characteristic_id']);
+                $table->unique(['category_id', 'characteristic_id'], 'category_char_unique');
             });
         }
     }

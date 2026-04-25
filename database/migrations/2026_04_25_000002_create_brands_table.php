@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('brands', function (Blueprint $table) {
             $table->id();
             $table->json('title')->nullable();
+            $table->string('slug')->unique()->nullable();
             $table->json('description')->nullable();
             $table->string('picture')->nullable();
             $table->smallInteger('priority')->default(0);

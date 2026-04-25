@@ -7,11 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Laravel\Scout\Searchable;
 
 class Product extends Model
 {
-    use HasFactory, Searchable;
+    use HasFactory;
 
     protected $fillable = [
         'title',
@@ -26,10 +25,10 @@ class Product extends Model
         'link_to_youtube',
         'is_active',
         'category_id',
+        'brand_id',
         'slug',
         'external_id',
         'analogs',
-        'other_categories',
         'priority',
     ];
 
@@ -43,13 +42,17 @@ class Product extends Model
         'other_pictures' => 'json',
         'link_to_youtube' => 'json',
         'analogs' => 'json',
-        'other_categories' => 'json',
         'priority' => 'integer',
     ];
 
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class);
     }
 
     public function brand(): BelongsTo
