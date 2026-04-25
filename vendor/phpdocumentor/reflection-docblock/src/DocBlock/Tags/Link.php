@@ -22,13 +22,11 @@ use Webmozart\Assert\Assert;
 /**
  * Reflection class for a {@}link tag in a Docblock.
  */
-final class Link extends BaseTag implements Factory\StaticMethod
+final class Link extends BaseTag
 {
-    /** @var string */
-    protected $name = 'link';
+    protected string $name = 'link';
 
-    /** @var string */
-    private $link;
+    private string $link;
 
     /**
      * Initializes a link to a URL.

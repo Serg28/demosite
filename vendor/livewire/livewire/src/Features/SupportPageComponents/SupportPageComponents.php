@@ -2,11 +2,11 @@
 
 namespace Livewire\Features\SupportPageComponents;
 
-use function Livewire\{invade, on, off, once};
+use function Livewire\{on, off, once};
 use Livewire\Drawer\ImplicitRouteBinding;
 use Livewire\ComponentHook;
+use Livewire\Mechanisms\HandleRouting\LivewirePageController;
 use Illuminate\View\View;
-use Illuminate\View\AnonymousComponent;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -15,6 +15,8 @@ class SupportPageComponents extends ComponentHook
     static function provide()
     {
         static::registerLayoutViewMacros();
+
+        static::resolvePageComponentRouteBindings();
     }
 
     static function registerLayoutViewMacros()
@@ -111,10 +113,12 @@ class SupportPageComponents extends ComponentHook
         });
 
         on('render', $handler);
+        on('render.placeholder', $handler);
 
         $callback();
 
         off('render', $handler);
+        off('render.placeholder', $handler);
 
         return $layoutConfig;
     }
@@ -138,6 +142,14 @@ class SupportPageComponents extends ComponentHook
             }
 
             throw $exception;
+        }
+
+        // Merge lazy/defer route defaults so that ->lazy() and ->defer()
+        // route macros work even when the component has no mount() method...
+        foreach (['lazy', 'defer'] as $key) {
+            if (array_key_exists($key, $route->defaults) && ! array_key_exists($key, $params)) {
+                $params[$key] = $route->defaults[$key];
+            }
         }
 
         return $params;
@@ -191,5 +203,63 @@ class SupportPageComponents extends ComponentHook
                 throw $e;
             }
         }
+    }
+
+    // This needs to exist so that authorization middleware (and other middleware) have access
+    // to implicit route bindings based on the Livewire page component. Otherwise, Laravel
+    // has no implicit binding references because the action is __invoke with no params
+    protected static function resolvePageComponentRouteBindings()
+    {
+        // This method was introduced into Laravel 10.37.1 for this exact purpose...
+        if (static::canSubstituteImplicitBindings()) {
+            app('router')->substituteImplicitBindingsUsing(function ($container, $route, $default) {
+                // If the current route is a Livewire page component...
+                if ($componentClass = static::routeActionIsAPageComponent($route)) {
+                    // Resolve and set all page component parameters to the current route...
+                    (new \Livewire\Drawer\ImplicitRouteBinding($container))
+                        ->resolveAllParameters($route, new $componentClass);
+                } else {
+                    // Otherwise, run the default Laravel implicit binding system...
+                    $default();
+                }
+            });
+        }
+    }
+
+    public static function canSubstituteImplicitBindings()
+    {
+        return method_exists(app('router'), 'substituteImplicitBindingsUsing');
+    }
+
+    protected static function routeActionIsAPageComponent($route)
+    {
+        $action = $route->action;
+
+        if (! $action) return false;
+
+        $uses = $action['uses'] ?? false;
+
+        if (! $uses) return false;
+
+        if (is_string($uses)) {
+            $class = str($uses)->before('@')->toString();
+            $method = str($uses)->after('@')->toString();
+
+            // Case 1: Direct component class usage (Route::get('/path', Component::class))
+            if (is_subclass_of($class, \Livewire\Component::class) && $method === '__invoke') {
+                return $class;
+            }
+
+            // Case 2: Route::livewire macro usage (via LivewirePageController)
+            if (str($uses)->contains(LivewirePageController::class)) {
+                $component = $action['livewire_component'] ?? null;
+
+                if (! $component) return false;
+
+                return app('livewire.factory')->resolveComponentClass($component);
+            }
+        }
+
+        return false;
     }
 }

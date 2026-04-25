@@ -18,9 +18,10 @@ use phpDocumentor\Reflection\Type;
 use phpDocumentor\Reflection\Types\Integer;
 
 /** @psalm-immutable */
-final class IntegerValue implements PseudoType
+final class IntegerValue extends Integer implements PseudoType
 {
-    private int $value;
+    /** @var int */
+    private $value;
 
     public function __construct(int $value)
     {

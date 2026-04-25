@@ -27,13 +27,11 @@ use function explode;
 /**
  * Reflection class for a {@}uses tag in a Docblock.
  */
-final class Uses extends BaseTag implements Factory\StaticMethod
+final class Uses extends BaseTag
 {
-    /** @var string */
-    protected $name = 'uses';
+    protected string $name = 'uses';
 
-    /** @var Fqsen */
-    protected $refers;
+    protected Fqsen $refers;
 
     /**
      * Initializes this tag.

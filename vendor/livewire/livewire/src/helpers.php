@@ -54,8 +54,6 @@ function invade($obj)
         {
             $method = $this->reflected->getMethod($name);
 
-            $method->setAccessible(true);
-
             return $method->invoke($this->obj, ...$params);
         }
     };
@@ -113,7 +111,7 @@ function before($name, $callback) {
 }
 
 function off($name, $callback) {
-    return app(\Livewire\EventBus::class)->off($name, $callback);
+    app(\Livewire\EventBus::class)->off($name, $callback);
 }
 
 function memoize($target) {
@@ -165,6 +163,11 @@ function store($instance = null)
         function has($key, $iKey = null)
         {
             return app(\Livewire\Mechanisms\DataStore::class)->has($this->instance, $key, $iKey);
+        }
+
+        function unset($key, $iKey = null)
+        {
+            return app(\Livewire\Mechanisms\DataStore::class)->unset($this->instance, $key, $iKey);
         }
     };
 }

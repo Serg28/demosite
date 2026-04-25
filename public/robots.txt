@@ -1,18 +1,2 @@
 User-agent: *
-Disallow: /
-
-Disallow: /admin/
-Disallow: /login/
-Disallow: /ru/admin/
-Disallow: /ru/login/
-Disallow: /profile
-Disallow: /ru/profile
-Disallow: /checkout
-Disallow: /ru/checkout
-Disallow: /search
-Disallow: /ru/search
-
-#Host: site.com
-
-#Sitemap: https://site.com/sitemap/google/ua-sitemap.xml
-#Sitemap: https://site.com/sitemap/google/ru-sitemap.xml
+Disallow:

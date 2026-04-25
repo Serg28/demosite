@@ -3,7 +3,6 @@
 namespace Livewire\Mechanisms;
 
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Str;
 
 class RenderComponent extends Mechanism
 {
@@ -14,25 +13,33 @@ class RenderComponent extends Mechanism
 
     public static function livewire($expression)
     {
-        $key = "'" . Str::random(7) . "'";
+        $key = null;
+        $slots = null;
 
-        $pattern = "/,\s*?key\(([\s\S]*)\)/"; //everything between ",key(" and ")"
-
-        $expression = preg_replace_callback($pattern, function ($match) use (&$key) {
+        // Extract key parameter
+        $keyPattern = '/,\s*?key\(([\s\S]*)\)/'; // everything between ",key(" and ")"
+        $expression = preg_replace_callback($keyPattern, function ($match) use (&$key) {
             $key = trim($match[1]) ?: $key;
-            return "";
+            return '';
         }, $expression);
 
-        // If we are inside a Livewire component, we know we're rendering a child.
-        // Therefore, we must create a more deterministic view cache key so that
-        // Livewire children are properly tracked across load balancers.
-        // if (LivewireManager::$currentCompilingViewPath !== null) {
-        //     // $key = '[hash of Blade view path]-[current @livewire directive count]'
-        //     $key = "'l" . crc32(LivewireManager::$currentCompilingViewPath) . "-" . LivewireManager::$currentCompilingChildCounter . "'";
+        // Extract slots parameter (4th parameter)
+        $slotsPattern = '/,\s*?(\$__slots\s*\?\?\s*\[\])/'; // match $__slots ?? []
+        $expression = preg_replace_callback($slotsPattern, function ($match) use (&$slots) {
+            $slots = trim($match[1]);
+            return '';
+        }, $expression);
 
-        //     // We'll increment count, so each cache key inside a compiled view is unique.
-        //     LivewireManager::$currentCompilingChildCounter++;
-        // }
+        if (is_null($key)) {
+            $key = 'null';
+        }
+
+        if (is_null($slots)) {
+            $slots = '[]';
+        }
+
+        $deterministicBladeKey = app(\Livewire\Mechanisms\ExtendBlade\DeterministicBladeKeys::class)->generate();
+        $deterministicBladeKey = "'{$deterministicBladeKey}'";
 
         return <<<EOT
 <?php
@@ -41,15 +48,25 @@ class RenderComponent extends Mechanism
 };
 [\$__name, \$__params] = \$__split($expression);
 
-\$__html = app('livewire')->mount(\$__name, \$__params, $key, \$__slots ?? [], get_defined_vars());
+\$__keyOuter = \$__key ?? null;
+
+\$__key = $key;
+\$__componentSlots = $slots;
+
+\$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey($deterministicBladeKey, \$__key);
+
+\$__html = app('livewire')->mount(\$__name, \$__params, \$__key, \$__componentSlots);
 
 echo \$__html;
 
 unset(\$__html);
+unset(\$__key);
+\$__key = \$__keyOuter;
+unset(\$__keyOuter);
 unset(\$__name);
 unset(\$__params);
+unset(\$__componentSlots);
 unset(\$__split);
-if (isset(\$__slots)) unset(\$__slots);
 ?>
 EOT;
     }

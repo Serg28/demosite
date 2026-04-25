@@ -1,1 +1,0 @@
-<a href="{{route('profile.favorites')}}" class="vidget like_widget" @if(!$favoritesCount) style="display:none" @endif><img src="/img/wi1.svg" alt="{{__t('Побажання')}}"><span id="like_count" class="badge-red" @if(!$favoritesCount) style="display:none" @endif>{{$favoritesCount}}</span></a>

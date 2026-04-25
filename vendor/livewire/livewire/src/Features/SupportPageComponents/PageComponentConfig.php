@@ -17,7 +17,7 @@ class PageComponentConfig
         public $slotOrSection = 'slot',
         public $params = [],
     ) {
-        $this->view = $view ?: config('livewire.layout');
+        $this->view = $view ?: config('livewire.component_layout');
         $this->viewContext = new ViewContext;
     }
 
@@ -40,6 +40,7 @@ class PageComponentConfig
         if (is_subclass_of($view, \Illuminate\View\Component::class)) {
             $layout = app()->makeWith($view, $params);
             $view = $layout->resolveView()->name();
+            $params = array_merge($params, $layout->resolveView()->getData());
         } else {
             $layout = new AnonymousComponent($view, $params);
         }

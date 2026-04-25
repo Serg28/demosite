@@ -2,61 +2,51 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
-use Cartalyst\Sentinel\Laravel\Facades\Activation;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Vis\Builder\Helpers\Traits\Rememberable;
-use Vis\Builder\User as UserBuilder;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 
-class User extends UserBuilder
+class User extends Authenticatable
 {
-    use Rememberable;
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
-    protected $guarded = [];
-
-    protected $hidden = ['password'];
-
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
     protected $fillable = [
+        'name',
         'email',
-        'first_name',
-        'last_name',
-        'patronymic',
-        'phone',
-        'password'
+        'password',
     ];
 
-    protected $dates = [
-        'created_at',
-        'updated_at',
-        'birth',
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
     ];
 
-
-    public function getAuthIdentifier(): int|string|null
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
     {
-        return auth()->id();
-    }
-
-    public function getCreatedAtAttribute($value): string
-    {
-        return $this->formatDate($value);
-    }
-
-    public function getUpdatedAtAttribute($value): string
-    {
-        return $this->formatDate($value);
-    }
-
-    public function getBirthAttribute($value): string
-    {
-        return $this->formatDate($value);
-    }
-
-    public function getIsActivatedAttribute(): bool
-    {
-        $activation = Activation::completed($this);
-        return $activation!==false;
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
     }
 
     public function orders(): HasMany
@@ -64,116 +54,25 @@ class User extends UserBuilder
         return $this->hasMany(Order::class);
     }
 
-    public function unfinishedBasket(): HasMany
+    public function reviews(): HasMany
     {
-        return $this->hasMany(UnfinishedBasket::class)->orderByDesc('created_at');
+        return $this->hasMany(Review::class);
     }
 
-    public function getUrlCms(): string
+    public function payments(): HasMany
     {
-        return '/admin/users?id='.$this->id;
-    }
-
-    public function city(): HasOne
-    {
-        return $this->hasOne(City::class, 'id', 'city_id');
-    }
-
-    public function discountcard(): hasOne
-    {
-        return $this->hasOne(DiscountCard::class, 'id', 'phone');
-    }
-
-    public function isNew() {
-        return Carbon::now()< Carbon::parse($this->created_at)->addMinutes(5);
-    }
-
-    public function getImgPath($width = '', $height = ''): bool|string|null
-    {
-        $picture = $this->image;
-
-        if (! $picture) {
-            $picture = '/img/pi1.png';
-        }
-
-        $size = [];
-        if ($width) {
-            $size['w'] = $width;
-        }
-
-        if ($height) {
-            $size['h'] = $height;
-        }
-
-        return  glide($picture, $size);
+        return $this->hasMany(Payment::class);
     }
 
     /**
-     * Проверяет, имеет ли пользователь все указанные разрешения.
-     *
-     * @param  array  $permissions Массив с именами разрешений, которые нужно проверить.
-     * @return bool Возвращает true, если пользователь имеет все указанные разрешения, иначе false.
-     *
-     * @example
-     * ```
-     * $user->hasPermissions(["orders.view", "orders.update", "orders.save"]);
-     * $user->hasPermissions(["orders.*"]); //подразумевает все права раздела прав orders
-     * ```
+     * Get the user's initials
      */
-    /*public function hasPermissions(array $permissions): bool
+    public function initials(): string
     {
-        return $this->whereHas('groups', function ($query) use ($permissions) {
-            foreach ($permissions as $permission) {
-                $query->whereJsonContains('permissions', [$permission => true]);
-            }
-        })->exists();
-    }*/
-    public function hasPermissions(array $permissions): bool
-    {
-        return $this->hasAccess($permissions);
-    }
-
-    /**
-     * Проверяет, имеет ли пользователь любую из указанных разрешений.
-     *
-     * @param  array  $permissions Массив с именами разрешений, которые нужно проверить.
-     * @return bool Возвращает true, если пользователь имеет все указанные разрешения, иначе false.
-     *
-     * @example
-     * ```
-     * $user->hasAnyPermissions(["orders.view", "orders.update", "orders.save"]);
-     * $user->hasAnyPermissions(["orders.*"]); //подразумевает все права раздела прав orders
-     * ```
-     */
-    public function hasAnyPermissions(array $permissions): bool
-    {
-        return $this->hasAnyAccess($permissions);
-    }
-
-    //Scope для выборки только юзеров с правом доступа к заказам
-    public function scopeHasOrderAccess($query)
-    {
-        $permissions = ["orders.view", "orders.update", "orders.save"];
-        return $query->with('groups')->whereHas('groups', function ($query) use ($permissions) {
-            foreach ($permissions as $permission) {
-                $query->whereJsonContains('permissions', [$permission => true]);
-            }
-        });
-    }
-
-    /**
-     * Проверяет, находится ли пользователь в одной из групп с заданными слагами.
-     *
-     * @param array $slugs
-     * @return bool
-     */
-    public function inGroups(array $slugs): bool
-    {
-        return $this->groups->contains(fn($group) => in_array($group->slug, $slugs));
-    }
-
-    protected function formatDate($value, $format = 'Y-m-d H:i:s', $timezone = 'Europe/Kiev'): string
-    {
-        return $value ? Carbon::parse($value)->timezone($timezone)->format($format) : '';
+        return Str::of($this->name)
+            ->explode(' ')
+            ->take(2)
+            ->map(fn ($word) => Str::substr($word, 0, 1))
+            ->implode('');
     }
 }

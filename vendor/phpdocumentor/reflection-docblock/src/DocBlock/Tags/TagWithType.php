@@ -13,17 +13,14 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\DocBlock\Tags;
 
+use phpDocumentor\Reflection\DocBlock\Tag;
+use phpDocumentor\Reflection\Exception\CannotCreateTag;
 use phpDocumentor\Reflection\Type;
-
-use function in_array;
-use function strlen;
-use function substr;
-use function trim;
 
 abstract class TagWithType extends BaseTag
 {
     /** @var ?Type */
-    protected $type;
+    protected ?Type $type = null;
 
     /**
      * Returns the type section of the variable.
@@ -33,34 +30,21 @@ abstract class TagWithType extends BaseTag
         return $this->type;
     }
 
-    /**
-     * @return string[]
-     */
-    protected static function extractTypeFromBody(string $body): array
+    final public static function create(string $body): Tag
     {
-        $type         = '';
-        $nestingLevel = 0;
-        for ($i = 0, $iMax = strlen($body); $i < $iMax; $i++) {
-            $character = $body[$i];
+        throw new CannotCreateTag('Typed tag cannot be created');
+    }
 
-            if ($nestingLevel === 0 && trim($character) === '') {
-                break;
-            }
-
-            $type .= $character;
-            if (in_array($character, ['<', '(', '[', '{'])) {
-                $nestingLevel++;
-                continue;
-            }
-
-            if (in_array($character, ['>', ')', ']', '}'])) {
-                $nestingLevel--;
-                continue;
-            }
+    public function __toString(): string
+    {
+        if ($this->description) {
+            $description = $this->description->render();
+        } else {
+            $description = '';
         }
 
-        $description = trim(substr($body, strlen($type)));
+        $type = (string) $this->type;
 
-        return [$type, $description];
+        return $type . ($description !== '' ? ($type !== '' ? ' ' : '') . $description : '');
     }
 }

@@ -1,1 +1,0 @@
-{!! $items->appends(request()->except('show-more'))->links() !!}

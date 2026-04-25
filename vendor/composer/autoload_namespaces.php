@@ -9,6 +9,4 @@ return array(
     'Venturecraft\\Revisionable' => array($vendorDir . '/venturecraft/revisionable/src'),
     'Mcamara\\LaravelLocalization' => array($vendorDir . '/mcamara/laravel-localization/src'),
     'HTMLPurifier' => array($vendorDir . '/ezyang/htmlpurifier/library'),
-    'Detection' => array($vendorDir . '/mobiledetect/mobiledetectlib/namespaced'),
-    'Barryvdh' => array($vendorDir . '/barryvdh/reflection-docblock/src'),
 );

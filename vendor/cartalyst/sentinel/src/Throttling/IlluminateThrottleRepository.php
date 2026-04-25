@@ -11,10 +11,10 @@
  * bundled with this package in the LICENSE file.
  *
  * @package    Sentinel
- * @version    6.0.0
+ * @version    9.0.0
  * @author     Cartalyst LLC
  * @license    BSD License (3-clause)
- * @copyright  (c) 2011-2022, Cartalyst LLC
+ * @copyright  (c) 2011-2025, Cartalyst LLC
  * @link       https://cartalyst.com
  */
 
@@ -105,7 +105,7 @@ class IlluminateThrottleRepository implements ThrottleRepositoryInterface
      * @var \Illuminate\Database\Eloquent\Collection
      */
     protected $userThrottles = [];
-    
+
     /**
      * The EloquentThrottle Model.
      *
@@ -383,7 +383,7 @@ class IlluminateThrottleRepository implements ThrottleRepositoryInterface
                     continue;
                 }
 
-                if ($last->created_at->diffInSeconds() < $delay) {
+                if ((int) $last->created_at->diffInSeconds() < $delay) {
                     return $this->secondsToFree($last, $delay);
                 }
             }
@@ -522,6 +522,6 @@ class IlluminateThrottleRepository implements ThrottleRepositoryInterface
      */
     protected function secondsToFree(EloquentThrottle $throttle, $interval)
     {
-        return $throttle->created_at->addSeconds($interval)->diffInSeconds();
+        return (int) $throttle->created_at->subSeconds($interval)->diffInSeconds();
     }
 }

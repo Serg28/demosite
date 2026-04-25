@@ -2,23 +2,26 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class Brand extends BaseModel
+class Brand extends Model
 {
-    protected $table = 'brands';
+    use HasFactory;
 
-    protected $fillable = [];
+    protected $fillable = [
+        'title',
+        'description',
+        'picture',
+        'priority',
+        'is_active',
+        'external_id',
+    ];
 
-    public $timestamps = false;
-
-    public function getUrl($locale = ''): string
-    {
-        return geturl('/brand/' . $this->slug);
-    }
-
-    public function characteristic_brand(): HasOne
-    {
-        return $this->HasOne(CharacteristicOption::class);
-    }
+    protected $casts = [
+        'title' => 'json',
+        'description' => 'json',
+        'is_active' => 'boolean',
+        'priority' => 'integer',
+    ];
 }

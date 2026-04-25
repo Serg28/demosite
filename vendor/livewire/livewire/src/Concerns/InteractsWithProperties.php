@@ -3,7 +3,9 @@
 namespace Livewire\Concerns;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Livewire\Drawer\Utils;
+use Livewire\Form;
 
 trait InteractsWithProperties
 {
@@ -57,12 +59,20 @@ trait InteractsWithProperties
             // Check if the property contains a dot which means it is actually on a nested object like a FormObject
             if (str($property)->contains('.')) {
                 $propertyName = $property->afterLast('.');
-                $objectName = $property->beforeLast('.');
+                $objectName = $property->before('.');
+
+                // form object reset
+                if (is_subclass_of($this->{$objectName}, Form::class)) {
+                    $this->{$objectName}->reset($propertyName);
+                    continue;
+                }
 
                 $object = data_get($freshInstance, $objectName, null);
 
                 if (is_object($object)) {
                     $isInitialized = (new \ReflectionProperty($object, (string) $propertyName))->isInitialized($object);
+                } elseif (is_array($object)) {
+                    $isInitialized = Arr::has($freshInstance->{$objectName}, Utils::afterFirstDot((string) $property));
                 } else {
                     $isInitialized = false;
                 }
@@ -88,7 +98,28 @@ trait InteractsWithProperties
 
         $keysToReset = array_diff(array_keys($this->all()), $properties);
 
+        if($keysToReset === []) {
+            return;
+        }
+
         $this->reset($keysToReset);
+    }
+
+    public function pull($properties = null)
+    {
+        $wantsASingleValue = is_string($properties);
+
+        $properties = is_array($properties) ? $properties : func_get_args();
+
+        $beforeReset = match (true) {
+            empty($properties) => $this->all(),
+            $wantsASingleValue => $this->getPropertyValue($properties[0]),
+            default => $this->only($properties),
+        };
+
+        $this->reset($properties);
+
+        return $beforeReset;
     }
 
     public function only($properties)

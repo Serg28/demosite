@@ -1,4 +1,12 @@
-@blaze(fold: true, unsafe: ['icon:trailing', 'icon:leading', 'icon:variant', 'mask:dynamic'])
+@blaze(fold: true, unsafe: [
+    // attributes
+    'icon:trailing', 'icon:leading', 'icon:variant', 'mask:dynamic',
+    // flux:with-field props
+    'name', 'label', 'badge',
+    'description', 'description:trailing',
+    'label:badge', 'label:aside', 'label:trailing',
+    'error:name', 'error:bag', 'error:message', 'error:icon', 'error:nested', 'error:deep',
+])
 
 @php $iconTrailing ??= $attributes->pluck('icon:trailing'); @endphp
 @php $iconLeading ??= $attributes->pluck('icon:leading'); @endphp
@@ -27,6 +35,8 @@
 ])
 
 @php
+
+$inputAttributes = Flux::attributesAfter('input:', $attributes, []);
 
 // There are a few loading scenarios that this covers:
 // If `:loading="false"` then never show loading.
@@ -141,12 +151,12 @@ $classes = Flux::classes()
             <input
                 type="{{ $type }}"
                 {{-- Leave file inputs unstyled... --}}
-                {{ $attributes->except('class')->class($type === 'file' ? '' : $classes) }}
-                <?php if(isset($name)): ?> name="{{ $name }}" <?php endif; ?>
+                {{ $attributes->except('class')->class($type === 'file' ? '' : $classes)->merge($inputAttributes->getAttributes()) }}
+                <?php if (isset($name)): ?> name="{{ $name }}" <?php endif; ?>
                 <?php if ($maskDynamic): ?> x-mask:dynamic="{{ $maskDynamic }}" @elseif ($mask) x-mask="{{ $mask }}" <?php endif; ?>
                 <?php if (is_numeric($size)): ?> size="{{ $size }}" <?php endif; ?>
-                @unblaze(scope: ['name' => $name ?? null])
-                <?php if ($scope['name'] && $errors->has($scope['name'])): ?>
+                @unblaze(scope: ['name' => $name ?? null, 'invalid' => $invalid ?? false])
+                <?php if ($scope['invalid'] || ($scope['name'] && $errors->has($scope['name']))): ?>
                 aria-invalid="true" data-invalid
                 <?php endif; ?>
                 @endunblaze
@@ -164,7 +174,7 @@ $classes = Flux::classes()
                     <?php endif; ?>
 
                     <?php if ($clearable): ?>
-                        <flux:input.clearable inset="left right" :$size />
+                        <flux:input.clearable inset="left right" :$size :$iconVariant />
                     <?php endif; ?>
 
                     <?php if ($kbd): ?>
@@ -172,15 +182,15 @@ $classes = Flux::classes()
                     <?php endif; ?>
 
                     <?php if ($expandable): ?>
-                        <flux:input.expandable inset="left right" :$size />
+                        <flux:input.expandable inset="left right" :$size :$iconVariant />
                     <?php endif; ?>
 
                     <?php if ($copyable): ?>
-                        <flux:input.copyable inset="left right" :$size />
+                        <flux:input.copyable inset="left right" :$size :$iconVariant />
                     <?php endif; ?>
 
                     <?php if ($viewable): ?>
-                        <flux:input.viewable inset="left right" :$size />
+                        <flux:input.viewable inset="left right" :$size :$iconVariant />
                     <?php endif; ?>
 
                     <?php if (is_string($iconTrailing)): ?>

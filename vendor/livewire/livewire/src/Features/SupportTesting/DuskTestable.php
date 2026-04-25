@@ -16,11 +16,7 @@ class DuskTestable
     public static $browser;
 
     static function provide() {
-        Route::get('livewire-dusk/{component}', function ($component) {
-            $class = urldecode($component);
-
-            return app()->call(app('livewire')->new($class));
-        })->middleware('web');
+        Route::get('livewire-dusk/{component}', ShowDuskComponent::class)->middleware('web');
 
         on('browser.testCase.setUp', function ($testCase) {
             static::$currentTestCase = $testCase;
@@ -28,8 +24,8 @@ class DuskTestable
 
             $tweakApplication = $testCase::tweakApplicationHook();
 
-            invade($testCase)->tweakApplication(function () use ($tweakApplication) {
-                config()->set('app.debug', true);
+            invade($testCase)->beforeServingApplication(function ($app, $config) use ($tweakApplication) {
+                $config->set('app.debug', true);
 
                 if (is_callable($tweakApplication)) $tweakApplication();
 
@@ -57,6 +53,33 @@ class DuskTestable
      */
     static function create($components, $params = [], $queryParams = [])
     {
+        $components = is_array($components) ? $components : [$components];
+        $firstComponent = array_shift($components);
+
+        if (is_string($firstComponent) && ! class_exists($firstComponent)) {
+            // Simple component name (eg. `counter`)
+            $id = $firstComponent;
+            $components = [$firstComponent, ...$components];
+        } else {
+            if (is_string($firstComponent)) {
+                // Component class name (eg. `App\Livewire\Counter`)
+                $className = $firstComponent;
+            } else {
+                // Anonymous class instance (eg. `new class extends Component {}`)
+                // Remove the runtime '$123' suffix to make the class name stable
+                $className = str()->beforeLast($firstComponent::class, '$');
+            }
+
+            // A string ID that can be used in the URL
+            $id = 'a' . substr(md5($className), 0, 8);
+            $components = [$id => $firstComponent, ...$components];
+        }
+
+        return static::createBrowser($id, $components, $params, $queryParams)->visit('/livewire-dusk/'.$id.'?'.Arr::query($queryParams));
+    }
+
+    static function createBrowser($id, $components, $params = [], $queryParams = [])
+    {
         if (static::$shortCircuitCreateCall) {
             throw new class ($components) extends \Exception {
                 public $components;
@@ -67,23 +90,13 @@ class DuskTestable
             };
         }
 
-        $components = (array) $components;
-
-        $firstComponent = array_shift($components);
-
-        $id = 'a'.str()->random(10);
-
-        $components = [$id => $firstComponent, ...$components];
-
         [$class, $method] = static::findTestClassAndMethodThatCalledThis();
 
         static::registerComponentsForNextTest([$id, $class, $method]);
 
         $testCase = invade(static::$currentTestCase);
 
-        static::$browser = $testCase->newBrowser($testCase->createWebDriver());
-
-        return static::$browser->visit('/livewire-dusk/'.$id.'?'.Arr::query($queryParams));
+        return static::$browser = $testCase->newBrowser($testCase->createWebDriver());
     }
 
     static function actingAs(\Illuminate\Contracts\Auth\Authenticatable $user, $driver = null)
@@ -120,22 +133,16 @@ class DuskTestable
 
             $components = null;
 
-            try { 
+            try {
                 if (\Orchestra\Testbench\phpunit_version_compare('10.0', '>=')) {
-                    (new $testClass($method))->$method(); 
+                    (new $testClass($method))->$method();
                 } else {
-                    (new $testClass())->$method(); 
+                    (new $testClass())->$method();
                 }
             } catch (\Exception $e) {
                 if (! $e->isDuskShortcircuit) throw $e;
                 $components = $e->components;
             }
-
-            $components = is_array($components) ? $components : [$components];
-
-            $firstComponent = array_shift($components);
-
-            $components = [$id => $firstComponent, ...$components];
 
             static::$shortCircuitCreateCall = false;
 

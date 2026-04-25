@@ -14,34 +14,20 @@ declare(strict_types=1);
 namespace phpDocumentor\Reflection\DocBlock\Tags;
 
 use phpDocumentor\Reflection\DocBlock\Description;
-use phpDocumentor\Reflection\DocBlock\DescriptionFactory;
 use phpDocumentor\Reflection\Type;
-use phpDocumentor\Reflection\TypeResolver;
-use phpDocumentor\Reflection\Types\Context as TypeContext;
-use phpDocumentor\Reflection\Utils;
-use Webmozart\Assert\Assert;
-
-use function array_shift;
-use function array_unshift;
-use function implode;
-use function strpos;
-use function substr;
-
-use const PREG_SPLIT_DELIM_CAPTURE;
 
 /**
  * Reflection class for the {@}param tag in a Docblock.
  */
-final class Param extends TagWithType implements Factory\StaticMethod
+final class Param extends TagWithType
 {
-    /** @var string|null */
-    private $variableName;
+    private ?string $variableName = null;
 
     /** @var bool determines whether this is a variadic argument */
-    private $isVariadic;
+    private bool $isVariadic;
 
     /** @var bool determines whether this is passed by reference */
-    private $isReference;
+    private bool $isReference;
 
     public function __construct(
         ?string $variableName,
@@ -56,61 +42,6 @@ final class Param extends TagWithType implements Factory\StaticMethod
         $this->isVariadic   = $isVariadic;
         $this->description  = $description;
         $this->isReference  = $isReference;
-    }
-
-    public static function create(
-        string $body,
-        ?TypeResolver $typeResolver = null,
-        ?DescriptionFactory $descriptionFactory = null,
-        ?TypeContext $context = null
-    ): self {
-        Assert::stringNotEmpty($body);
-        Assert::notNull($typeResolver);
-        Assert::notNull($descriptionFactory);
-
-        [$firstPart, $body] = self::extractTypeFromBody($body);
-
-        $type         = null;
-        $parts        = Utils::pregSplit('/(\s+)/Su', $body, 2, PREG_SPLIT_DELIM_CAPTURE);
-        $variableName = '';
-        $isVariadic   = false;
-        $isReference   = false;
-
-        // if the first item that is encountered is not a variable; it is a type
-        if ($firstPart && !self::strStartsWithVariable($firstPart)) {
-            $type = $typeResolver->resolve($firstPart, $context);
-        } else {
-            // first part is not a type; we should prepend it to the parts array for further processing
-            array_unshift($parts, $firstPart);
-        }
-
-        // if the next item starts with a $ or ...$ or &$ or &...$ it must be the variable name
-        if (isset($parts[0]) && self::strStartsWithVariable($parts[0])) {
-            $variableName = array_shift($parts);
-            if ($type) {
-                array_shift($parts);
-            }
-
-            Assert::notNull($variableName);
-
-            if (strpos($variableName, '$') === 0) {
-                $variableName = substr($variableName, 1);
-            } elseif (strpos($variableName, '&$') === 0) {
-                $isReference = true;
-                $variableName = substr($variableName, 2);
-            } elseif (strpos($variableName, '...$') === 0) {
-                $isVariadic = true;
-                $variableName = substr($variableName, 4);
-            } elseif (strpos($variableName, '&...$') === 0) {
-                $isVariadic   = true;
-                $isReference  = true;
-                $variableName = substr($variableName, 5);
-            }
-        }
-
-        $description = $descriptionFactory->create(implode('', $parts), $context);
-
-        return new static($variableName, $type, $isVariadic, $description, $isReference);
     }
 
     /**
@@ -149,7 +80,7 @@ final class Param extends TagWithType implements Factory\StaticMethod
         }
 
         $variableName = '';
-        if ($this->variableName) {
+        if ($this->variableName !== null && $this->variableName !== '') {
             $variableName .= ($this->isReference ? '&' : '') . ($this->isVariadic ? '...' : '');
             $variableName .= '$' . $this->variableName;
         }
@@ -159,16 +90,5 @@ final class Param extends TagWithType implements Factory\StaticMethod
         return $type
             . ($variableName !== '' ? ($type !== '' ? ' ' : '') . $variableName : '')
             . ($description !== '' ? ($type !== '' || $variableName !== '' ? ' ' : '') . $description : '');
-    }
-
-    private static function strStartsWithVariable(string $str): bool
-    {
-        return strpos($str, '$') === 0
-               ||
-               strpos($str, '...$') === 0
-               ||
-               strpos($str, '&$') === 0
-               ||
-               strpos($str, '&...$') === 0;
     }
 }

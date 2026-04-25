@@ -1,1 +1,0 @@
-<a href="{{$commentable?->getUrl() ?? '#'}}" target="_blank"> {{$commentable?->t('title') ?? 'Н/Д'}}</a>

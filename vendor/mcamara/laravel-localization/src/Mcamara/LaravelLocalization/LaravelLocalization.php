@@ -2,8 +2,13 @@
 
 namespace Mcamara\LaravelLocalization;
 
-use Illuminate\Config\Repository;
+use Illuminate\Contracts\Config\Repository as ConfigRepository;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Contracts\Routing\UrlRoutable;
+use Illuminate\Contracts\Translation\Translator;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Str;
 use Illuminate\Support\Env;
 use Mcamara\LaravelLocalization\Exceptions\SupportedLocalesNotDefined;
@@ -19,21 +24,14 @@ class LaravelLocalization
     /**
      * Config repository.
      *
-     * @var \Illuminate\Config\Repository
+     * @var \Illuminate\Contracts\Config\Repository
      */
     protected $configRepository;
 
     /**
-     * Illuminate view Factory.
-     *
-     * @var \Illuminate\View\Factory
-     */
-    protected $view;
-
-    /**
      * Illuminate translator class.
      *
-     * @var \Illuminate\Translation\Translator
+     * @var \Illuminate\Contracts\Translation\Translator
      */
     protected $translator;
 
@@ -47,21 +45,21 @@ class LaravelLocalization
     /**
      * Illuminate request class.
      *
-     * @var \Illuminate\Routing\Request
+     * @var \Illuminate\Http\Request
      */
     protected $request;
 
     /**
      * Illuminate url class.
      *
-     * @var \Illuminate\Routing\UrlGenerator
+     * @var \Illuminate\Contracts\Routing\UrlGenerator
      */
     protected $url;
 
     /**
      * Illuminate request class.
      *
-     * @var Illuminate\Foundation\Application
+     * @var \Illuminate\Contracts\Foundation\Application
      */
     protected $app;
 
@@ -126,16 +124,20 @@ class LaravelLocalization
      *
      * @throws UnsupportedLocaleException
      */
-    public function __construct()
-    {
-        $this->app = app();
-
-        $this->configRepository = $this->app['config'];
-        $this->view = $this->app['view'];
-        $this->translator = $this->app['translator'];
-        $this->router = $this->app['router'];
-        $this->request = $this->app['request'];
-        $this->url = $this->app['url'];
+    public function __construct(
+        Application $app,
+        ConfigRepository $configRepository,
+        Translator $translator,
+        Router $router,
+        Request $request,
+        UrlGenerator $url
+    ) {
+        $this->app = $app;
+        $this->configRepository = $configRepository;
+        $this->translator = $translator;
+        $this->router = $router;
+        $this->request = $request;
+        $this->url = $url;
 
         // set default locale
         $this->defaultLocale = $this->configRepository->get('app.locale');
@@ -192,6 +194,7 @@ class LaravelLocalization
         }
 
         $this->app->setLocale($this->currentLocale);
+        $this->translator->setLocale($this->currentLocale);
 
         // Regional locale such as de_DE, so formatLocalized works in Carbon
         $regional = $this->getCurrentLocaleRegional();
@@ -298,8 +301,7 @@ class LaravelLocalization
         if (!$parsed_url || empty($parsed_url['path'])) {
             $path = $parsed_url['path'] = '';
         } else {
-            //$parsed_url['path'] = str_replace($base_path, '', '/'.ltrim($parsed_url['path'], '/'));
-            $parsed_url['path'] = ($base_path!=='/') ?str_replace($base_path, '', '/'.ltrim($parsed_url['path'], '/')) : $parsed_url['path'];
+            $parsed_url['path'] = str_replace($base_path, '', '/'.ltrim($parsed_url['path'], '/'));
             $path = $parsed_url['path'];
             foreach ($this->getSupportedLocales() as $localeCode => $lang) {
                 $localeCode = $this->getLocaleFromMapping($localeCode);
@@ -787,7 +789,7 @@ class LaravelLocalization
     /**
      * Returns the config repository for this instance.
      *
-     * @return Repository Configuration repository
+     * @return \Illuminate\Contracts\Config\Repository Configuration repository
      */
     public function getConfigRepository()
     {

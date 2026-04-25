@@ -17,11 +17,19 @@ class Regexes
                         )
                         |
                         (?:
+                            @(?:style)(\( (?: (?>[^()]+) | (?-1) )* \))
+                        )
+                        |
+                        (?:
                             \{\{\s*\\\$attributes(?:[^}]+?)?\s*\}\}
                         )
                         |
                         (?:
-                            [\w\-:.@]+
+                            (\:\\\$)(\w+)
+                        )
+                        |
+                        (?:
+                            [\w\-:.@%]+
                             (
                                 =
                                 (?:
@@ -54,15 +62,19 @@ class Regexes
                         )
                         |
                         (?:
+                            @(?:style)(\( (?: (?>[^()]+) | (?-1) )* \))
+                        )
+                        |
+                        (?:
                             \{\{\s*\\\$attributes(?:[^}]+?)?\s*\}\}
                         )
                         |
                         (?:
-                            [:][$][\w]+
+                            (\:\\\$)(\w+)
                         )
                         |
                         (?:
-                            [\w\-:.@]+
+                            [\w\-:.@%]+
                             (
                                 =
                                 (?:
@@ -95,11 +107,19 @@ class Regexes
                             )
                             |
                             (?:
+                                @(?:style)(\( (?: (?>[^()]+) | (?-1) )* \))
+                            )
+                            |
+                            (?:
                                 \{\{\s*\\\$attributes(?:[^}]+?)?\s*\}\}
                             )
                             |
                             (?:
-                                [\w\-:.@]+
+                                (\:\\\$)(\w+)
+                            )
+                            |
+                            (?:
+                                [\w\-:.@%]+
                                 (
                                     =
                                     (?:
@@ -118,12 +138,12 @@ class Regexes
         \/>
     ";
 
-    static $livewireClosingTag = "<\/\s*livewire[-\:][\w\-\:\.]*\s*>";
+    static $livewireClosingTag = '<\/\s*livewire[-\:][\w\-\:\.]*\s*>';
 
     static $slotOpeningTag = "
         <
             \s*
-            x[\-\:]slot
+            livewire[\-\:]slot
             (?:\:(?<inlineName>\w+(?:-\w+)*))?
             (?:\s+(:?)name=(?<name>(\"[^\"]+\"|\\\'[^\\\']+\\\'|[^\s>]+)))?
             (?<attributes>
@@ -135,11 +155,19 @@ class Regexes
                         )
                         |
                         (?:
+                            @(?:style)(\( (?: (?>[^()]+) | (?-1) )* \))
+                        )
+                        |
+                        (?:
                             \{\{\s*\\\$attributes(?:[^}]+?)?\s*\}\}
                         )
                         |
                         (?:
-                            [\w\-:.@]+
+                            (\:\\\$)(\w+)
+                        )
+                        |
+                        (?:
+                            [\w\-:.@%]+
                             (
                                 =
                                 (?:
@@ -159,7 +187,7 @@ class Regexes
         >
     ";
 
-    static $slotClosingTag = "<\/\s*x[\-\:]slot[^>]*>";
+    static $slotClosingTag = '<\/\s*livewire[\-\:]slot[^>]*>';
 
     static $bladeDirective = "\B@(@?\w+(?:::\w+)?)([ \t]*)(\( ( (?>[^()]+) | (?3) )* \))?";
 

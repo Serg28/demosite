@@ -27,13 +27,11 @@ use function explode;
 /**
  * Reflection class for a @covers tag in a Docblock.
  */
-final class Covers extends BaseTag implements Factory\StaticMethod
+final class Covers extends BaseTag
 {
-    /** @var string */
-    protected $name = 'covers';
+    protected string $name = 'covers';
 
-    /** @var Fqsen */
-    private $refers;
+    private Fqsen $refers;
 
     /**
      * Initializes this tag.

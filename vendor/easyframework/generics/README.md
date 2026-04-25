@@ -1,4 +1,0 @@
-generics
-========
-
-Generic library

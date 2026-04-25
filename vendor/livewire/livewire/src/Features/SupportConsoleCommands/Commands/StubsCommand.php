@@ -4,7 +4,9 @@ namespace Livewire\Features\SupportConsoleCommands\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
+use Symfony\Component\Console\Attribute\AsCommand;
 
+#[AsCommand(name: 'livewire:stubs')]
 class StubsCommand extends Command
 {
     protected $signature = 'livewire:stubs';
@@ -42,6 +44,51 @@ class StubsCommand extends Command
         file_put_contents(
             $stubsPath.'/livewire.pest.stub',
             file_get_contents(__DIR__.'/livewire.pest.stub')
+        );
+
+        file_put_contents(
+            $stubsPath.'/livewire.form.stub',
+            file_get_contents(__DIR__.'/livewire.form.stub')
+        );
+
+        file_put_contents(
+            $stubsPath.'/livewire.attribute.stub',
+            file_get_contents(__DIR__.'/livewire.attribute.stub')
+        );
+
+        file_put_contents(
+            $stubsPath.'/livewire.layout.stub',
+            file_get_contents(__DIR__.'/livewire.layout.stub')
+        );
+
+        file_put_contents(
+            $stubsPath.'/livewire-sfc.stub',
+            file_get_contents(__DIR__.'/livewire-sfc.stub')
+        );
+
+        file_put_contents(
+            $stubsPath.'/livewire-mfc-class.stub',
+            file_get_contents(__DIR__.'/livewire-mfc-class.stub')
+        );
+
+        file_put_contents(
+            $stubsPath.'/livewire-mfc-view.stub',
+            file_get_contents(__DIR__.'/livewire-mfc-view.stub')
+        );
+
+        file_put_contents(
+            $stubsPath.'/livewire-mfc-test.stub',
+            file_get_contents(__DIR__.'/livewire-mfc-test.stub')
+        );
+
+        file_put_contents(
+            $stubsPath.'/livewire-mfc-js.stub',
+            file_get_contents(__DIR__.'/livewire-mfc-js.stub')
+        );
+
+        file_put_contents(
+            $stubsPath.'/livewire-mfc-css.stub',
+            file_get_contents(__DIR__.'/livewire-mfc-css.stub')
         );
 
         $this->info('Stubs published successfully.');
