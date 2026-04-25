@@ -4,9 +4,13 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
 
+use App\Http\Controllers\CatalogController;
+
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+Route::get('/catalog/{category}', [CatalogController::class, 'show'])->name('catalog.show');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
