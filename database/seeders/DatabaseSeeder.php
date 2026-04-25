@@ -42,10 +42,9 @@ class DatabaseSeeder extends Seeder
             $category->characteristics()->attach($characteristics->random(3)->pluck('id'));
         });
 
-        // Create products with random categories and brands
+        // Create products with random categories
         $products = \App\Models\Product::factory(100)->create([
             'category_id' => fn () => $categories->random()->id,
-            'brand_id' => fn () => $brands->random()->id,
         ]);
 
         // Associate products with characteristic options

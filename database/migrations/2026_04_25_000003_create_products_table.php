@@ -23,9 +23,6 @@ return new class extends Migration
             $table->boolean('is_active')->default(true)->index();
             $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
             $table->string('slug')->unique()->index();
-            $table->string('external_id')->nullable();
-            $table->json('analogs')->nullable();
-            $table->json('other_categories')->nullable();
             $table->smallInteger('priority')->default(0);
             $table->timestamps();
         });

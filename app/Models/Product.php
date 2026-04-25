@@ -25,10 +25,7 @@ class Product extends Model
         'link_to_youtube',
         'is_active',
         'category_id',
-        'brand_id',
         'slug',
-        'external_id',
-        'analogs',
         'priority',
     ];
 
@@ -41,7 +38,6 @@ class Product extends Model
         'is_active' => 'boolean',
         'other_pictures' => 'json',
         'link_to_youtube' => 'json',
-        'analogs' => 'json',
         'priority' => 'integer',
     ];
 
@@ -53,11 +49,6 @@ class Product extends Model
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class);
-    }
-
-    public function brand(): BelongsTo
-    {
-        return $this->belongsTo(Brand::class);
     }
 
     public function orderProducts(): HasMany

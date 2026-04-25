@@ -39,10 +39,7 @@ class ProductFactory extends Factory
             'link_to_youtube' => [],
             'is_active' => true,
             'category_id' => null,
-            'brand_id' => null,
             'slug' => $this->faker->unique()->slug(),
-            'external_id' => null,
-            'analogs' => [],
             'priority' => $this->faker->numberBetween(0, 1000),
         ];
     }

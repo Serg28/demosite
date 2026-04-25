@@ -17,7 +17,6 @@ class Brand extends Model
         'picture',
         'priority',
         'is_active',
-        'external_id',
     ];
 
     protected $casts = [
