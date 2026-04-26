@@ -12,11 +12,11 @@ class CharacteristicFactory extends Factory
     public function definition(): array
     {
         return [
-            'title' => json_encode([
+            'title' => [
                 'ua' => $this->faker->words(2, true),
                 'ru' => $this->faker->words(2, true),
                 'en' => $this->faker->words(2, true),
-            ]),
+            ],
             'slug' => $this->faker->unique()->slug(),
             'is_range_type' => $this->faker->boolean(20),
             'is_active' => true,

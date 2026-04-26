@@ -44,4 +44,9 @@ class Category extends Model
     {
         return $this->belongsToMany(Characteristic::class);
     }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 }

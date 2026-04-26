@@ -126,25 +126,49 @@ return [
     */
 
     'typesense' => [
-        'client' => [
+        'client-settings' => [
             'api_key' => env('TYPESENSE_API_KEY', 'demo_api_key_12345'),
             'nodes' => [
                 [
                     'host' => env('TYPESENSE_HOST', 'typesense'),
-                    'port' => env('TYPESENSE_PORT', 8108),
+                    'port' => env('TYPESENSE_PORT', '8108'),
+                    'path' => env('TYPESENSE_PATH', ''),
                     'protocol' => env('TYPESENSE_PROTOCOL', 'http'),
                 ],
             ],
             'nearest_node' => [
                 'host' => env('TYPESENSE_HOST', 'typesense'),
-                'port' => env('TYPESENSE_PORT', 8108),
+                'port' => env('TYPESENSE_PORT', '8108'),
+                'path' => env('TYPESENSE_PATH', ''),
                 'protocol' => env('TYPESENSE_PROTOCOL', 'http'),
             ],
             'connection_timeout_seconds' => env('TYPESENSE_CONNECTION_TIMEOUT_SECONDS', 2),
             'healthcheck_interval_seconds' => env('TYPESENSE_HEALTHCHECK_INTERVAL_SECONDS', 30),
+            'num_retries' => env('TYPESENSE_NUM_RETRIES', 3),
+            'retry_interval_seconds' => env('TYPESENSE_RETRY_INTERVAL_SECONDS', 1),
         ],
-        'search_only_api_key' => env('TYPESENSE_SEARCH_ONLY_API_KEY', 'search_key'),
-        'enable_analytics' => env('TYPESENSE_ANALYTICS', false),
+        'model-settings' => [
+            \App\Models\Product::class => [
+                'collection-schema' => [
+                    'fields' => [
+                        ['name' => 'id',          'type' => 'string'],
+                        ['name' => 'title',       'type' => 'string'],
+                        ['name' => 'description', 'type' => 'string', 'optional' => true],
+                        ['name' => 'price',       'type' => 'float'],
+                        ['name' => 'price_old',   'type' => 'float',  'optional' => true],
+                        ['name' => 'category_id', 'type' => 'int32',  'optional' => true],
+                        ['name' => 'slug',        'type' => 'string'],
+                        ['name' => 'is_active',   'type' => 'bool'],
+                        ['name' => 'priority',    'type' => 'int32'],
+                        ['name' => 'created_at',  'type' => 'int64'],
+                    ],
+                    'default_sorting_field' => 'priority',
+                ],
+                'search-parameters' => [
+                    'query_by' => 'title,description',
+                ],
+            ],
+        ],
     ],
 
 ];

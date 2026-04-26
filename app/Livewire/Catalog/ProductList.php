@@ -4,59 +4,80 @@ namespace App\Livewire\Catalog;
 
 use App\Models\Category;
 use App\Services\TypeSenseService;
+use Illuminate\View\View;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class ProductList extends Component
 {
-    use WithPagination;
-
     public Category $category;
 
+    public int $page = 1;
+
+    #[Locked]
     public array $filters = [];
 
+    #[Locked]
     public string $sortBy = 'priority';
 
+    #[Locked]
     public string $sortDir = 'desc';
 
-    public function __construct(private TypeSenseService $typeSearchService)
-    {
-        parent::__construct();
-    }
-
-    public function mount(Category $category, array $filters = [], string $sortBy = 'priority', string $sortDir = 'desc'): void
+    public function mount(Category $category, string $sortBy = 'priority', string $sortDir = 'desc'): void
     {
         $this->category = $category;
-        $this->filters = $filters;
         $this->sortBy = $sortBy;
         $this->sortDir = $sortDir;
     }
 
-    #[Computed]
-    public function products()
+    #[On('filtersUpdated')]
+    public function applyFilters(array $filters): void
     {
-        $page = $this->getPage();
+        $this->filters = $filters;
+        $this->page = 1;
+        $this->dispatch('product-list-reset');
+    }
 
-        $results = $this->typeSearchService->search(
+    #[On('sortUpdated')]
+    public function applySort(string $sortBy, string $sortDir): void
+    {
+        $this->sortBy = $sortBy;
+        $this->sortDir = $sortDir;
+        $this->page = 1;
+        $this->dispatch('product-list-reset');
+    }
+
+    public function setPage(int $page): void
+    {
+        $this->page = max(1, $page);
+        $this->dispatch('product-list-reset');
+    }
+
+    public function resetPage(): void
+    {
+        $this->page = 1;
+    }
+
+    #[Computed]
+    public function products(): array
+    {
+        return app(TypeSenseService::class)->search(
             query: '',
             filters: [
                 'category_id' => $this->category->id,
-                ...$this->filters
+                ...$this->filters,
             ],
-            page: $page,
+            page: $this->page,
             pageSize: 24,
             sortBy: $this->sortBy,
             sortDir: $this->sortDir
         );
-
-        return $results;
     }
 
-    public function render()
+    public function render(): View
     {
-        return view('livewire.catalog.product-list', [
-            'products' => $this->products,
-        ]);
+        return view('livewire.catalog.product-list');
     }
 }

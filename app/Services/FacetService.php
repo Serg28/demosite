@@ -5,9 +5,8 @@ namespace App\Services;
 use App\Models\Category;
 use App\Models\Characteristic;
 use App\Models\CharacteristicOption;
-use App\Models\Brand;
+use App\Models\Product;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Collection;
 
 /**
  * FacetService — управление фасетами каталога с многоуровневым кэшем.
@@ -20,17 +19,18 @@ use Illuminate\Support\Collection;
 class FacetService
 {
     private const FACET_CACHE_TTL = 15; // минут
+
     private const EXPANDED_FACET_CACHE_TTL = 60; // минут
+
     private const FACET_PAGE_SIZE = 15; // Первоначально показываем 15
+
     private const EXPANDED_PAGE_SIZE = 50; // При развертывании показываем по 50
 
     /**
      * Получить все фасеты для категории.
      *
-     * @param Category $category
-     * @param array $expandedFacets ID характеристик, развернутых пользователем
-     * @param array $currentFilters Текущие выбранные фильтры (для подсчета)
-     * @return array
+     * @param  array  $expandedFacets  ID характеристик, развернутых пользователем
+     * @param  array  $currentFilters  Текущие выбранные фильтры (для подсчета)
      */
     public function getFacetsForCategory(
         Category $category,
@@ -39,11 +39,10 @@ class FacetService
     ): array {
         $cacheKey = $this->generateFacetCacheKey($category->id, $currentFilters);
 
-        return Cache::tags(['category_' . $category->id, 'facets'])
+        return Cache::tags(['category_'.$category->id, 'facets'])
             ->remember($cacheKey, now()->addMinutes(self::FACET_CACHE_TTL), function () use ($category, $expandedFacets, $currentFilters) {
                 return [
                     'price' => $this->getPriceFacet($category, $currentFilters),
-                    'brands' => $this->getBrandsFacet($category, self::FACET_PAGE_SIZE, $currentFilters),
                     'characteristics' => $this->getCharacteristicsFacets($category, self::FACET_PAGE_SIZE, $expandedFacets, $currentFilters),
                 ];
             });
@@ -51,13 +50,6 @@ class FacetService
 
     /**
      * Получить развернутый фасет (для "Показати ще").
-     *
-     * @param Category $category
-     * @param int $characteristicId
-     * @param int $page
-     * @param int $pageSize
-     * @param array $currentFilters
-     * @return array
      */
     public function getExpandedFacet(
         Category $category,
@@ -68,7 +60,7 @@ class FacetService
     ): array {
         $cacheKey = "facet_expanded:{$category->id}:{$characteristicId}:{$page}";
 
-        return Cache::tags(['category_' . $category->id, 'facet_expanded'])
+        return Cache::tags(['category_'.$category->id, 'facet_expanded'])
             ->remember($cacheKey, now()->addMinutes(self::EXPANDED_FACET_CACHE_TTL), function () use ($category, $characteristicId, $page, $pageSize, $currentFilters) {
                 $characteristic = Characteristic::findOrFail($characteristicId);
 
@@ -84,7 +76,7 @@ class FacetService
                 return [
                     'characteristic_id' => $characteristicId,
                     'characteristic_title' => $characteristic->title['ua'] ?? $characteristic->title['ru'] ?? '',
-                    'options' => $items->map(fn($opt) => [
+                    'options' => $items->map(fn ($opt) => [
                         'id' => $opt->id,
                         'title' => $opt->title['ua'] ?? $opt->title['ru'] ?? '',
                         'slug' => $opt->slug,
@@ -104,7 +96,7 @@ class FacetService
     {
         $cacheKey = "facet_price:{$category->id}";
 
-        return Cache::tags(['category_' . $category->id, 'facet_price'])
+        return Cache::tags(['category_'.$category->id, 'facet_price'])
             ->remember($cacheKey, now()->addHours(1), function () use ($category) {
                 // Получаем min/max цену в этой категории
                 $priceStats = \DB::table('products')
@@ -119,39 +111,6 @@ class FacetService
                 return [
                     'min' => (int) ($priceStats->min_price ?? 0),
                     'max' => (int) ($priceStats->max_price ?? 0),
-                ];
-            });
-    }
-
-    /**
-     * Получить фасет брендов.
-     */
-    private function getBrandsFacet(Category $category, int $limit, array $currentFilters): array
-    {
-        $cacheKey = "facet_brands:{$category->id}";
-
-        return Cache::tags(['category_' . $category->id, 'facet_brands'])
-            ->remember($cacheKey, now()->addMinutes(self::FACET_CACHE_TTL), function () use ($category, $limit) {
-                $brands = Brand::whereHas('products', function ($q) use ($category) {
-                    $q->where('category_id', $category->id)->where('is_active', true);
-                })
-                ->orderByDesc('priority')
-                ->limit($limit)
-                ->get();
-
-                return [
-                    'facet_id' => 'brands',
-                    'facet_title' => __t('Бренди'),
-                    'options' => $brands->map(fn($brand) => [
-                        'id' => $brand->id,
-                        'title' => $brand->title['ua'] ?? $brand->title['ru'] ?? '',
-                        'slug' => $brand->slug ?? '',
-                        'count' => $brand->products()
-                            ->where('category_id', $category->id)
-                            ->where('is_active', true)
-                            ->count(),
-                    ])->toArray(),
-                    'has_more' => false, // TODO: Реализовать if count > limit
                 ];
             });
     }
@@ -175,7 +134,7 @@ class FacetService
             $cacheKey = "facet_char:{$category->id}:{$char->id}";
             $pageSize = in_array($char->id, $expandedFacets) ? 100 : $limit;
 
-            return Cache::tags(['category_' . $category->id, "facet_char_{$char->id}"])
+            return Cache::tags(['category_'.$category->id, "facet_char_{$char->id}"])
                 ->remember($cacheKey, now()->addMinutes(self::FACET_CACHE_TTL), function () use ($category, $char, $pageSize, $currentFilters) {
                     $options = $char->options()
                         ->limit($pageSize + 1) // +1 для has_more
@@ -185,11 +144,11 @@ class FacetService
                     $items = $options->take($pageSize);
 
                     return [
-                        'facet_id' => 'characteristic_' . $char->id,
+                        'facet_id' => 'characteristic_'.$char->id,
                         'characteristic_id' => $char->id,
                         'characteristic_title' => $char->title['ua'] ?? $char->title['ru'] ?? '',
                         'is_range_type' => $char->is_range_type ?? false,
-                        'options' => $items->map(fn($opt) => [
+                        'options' => $items->map(fn ($opt) => [
                             'id' => $opt->id,
                             'title' => $opt->title['ua'] ?? $opt->title['ru'] ?? '',
                             'slug' => $opt->slug,
@@ -213,13 +172,15 @@ class FacetService
     ): int {
         $cacheKey = "option_count:{$categoryId}:{$characteristicId}:{$optionId}";
 
-        return Cache::tags(['category_' . $categoryId, "option_{$optionId}"])
+        return Cache::tags(['category_'.$categoryId, "option_{$optionId}"])
             ->remember($cacheKey, now()->addHours(1), function () use ($categoryId, $optionId) {
-                return \DB::table('products')
+                return Product::query()
                     ->where('category_id', $categoryId)
                     ->where('is_active', true)
-                    ->whereHas('characteristics', function ($q) use ($optionId) {
-                        $q->where('characteristic_option_id', $optionId);
+                    ->whereIn('id', function ($q) use ($optionId) {
+                        $q->select('product_id')
+                            ->from('product_characteristic_options')
+                            ->where('characteristic_option_id', $optionId);
                     })
                     ->count();
             });
@@ -230,7 +191,7 @@ class FacetService
      */
     public function invalidateCategoryFacets(Category $category): void
     {
-        Cache::tags(['category_' . $category->id, 'facets', 'facet_expanded'])->flush();
+        Cache::tags(['category_'.$category->id, 'facets', 'facet_expanded'])->flush();
     }
 
     /**
@@ -238,7 +199,7 @@ class FacetService
      */
     public function invalidatePrices(Category $category): void
     {
-        Cache::tags(['category_' . $category->id, 'facet_price'])->flush();
+        Cache::tags(['category_'.$category->id, 'facet_price'])->flush();
     }
 
     /**
@@ -247,6 +208,7 @@ class FacetService
     private function generateFacetCacheKey(int $categoryId, array $filters): string
     {
         $hash = md5(json_encode($filters));
+
         return "facets:{$categoryId}:{$hash}";
     }
 }

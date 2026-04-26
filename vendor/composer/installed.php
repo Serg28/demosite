@@ -82,6 +82,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'clue/stream-filter' => array(
+            'pretty_version' => 'v1.7.0',
+            'version' => '1.7.0.0',
+            'reference' => '049509fef80032cb3f051595029ab75b49a3c2f7',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../clue/stream-filter',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'composer/pcre' => array(
             'pretty_version' => '3.3.2',
             'version' => '3.3.2.0',
@@ -613,6 +622,15 @@
             'aliases' => array(),
             'dev_requirement' => true,
         ),
+        'laravel/scout' => array(
+            'pretty_version' => 'v11.1.0',
+            'version' => '11.1.0.0',
+            'reference' => '9865fca4129d79c271da6a89afb44359e9ee9020',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../laravel/scout',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'laravel/serializable-closure' => array(
             'pretty_version' => 'v2.0.12',
             'version' => '2.0.12.0',
@@ -879,6 +897,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'nyholm/psr7' => array(
+            'pretty_version' => '1.8.2',
+            'version' => '1.8.2.0',
+            'reference' => 'a71f2b11690f4b24d099d6b16690a90ae14fc6f3',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../nyholm/psr7',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'opis/closure' => array(
             'pretty_version' => '3.7.0',
             'version' => '3.7.0.0',
@@ -975,6 +1002,69 @@
             'reference' => 'abb9fa3c5c8dbe7efe03ddba56782917481de3e8',
             'type' => 'library',
             'install_path' => __DIR__ . '/../php-debugbar/php-debugbar',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'php-http/async-client-implementation' => array(
+            'dev_requirement' => false,
+            'provided' => array(
+                0 => '*',
+            ),
+        ),
+        'php-http/client-common' => array(
+            'pretty_version' => '2.7.3',
+            'version' => '2.7.3.0',
+            'reference' => 'dcc6de29c90dd74faab55f71b79d89409c4bf0c1',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../php-http/client-common',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'php-http/client-implementation' => array(
+            'dev_requirement' => false,
+            'provided' => array(
+                0 => '*',
+            ),
+        ),
+        'php-http/discovery' => array(
+            'pretty_version' => '1.20.0',
+            'version' => '1.20.0.0',
+            'reference' => '82fe4c73ef3363caed49ff8dd1539ba06044910d',
+            'type' => 'composer-plugin',
+            'install_path' => __DIR__ . '/../php-http/discovery',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'php-http/httplug' => array(
+            'pretty_version' => '2.4.1',
+            'version' => '2.4.1.0',
+            'reference' => '5cad731844891a4c282f3f3e1b582c46839d22f4',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../php-http/httplug',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'php-http/message' => array(
+            'pretty_version' => '1.16.2',
+            'version' => '1.16.2.0',
+            'reference' => '06dd5e8562f84e641bf929bfe699ee0f5ce8080a',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../php-http/message',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'php-http/message-factory-implementation' => array(
+            'dev_requirement' => false,
+            'provided' => array(
+                0 => '1.0',
+            ),
+        ),
+        'php-http/promise' => array(
+            'pretty_version' => '1.3.1',
+            'version' => '1.3.1.0',
+            'reference' => 'fc85b1fba37c169a69a07ef0d5a8075770cc1f83',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../php-http/promise',
             'aliases' => array(),
             'dev_requirement' => false,
         ),
@@ -1162,6 +1252,7 @@
             'dev_requirement' => false,
             'provided' => array(
                 0 => '1.0',
+                1 => '*',
             ),
         ),
         'psr/http-factory' => array(
@@ -1177,6 +1268,7 @@
             'dev_requirement' => false,
             'provided' => array(
                 0 => '1.0',
+                1 => '*',
             ),
         ),
         'psr/http-message' => array(
@@ -1192,6 +1284,7 @@
             'dev_requirement' => false,
             'provided' => array(
                 0 => '1.0',
+                1 => '*',
             ),
         ),
         'psr/log' => array(
@@ -1531,6 +1624,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'symfony/options-resolver' => array(
+            'pretty_version' => 'v7.4.8',
+            'version' => '7.4.8.0',
+            'reference' => '2888fcdc4dc2fd5f7c7397be78631e8af12e02b4',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/options-resolver',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'symfony/polyfill-ctype' => array(
             'pretty_version' => 'v1.36.0',
             'version' => '1.36.0.0',
@@ -1732,6 +1834,15 @@
             'reference' => 'f0292ccf0ec75843d65027214426b6b163b48b41',
             'type' => 'library',
             'install_path' => __DIR__ . '/../tijsverkoyen/css-to-inline-styles',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'typesense/typesense-php' => array(
+            'pretty_version' => 'v6.0.0',
+            'version' => '6.0.0.0',
+            'reference' => 'e113f90449e159316a433a5509205939f271c5e2',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../typesense/typesense-php',
             'aliases' => array(),
             'dev_requirement' => false,
         ),

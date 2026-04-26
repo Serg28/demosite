@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Scout\Searchable;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, Searchable;
 
     protected $fillable = [
         'title',
@@ -77,16 +78,15 @@ class Product extends Model
     public function toSearchableArray(): array
     {
         return [
-            'id' => $this->id,
+            'id' => (string) $this->id,
             'title' => $this->title['ua'] ?? $this->title['ru'] ?? '',
             'description' => $this->description['ua'] ?? $this->description['ru'] ?? '',
             'price' => (float) $this->price,
             'price_old' => (float) ($this->price_old ?? 0),
-            'brand_id' => $this->brand_id,
-            'category_id' => $this->category_id,
-            'slug' => $this->slug,
-            'is_active' => $this->is_active,
-            'priority' => $this->priority,
+            'category_id' => (int) ($this->category_id ?? 0),
+            'slug' => (string) ($this->slug ?? ''),
+            'is_active' => (bool) $this->is_active,
+            'priority' => (int) ($this->priority ?? 0),
             'created_at' => $this->created_at?->timestamp ?? 0,
         ];
     }
