@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Characteristic;
 use App\Models\CharacteristicOption;
 use App\Services\FacetService;
+use App\Services\TypeSenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -32,6 +33,7 @@ class CatalogFilterUrlTest extends TestCase
         $this->colorChar = Characteristic::factory()->create([
             'slug' => 'color',
             'is_active' => true,
+            'is_range_type' => false,
             'priority' => 1,
         ]);
         $this->category->characteristics()->attach($this->colorChar);
@@ -45,29 +47,32 @@ class CatalogFilterUrlTest extends TestCase
             'slug' => 'blue',
         ]);
 
-        // Stub FacetService so tests don't need TypeSense
+        $this->mockFacetService();
+    }
+
+    private function mockFacetService(): void
+    {
         $this->mock(FacetService::class, function ($mock) {
             $mock->shouldReceive('getFacetsForCategory')->andReturn([
-                'price' => ['min' => 0, 'max' => 0],
+                'price' => ['min' => 0, 'max' => 0, 'current_min' => null, 'current_max' => null],
                 'characteristics' => [
                     [
-                        'facet_id' => 'characteristic_'.$this->colorChar->id,
                         'characteristic_id' => $this->colorChar->id,
                         'characteristic_slug' => 'color',
                         'characteristic_title' => 'Color',
                         'is_range_type' => false,
                         'options' => [
-                            ['id' => $this->redOption->id, 'slug' => 'red', 'title' => 'Red', 'count' => 10],
-                            ['id' => $this->blueOption->id, 'slug' => 'blue', 'title' => 'Blue', 'count' => 5],
+                            ['id' => $this->redOption->id,  'slug' => 'red',  'title' => 'Red',  'count' => 10, 'is_active' => false, 'is_disabled' => false],
+                            ['id' => $this->blueOption->id, 'slug' => 'blue', 'title' => 'Blue', 'count' => 5,  'is_active' => false, 'is_disabled' => false],
                         ],
-                        'has_more' => false,
                     ],
                 ],
+                'clear_url' => '/catalog/phones/',
             ]);
         });
     }
 
-    // ─── Controller: filter resolution from URL ───────────────────────────────
+    // ─── Controller: filter resolution from PATH ──────────────────────────────
 
     public function test_catalog_page_loads_without_filters(): void
     {
@@ -76,9 +81,9 @@ class CatalogFilterUrlTest extends TestCase
             ->assertViewHas('initialFilters', ['characteristics' => [], 'min_price' => null, 'max_price' => null]);
     }
 
-    public function test_controller_resolves_single_option_slug_to_id(): void
+    public function test_controller_resolves_single_option_slug_from_path(): void
     {
-        $this->get('/catalog/'.$this->category->slug.'?color=red')
+        $this->get('/catalog/'.$this->category->slug.'/color=red/')
             ->assertStatus(200)
             ->assertViewHas('initialFilters', [
                 'characteristics' => [$this->colorChar->id => [$this->redOption->id]],
@@ -87,9 +92,9 @@ class CatalogFilterUrlTest extends TestCase
             ]);
     }
 
-    public function test_controller_resolves_multiple_option_slugs(): void
+    public function test_controller_resolves_multiple_option_slugs_from_path(): void
     {
-        $this->get('/catalog/'.$this->category->slug.'?color=red,blue')
+        $this->get('/catalog/'.$this->category->slug.'/color=red,blue/')
             ->assertStatus(200)
             ->assertViewHas('initialFilters', [
                 'characteristics' => [$this->colorChar->id => [$this->redOption->id, $this->blueOption->id]],
@@ -98,9 +103,9 @@ class CatalogFilterUrlTest extends TestCase
             ]);
     }
 
-    public function test_controller_resolves_price_params(): void
+    public function test_controller_resolves_price_from_path(): void
     {
-        $this->get('/catalog/'.$this->category->slug.'?min_price=100&max_price=500')
+        $this->get('/catalog/'.$this->category->slug.'/price=100-500/')
             ->assertStatus(200)
             ->assertViewHas('initialFilters', [
                 'characteristics' => [],
@@ -109,118 +114,109 @@ class CatalogFilterUrlTest extends TestCase
             ]);
     }
 
-    public function test_controller_ignores_unknown_char_slugs(): void
+    public function test_controller_ignores_unknown_segments(): void
     {
-        $this->get('/catalog/'.$this->category->slug.'?unknown-param=value')
+        $this->get('/catalog/'.$this->category->slug.'/unknown-param=value/')
             ->assertStatus(200)
             ->assertViewHas('initialFilters', ['characteristics' => [], 'min_price' => null, 'max_price' => null]);
     }
 
+    public function test_controller_passes_base_path_to_view(): void
+    {
+        $this->get('/catalog/'.$this->category->slug)
+            ->assertStatus(200)
+            ->assertViewHas('basePath', '/catalog/'.$this->category->slug);
+    }
+
     // ─── Facets: rendering & options ─────────────────────────────────────────
 
-    public function test_facets_renders_option_as_anchor_link(): void
+    public function test_facets_renders_option_seo_urls(): void
     {
-        Livewire::test(Facets::class, ['category' => $this->category])
-            ->assertSeeHtml('href="?color=red"')
-            ->assertSeeHtml('href="?color=blue"');
+        Livewire::test(Facets::class, [
+            'category' => $this->category,
+            'basePath' => '/catalog/phones',
+        ])
+            ->assertSeeHtml('/catalog/phones/color=red/')
+            ->assertSeeHtml('/catalog/phones/color=blue/');
     }
 
-    public function test_facets_uses_wire_click_prevent_on_options(): void
+    public function test_facets_renders_checkbox_inputs(): void
     {
-        Livewire::test(Facets::class, ['category' => $this->category])
-            ->assertSeeHtml('wire:click.prevent="toggleOption(');
+        Livewire::test(Facets::class, [
+            'category' => $this->category,
+            'basePath' => '/catalog/phones',
+        ])
+            ->assertSeeHtml('class="js-filter-input')
+            ->assertSeeHtml('data-url=');
     }
 
-    public function test_facets_initializes_from_initial_filters(): void
+    public function test_facets_initializes_from_path(): void
     {
-        $initialFilters = [
-            'characteristics' => [$this->colorChar->id => [$this->redOption->id]],
-            'min_price' => null,
-            'max_price' => null,
-        ];
-
-        Livewire::test(Facets::class, ['category' => $this->category, 'initialFilters' => $initialFilters])
-            ->assertSet('currentFilters', $initialFilters);
+        Livewire::test(Facets::class, [
+            'category' => $this->category,
+            'basePath' => '/catalog/phones',
+            'initialFiltersPath' => 'color=red/',
+        ])
+            ->assertSet('filtersPath', 'color=red/');
     }
 
-    public function test_toggle_option_adds_option_to_filters(): void
+    public function test_filter_changed_updates_filters_path(): void
     {
-        Livewire::test(Facets::class, ['category' => $this->category])
-            ->call('toggleOption', $this->colorChar->id, $this->redOption->id)
-            ->assertSet('currentFilters.characteristics', [$this->colorChar->id => [$this->redOption->id]]);
+        Livewire::test(Facets::class, [
+            'category' => $this->category,
+            'basePath' => '/catalog/phones',
+        ])
+            ->dispatch('filter-changed', path: '/catalog/phones/color=red/')
+            ->assertSet('filtersPath', 'color=red/');
     }
 
-    public function test_toggle_option_removes_already_selected_option(): void
+    public function test_filter_changed_dispatches_filters_updated(): void
     {
-        $initialFilters = [
-            'characteristics' => [$this->colorChar->id => [$this->redOption->id]],
-            'min_price' => null,
-            'max_price' => null,
-        ];
-
-        Livewire::test(Facets::class, ['category' => $this->category, 'initialFilters' => $initialFilters])
-            ->call('toggleOption', $this->colorChar->id, $this->redOption->id)
-            ->assertSet('currentFilters.characteristics', []);
-    }
-
-    public function test_toggle_option_dispatches_filters_updated(): void
-    {
-        Livewire::test(Facets::class, ['category' => $this->category])
-            ->call('toggleOption', $this->colorChar->id, $this->redOption->id)
+        Livewire::test(Facets::class, [
+            'category' => $this->category,
+            'basePath' => '/catalog/phones',
+        ])
+            ->dispatch('filter-changed', path: '/catalog/phones/color=red/')
             ->assertDispatched('filtersUpdated');
     }
 
-    public function test_toggle_option_dispatches_update_filter_url(): void
+    public function test_filter_changed_with_empty_path_clears_filters(): void
     {
-        Livewire::test(Facets::class, ['category' => $this->category])
-            ->call('toggleOption', $this->colorChar->id, $this->redOption->id)
-            ->assertDispatched('updateFilterUrl');
+        Livewire::test(Facets::class, [
+            'category' => $this->category,
+            'basePath' => '/catalog/phones',
+            'initialFiltersPath' => 'color=red/',
+        ])
+            ->dispatch('filter-changed', path: '/catalog/phones/')
+            ->assertSet('filtersPath', '');
     }
 
-    public function test_clear_filters_resets_state(): void
-    {
-        $initialFilters = [
-            'characteristics' => [$this->colorChar->id => [$this->redOption->id]],
-            'min_price' => 100,
-            'max_price' => 500,
-        ];
+    // ─── SEO: noindex on filter path ─────────────────────────────────────────
 
-        Livewire::test(Facets::class, ['category' => $this->category, 'initialFilters' => $initialFilters])
-            ->call('clearFilters')
-            ->assertSet('currentFilters', ['characteristics' => [], 'min_price' => null, 'max_price' => null]);
+    public function test_seo_noindex_nofollow_on_clean_url_in_non_production(): void
+    {
+        $this->get('/catalog/'.$this->category->slug)
+            ->assertStatus(200)
+            ->assertSee('noindex, nofollow');
     }
 
-    public function test_clear_filters_dispatches_update_filter_url_with_empty_params(): void
+    public function test_seo_no_robots_on_clean_url_in_production(): void
     {
-        Livewire::test(Facets::class, ['category' => $this->category])
-            ->call('clearFilters')
-            ->assertDispatched('updateFilterUrl', params: []);
-    }
-
-    // ─── SEO: noindex on filter pages ────────────────────────────────────────
-
-    public function test_seo_no_robots_meta_on_clean_category_url_in_production(): void
-    {
-        config(['app.env' => 'production']);
+        config(['app.domain' => 'localhost']);
+        $this->partialMock(TypeSenseService::class, fn ($m) => $m->shouldReceive('count')->andReturn(5));
 
         $this->get('/catalog/'.$this->category->slug)
             ->assertStatus(200)
             ->assertDontSee('noindex');
     }
 
-    public function test_seo_noindex_follow_on_filter_url_in_production(): void
+    public function test_seo_noindex_follow_on_filter_path_in_production(): void
     {
-        config(['app.env' => 'production']);
+        config(['app.domain' => 'localhost']);
+        $this->partialMock(TypeSenseService::class, fn ($m) => $m->shouldReceive('count')->andReturn(5));
 
-        $this->get('/catalog/'.$this->category->slug.'?color=red')
+        $this->get('/catalog/'.$this->category->slug.'/color=red/')
             ->assertStatus(200)
             ->assertSee('noindex, follow');
-    }
-
-    public function test_seo_noindex_nofollow_on_any_url_in_non_production(): void
-    {
-        $this->get('/catalog/'.$this->category->slug)
-            ->assertStatus(200)
-            ->assertSee('noindex, nofollow');
     }
 }

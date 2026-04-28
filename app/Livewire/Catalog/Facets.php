@@ -4,143 +4,144 @@ namespace App\Livewire\Catalog;
 
 use App\Models\Category;
 use App\Services\FacetService;
+use App\Services\FilterUrlService;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Facets extends Component
 {
     public Category $category;
 
-    public array $currentFilters = [
-        'characteristics' => [],
-        'min_price' => null,
-        'max_price' => null,
-    ];
+    #[Locked]
+    public string $basePath = '';
 
-    public array $expandedFacets = [];
+    public string $filtersPath = '';
 
-    public function mount(Category $category, array $initialFilters = []): void
+    public function mount(Category $category, string $basePath = '', string $initialFiltersPath = '', array $initialFilters = []): void
     {
         $this->category = $category;
-
-        if (!empty($initialFilters)) {
-            $this->currentFilters = $initialFilters;
-        }
-    }
-
-    #[Computed]
-    public function facets(): array
-    {
-        return app(FacetService::class)->getFacetsForCategory(
-            $this->category,
-            $this->expandedFacets,
-            $this->currentFilters
-        );
+        $this->basePath = $basePath ?: '/catalog/'.$category->slug;
+        $this->filtersPath = $initialFiltersPath;
     }
 
     /**
-     * Maps characteristic/option IDs to URL slugs for pushUrlState().
-     * Memoized per render cycle by #[Computed].
+     * Called by JS when browser URL changes (filter click or popstate).
      */
+    #[On('filter-changed')]
+    public function onFilterChanged(string $path): void
+    {
+        $prefix = '/catalog/'.$this->category->slug.'/';
+        $this->filtersPath = str_starts_with($path, $prefix)
+            ? substr($path, strlen($prefix))
+            : '';
+
+        $this->dispatch('filtersUpdated', filters: $this->activeFilters);
+    }
+
+    /** @return array{characteristics: array<int, int[]>, min_price: int|null, max_price: int|null} */
     #[Computed]
-    public function idToSlugMap(): array
+    public function activeFilters(): array
     {
-        $chars = $this->category->characteristics()
-            ->where('is_active', true)
-            ->with(['options:id,characteristic_id,slug'])
-            ->get(['characteristics.id', 'characteristics.slug']);
+        return app(FilterUrlService::class)->parseFilterPath($this->filtersPath, $this->slugMap);
+    }
 
-        $charSlugs = [];
-        $optSlugs = [];
+    /** @return array<string, array{char_id: int, is_range_type: bool, options: array<string, int>}> */
+    #[Computed]
+    public function slugMap(): array
+    {
+        return app(FilterUrlService::class)->buildSlugMap($this->category);
+    }
 
-        foreach ($chars as $char) {
-            $charSlugs[$char->id] = $char->slug;
-            foreach ($char->options as $opt) {
-                $optSlugs[$opt->id] = $opt->slug;
+    /** @return array{price: array{min: int, max: int}, characteristics: array<int, array<string, mixed>>} */
+    #[Computed]
+    public function facets(): array
+    {
+        $raw = app(FacetService::class)->getFacetsForCategory($this->category, $this->activeFilters);
+
+        return $this->enrichWithUrls($raw);
+    }
+
+    /** @return array<int, array{char_title: string, opt_title: string, remove_url: string}> */
+    #[Computed]
+    public function activeFilterTags(): array
+    {
+        $urlService = app(FilterUrlService::class);
+        $tags = [];
+
+        $active = $this->activeFilters;
+        $chars = $this->facets['characteristics'] ?? [];
+
+        foreach ($chars as $facet) {
+            $activeOptIds = (array) ($active['characteristics'][$facet['characteristic_id']] ?? []);
+            foreach ($facet['options'] as $opt) {
+                if (! in_array($opt['id'], $activeOptIds, true)) {
+                    continue;
+                }
+                $tags[] = [
+                    'char_title' => $facet['characteristic_title'],
+                    'opt_title' => $opt['title'],
+                    'remove_url' => $urlService->buildOptionUrl($this->basePath, $this->filtersPath, $facet['characteristic_slug'], $opt['slug']),
+                ];
             }
         }
 
-        return ['chars' => $charSlugs, 'opts' => $optSlugs];
-    }
-
-    public function toggleOption(int $characteristicId, int $optionId): void
-    {
-        $selected = $this->currentFilters['characteristics'][$characteristicId] ?? [];
-
-        if (in_array($optionId, $selected)) {
-            $selected = array_values(array_filter($selected, fn ($id) => $id !== $optionId));
-        } else {
-            $selected[] = $optionId;
+        if ($active['min_price'] || $active['max_price']) {
+            $tags[] = [
+                'char_title' => __t('Ціна'),
+                'opt_title' => ($active['min_price'] ?? '?').' – '.($active['max_price'] ?? '?'),
+                'remove_url' => $urlService->buildRangeUrl($this->basePath, $this->filtersPath, 'price', null, null),
+            ];
         }
 
-        if (empty($selected)) {
-            unset($this->currentFilters['characteristics'][$characteristicId]);
-        } else {
-            $this->currentFilters['characteristics'][$characteristicId] = $selected;
-        }
-
-        $this->dispatchFilters();
-        $this->pushUrlState();
-    }
-
-    public function updated(string $property): void
-    {
-        if (str_starts_with($property, 'currentFilters.min_price') || str_starts_with($property, 'currentFilters.max_price')) {
-            $this->dispatchFilters();
-            $this->pushUrlState();
-        }
-    }
-
-    public function toggleFacet(int $characteristicId): void
-    {
-        if (in_array($characteristicId, $this->expandedFacets)) {
-            $this->expandedFacets = array_values(array_filter($this->expandedFacets, fn ($id) => $id !== $characteristicId));
-        } else {
-            $this->expandedFacets[] = $characteristicId;
-        }
-    }
-
-    public function clearFilters(): void
-    {
-        $this->currentFilters = ['characteristics' => [], 'min_price' => null, 'max_price' => null];
-        $this->dispatchFilters();
-        $this->pushUrlState();
-    }
-
-    private function dispatchFilters(): void
-    {
-        $this->dispatch('filtersUpdated', filters: $this->currentFilters);
-    }
-
-    private function pushUrlState(): void
-    {
-        $slugMap = $this->idToSlugMap;
-        $params = [];
-
-        foreach ($this->currentFilters['characteristics'] as $charId => $optIds) {
-            $charSlug = $slugMap['chars'][$charId] ?? null;
-            if (!$charSlug || empty($optIds)) {
-                continue;
-            }
-            $optSlugs = array_filter(array_map(fn ($id) => $slugMap['opts'][$id] ?? null, $optIds));
-            if ($optSlugs) {
-                $params[$charSlug] = implode(',', array_values($optSlugs));
-            }
-        }
-
-        if ($this->currentFilters['min_price']) {
-            $params['min_price'] = $this->currentFilters['min_price'];
-        }
-        if ($this->currentFilters['max_price']) {
-            $params['max_price'] = $this->currentFilters['max_price'];
-        }
-
-        $this->dispatch('updateFilterUrl', params: $params);
+        return $tags;
     }
 
     public function render(): View
     {
         return view('livewire.catalog.facets');
+    }
+
+    /**
+     * Enrich raw facets with toggle_url and seo_url per option.
+     *
+     * @param  array{price: array{min: int, max: int}, characteristics: array<int, array<string, mixed>>}  $raw
+     * @return array{price: array{min: int, max: int}, characteristics: array<int, array<string, mixed>>, clear_url: string}
+     */
+    private function enrichWithUrls(array $raw): array
+    {
+        $urlService = app(FilterUrlService::class);
+
+        foreach ($raw['characteristics'] as &$facet) {
+            foreach ($facet['options'] as &$option) {
+                $toggleUrl = $urlService->buildOptionUrl(
+                    $this->basePath,
+                    $this->filtersPath,
+                    $facet['characteristic_slug'],
+                    $option['slug']
+                );
+                $option['toggle_url'] = $toggleUrl;
+                $option['seo_url'] = $toggleUrl;
+            }
+            unset($option);
+
+            if ($facet['is_range_type']) {
+                $active = $this->activeFilters;
+                $rangeData = $active['characteristics'][$facet['characteristic_id']] ?? null;
+                $facet['range_current_min'] = is_array($rangeData) && isset($rangeData['min']) ? $rangeData['min'] : null;
+                $facet['range_current_max'] = is_array($rangeData) && isset($rangeData['max']) ? $rangeData['max'] : null;
+                $facet['range_url_base'] = $this->basePath;
+                $facet['range_filters_path'] = $this->filtersPath;
+            }
+        }
+        unset($facet);
+
+        $raw['clear_url'] = $urlService->buildClearUrl($this->basePath);
+        $raw['price']['current_min'] = $this->activeFilters['min_price'];
+        $raw['price']['current_max'] = $this->activeFilters['max_price'];
+
+        return $raw;
     }
 }

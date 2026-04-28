@@ -1,34 +1,137 @@
 /**
- * Catalog filter URL manager.
- * Listens for Livewire's updateFilterUrl event and pushes SEO-friendly slug-based
- * query params to browser history without page reload.
- * On popstate (Back/Forward), reloads so server re-resolves filter state from URL.
+ * CatalogFilter — SEO path-based filter manager.
+ *
+ * Responsibilities:
+ *  - Intercept clicks on .js-filter-link (SEO anchor → reads paired input's data-url)
+ *  - Intercept changes on .js-filter-input (direct checkbox interaction)
+ *  - Both actions: history.pushState(newPath) + Livewire.dispatch('filter-changed')
+ *  - Initialize .js-range-slider elements via CatalogRangeSlider
+ *  - Handle popstate (browser back/forward) → re-dispatch filter-changed
+ *  - Re-initialize on wire:navigate (livewire:navigated event)
+ *
+ * No logic in HTML attributes — configured entirely via data-* and CSS classes.
  */
-document.addEventListener('livewire:init', () => {
-    Livewire.on('updateFilterUrl', ({ params }) => {
-        const url = new URL(window.location);
+class CatalogFilter {
+    /** @param {string} rootSelector - CSS selector for the filter sidebar root */
+    constructor(rootSelector = '.lw-catalog-facets') {
+        this.root = rootSelector;
+        this._sliders = [];
+        this._offClick = null;
+        this._offChange = null;
+        this._offPopstate = null;
+    }
 
-        // Strip all existing filter params (everything except page/system params)
-        const systemParams = new Set(['page']);
-        [...url.searchParams.keys()].forEach((key) => {
-            if (!systemParams.has(key)) {
-                url.searchParams.delete(key);
+    init() {
+        if (!document.querySelector(this.root)) { return; }
+
+        this._destroy();
+        this._bindFilterLink();
+        this._bindFilterInput();
+        this._bindPopstate();
+        this._initRangeSliders();
+    }
+
+    _destroy() {
+        if (this._offClick)    { document.removeEventListener('click', this._offClick); }
+        if (this._offChange)   { document.removeEventListener('change', this._offChange); }
+        if (this._offPopstate) { window.removeEventListener('popstate', this._offPopstate); }
+        this._sliders = [];
+    }
+
+    _bindFilterLink() {
+        this._offClick = (e) => {
+            const link = e.target.closest('.js-filter-link');
+            if (!link) { return; }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            const inputId = link.dataset.inputId;
+            if (!inputId) {
+                // Direct link: active filter tag, clear-all — navigate to href
+                const href = link.getAttribute('href');
+                if (href) { this._navigate(href); }
+                return;
             }
+
+            const input = document.getElementById(inputId);
+            if (input && !input.disabled) {
+                this._navigate(input.dataset.url || link.getAttribute('href'));
+            }
+        };
+
+        document.addEventListener('click', this._offClick);
+    }
+
+    _bindFilterInput() {
+        this._offChange = (e) => {
+            const input = e.target.closest('.js-filter-input');
+            if (!input || input.disabled) { return; }
+
+            const url = input.dataset.url;
+            if (url) { this._navigate(url); }
+        };
+
+        document.addEventListener('change', this._offChange);
+    }
+
+    _bindPopstate() {
+        this._offPopstate = () => {
+            if (typeof Livewire !== 'undefined') {
+                Livewire.dispatch('filter-changed', { path: window.location.pathname });
+            }
+        };
+
+        window.addEventListener('popstate', this._offPopstate);
+    }
+
+    _initRangeSliders() {
+        document.querySelectorAll('.js-range-slider').forEach((el) => {
+            const slider = new CatalogRangeSlider(el);
+            this._sliders.push(slider);
         });
 
-        // Reset pagination on filter change
-        url.searchParams.delete('page');
+        // Redraw range slider values after Livewire morph
+        if (typeof Livewire !== 'undefined') {
+            Livewire.hook('morph.updated', ({ el }) => {
+                if (el.classList && el.classList.contains('js-range-slider')) {
+                    const match = this._sliders.find((s) => s.container === el);
+                    if (match) { match.redraw(); }
+                }
+            });
+        }
+    }
 
-        // Apply new filter params
-        Object.entries(params).forEach(([key, value]) => {
-            url.searchParams.set(key, String(value));
-        });
+    /** Push new URL and dispatch Livewire filter-changed event. */
+    _navigate(url) {
+        if (!url || url === '#') { return; }
 
-        history.pushState({ filterParams: params }, '', url.toString());
-    });
+        try {
+            const parsed = new URL(url, window.location.origin);
+            const finalUrl = parsed.pathname + (parsed.search || '');
+            history.pushState({}, '', finalUrl);
 
-    // Full reload on Back/Forward so server re-resolves filter state from URL
-    window.addEventListener('popstate', () => {
-        window.location.reload();
-    });
+            if (typeof Livewire !== 'undefined') {
+                Livewire.dispatch('filter-changed', { path: parsed.pathname });
+            }
+        } catch {
+            history.pushState({}, '', url);
+            if (typeof Livewire !== 'undefined') {
+                Livewire.dispatch('filter-changed', { path: url.split('?')[0] });
+            }
+        }
+    }
+}
+
+// ─── Bootstrap ───────────────────────────────────────────────────────────────
+
+const catalogFilter = new CatalogFilter('.lw-catalog-facets');
+
+document.addEventListener('livewire:init', () => {
+    catalogFilter.init();
+});
+
+// Re-init after wire:navigate page transitions
+document.addEventListener('livewire:navigated', () => {
+    catalogFilter.init();
 });

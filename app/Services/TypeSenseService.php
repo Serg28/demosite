@@ -101,21 +101,33 @@ class TypeSenseService
         return $builder;
     }
 
+    /**
+     * AND between groups, AND within each group.
+     * Each selected option requires a separate subquery — the product must have ALL options.
+     */
     private function getProductIdsByCharacteristics(array $characteristics): Collection
     {
         $query = Product::query()->select('id');
 
-        foreach ($characteristics as $optionIds) {
-            $optionIds = array_values(array_filter((array) $optionIds));
+        foreach ($characteristics as $groupValue) {
+            // Range-type group — skip (handled separately via price-like filters in the future)
+            if (is_array($groupValue) && isset($groupValue['type'])) {
+                continue;
+            }
+
+            $optionIds = array_values(array_filter((array) $groupValue));
             if (empty($optionIds)) {
                 continue;
             }
 
-            $query->whereIn('id', function ($q) use ($optionIds) {
-                $q->select('product_id')
-                    ->from('product_characteristic_options')
-                    ->whereIn('characteristic_option_id', $optionIds);
-            });
+            // AND within group: each option is its own subquery
+            foreach ($optionIds as $optionId) {
+                $query->whereIn('id', function ($q) use ($optionId) {
+                    $q->select('product_id')
+                        ->from('product_characteristic_options')
+                        ->where('characteristic_option_id', (int) $optionId);
+                });
+            }
         }
 
         return $query->pluck('id');

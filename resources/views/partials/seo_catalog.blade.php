@@ -1,21 +1,40 @@
-{{-- SEO, OG, canonical, noindex, hreflang --}}
-{{-- Variables: $page (model with HasSeo), $seoTitle, $seoDescription, $seoImage --}}
+{{-- SEO for catalog pages --}}
+{{-- Variables: $page (Category with HasSeo), $count (int, total products), $seoTitle, $seoDescription --}}
 {{-- $languages injected by SeoComposer --}}
 @php
+    $isStaging     = config('app.domain') !== request()->getHost();
+    $filtersPath   = request()->route('filters', '');
+    $isFilterPage  = str_contains((string) $filtersPath, '=');
+    $hasNoProducts = empty($count);
+
     if (isset($page) && $page) {
         $seoTitle       = $page->getSeoTitle();
         $seoDescription = $page->getSeoDescription();
         $seoImage       = $page->getSeoPicture();
+        $adminNoindex   = $page->getSeoNoindex();
+        $adminNofollow  = $page->getSeoNofollow();
+        // Canonical always points to the clean category URL (no filter path)
         $canonicalUrl   = $page->getSeoCanonical();
-        $robotsTag      = $page->getRobotsMetaTag();
-        $isStaging      = config('app.domain') !== request()->getHost();
     } else {
         $seoTitle       = $seoTitle ?? config('app.name');
         $seoDescription = $seoDescription ?? '';
-        $seoImage       = $seoImage ?? '';
+        $seoImage       = '';
+        $adminNoindex   = false;
+        $adminNofollow  = false;
         $canonicalUrl   = url()->current();
-        $robotsTag      = null;
-        $isStaging      = config('app.domain') !== request()->getHost();
+    }
+
+    // Robots logic (priority: staging > no-products > filter-page > admin-flag)
+    if ($isStaging) {
+        $robotsTag = 'noindex, nofollow';
+    } elseif ($hasNoProducts || $isFilterPage) {
+        $robotsTag = 'noindex, follow';
+    } elseif ($adminNoindex) {
+        $noindex   = $adminNoindex ? 'noindex' : 'index';
+        $nofollow  = $adminNofollow ? 'nofollow' : 'follow';
+        $robotsTag = $noindex . ', ' . $nofollow;
+    } else {
+        $robotsTag = null;
     }
 @endphp
 
@@ -32,9 +51,7 @@
     <meta property="og:image:height" content="314">
 @endif
 
-@if($isStaging)
-    <meta name="robots" content="noindex, nofollow">
-@elseif($robotsTag)
+@if($robotsTag)
     <meta name="robots" content="{{ $robotsTag }}">
 @endif
 
