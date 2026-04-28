@@ -1,9 +1,12 @@
+@props(['title' => config('app.name'), 'description' => ''])
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{{ $title ?? config('app.name') }}</title>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        @include('partials.seo', ['seoTitle' => $title ?? config('app.name'), 'seoDescription' => $description ?? ''])
+        @include('partials.analytics')
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet">
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -50,6 +53,7 @@
         </footer>
 
         @livewireScripts
+        @include('partials.analytics-body')
         <notifications-popup styles-path="/css/notifications.css"></notifications-popup>
     </body>
 </html>

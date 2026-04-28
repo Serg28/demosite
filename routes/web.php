@@ -10,7 +10,15 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::get('/catalog/{category}', [CatalogController::class, 'show'])->name('catalog.show');
+// Каталог: category slug + wildcard filter-сегменти (Phase 3.7)
+Route::get('/catalog/{category}/{filters?}', [CatalogController::class, 'show'])
+    ->where(['category' => '[^/]+', 'filters' => '.*'])
+    ->name('catalog.show');
+
+// Товар: /product/{slug} (Phase 5 — ProductController буде додано)
+// Route::get('/product/{product:slug}', [ProductController::class, 'show'])->name('product.show');
+// Fallback одноуровневий /{slug} — для клієнтів без сегментів (СТАВИТИ ОСТАННІМ)
+// Route::get('/{slug}', [CatalogController::class, 'routeSlug'])->where('slug', '[^/]+')->name('slug.route');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

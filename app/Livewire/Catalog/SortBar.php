@@ -21,13 +21,13 @@ class SortBar extends Component
         $this->sortBy = $sortBy;
         $this->sortDir = $sortDir;
 
-        $this->dispatch('sort-changed', sortBy: $sortBy, sortDir: $sortDir);
+        $this->dispatch('sortUpdated', sortBy: $sortBy, sortDir: $sortDir);
     }
 
     public function toggleDirection(): void
     {
         $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
-        $this->dispatch('sort-changed', sortBy: $this->sortBy, sortDir: $this->sortDir);
+        $this->dispatch('sortUpdated', sortBy: $this->sortBy, sortDir: $this->sortDir);
     }
 
     public function render()

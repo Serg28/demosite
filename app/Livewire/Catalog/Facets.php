@@ -20,9 +20,13 @@ class Facets extends Component
 
     public array $expandedFacets = [];
 
-    public function mount(Category $category): void
+    public function mount(Category $category, array $initialFilters = []): void
     {
         $this->category = $category;
+
+        if (!empty($initialFilters)) {
+            $this->currentFilters = $initialFilters;
+        }
     }
 
     #[Computed]
@@ -35,6 +39,31 @@ class Facets extends Component
         );
     }
 
+    /**
+     * Maps characteristic/option IDs to URL slugs for pushUrlState().
+     * Memoized per render cycle by #[Computed].
+     */
+    #[Computed]
+    public function idToSlugMap(): array
+    {
+        $chars = $this->category->characteristics()
+            ->where('is_active', true)
+            ->with(['options:id,characteristic_id,slug'])
+            ->get(['characteristics.id', 'characteristics.slug']);
+
+        $charSlugs = [];
+        $optSlugs = [];
+
+        foreach ($chars as $char) {
+            $charSlugs[$char->id] = $char->slug;
+            foreach ($char->options as $opt) {
+                $optSlugs[$opt->id] = $opt->slug;
+            }
+        }
+
+        return ['chars' => $charSlugs, 'opts' => $optSlugs];
+    }
+
     public function toggleOption(int $characteristicId, int $optionId): void
     {
         $selected = $this->currentFilters['characteristics'][$characteristicId] ?? [];
@@ -45,14 +74,21 @@ class Facets extends Component
             $selected[] = $optionId;
         }
 
-        $this->currentFilters['characteristics'][$characteristicId] = $selected;
+        if (empty($selected)) {
+            unset($this->currentFilters['characteristics'][$characteristicId]);
+        } else {
+            $this->currentFilters['characteristics'][$characteristicId] = $selected;
+        }
+
         $this->dispatchFilters();
+        $this->pushUrlState();
     }
 
     public function updated(string $property): void
     {
         if (str_starts_with($property, 'currentFilters.min_price') || str_starts_with($property, 'currentFilters.max_price')) {
             $this->dispatchFilters();
+            $this->pushUrlState();
         }
     }
 
@@ -69,11 +105,38 @@ class Facets extends Component
     {
         $this->currentFilters = ['characteristics' => [], 'min_price' => null, 'max_price' => null];
         $this->dispatchFilters();
+        $this->pushUrlState();
     }
 
     private function dispatchFilters(): void
     {
         $this->dispatch('filtersUpdated', filters: $this->currentFilters);
+    }
+
+    private function pushUrlState(): void
+    {
+        $slugMap = $this->idToSlugMap;
+        $params = [];
+
+        foreach ($this->currentFilters['characteristics'] as $charId => $optIds) {
+            $charSlug = $slugMap['chars'][$charId] ?? null;
+            if (!$charSlug || empty($optIds)) {
+                continue;
+            }
+            $optSlugs = array_filter(array_map(fn ($id) => $slugMap['opts'][$id] ?? null, $optIds));
+            if ($optSlugs) {
+                $params[$charSlug] = implode(',', array_values($optSlugs));
+            }
+        }
+
+        if ($this->currentFilters['min_price']) {
+            $params['min_price'] = $this->currentFilters['min_price'];
+        }
+        if ($this->currentFilters['max_price']) {
+            $params['max_price'] = $this->currentFilters['max_price'];
+        }
+
+        $this->dispatch('updateFilterUrl', params: $params);
     }
 
     public function render(): View

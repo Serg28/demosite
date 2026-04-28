@@ -76,13 +76,21 @@ window.catalogProductList = function (el) {
 
         getTitle(product) {
             if (product.title && typeof product.title === 'object') {
-                return product.title.ua || product.title.ru || '';
+                const locales = cfg.titleLocales || ['ua', 'ru', 'en'];
+                for (const locale of locales) {
+                    if (product.title[locale]) {
+                        return product.title[locale];
+                    }
+                }
+                return '';
             }
             return product.title || '';
         },
 
         formatPrice(price) {
-            return new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 0 }).format(price) + ' грн';
+            const locale = cfg.jsLocale || 'uk-UA';
+            const currency = cfg.currency || 'грн';
+            return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(price) + ' ' + currency;
         },
     };
 };

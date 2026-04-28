@@ -75,10 +75,10 @@ class FacetService
 
                 return [
                     'characteristic_id' => $characteristicId,
-                    'characteristic_title' => $characteristic->title['ua'] ?? $characteristic->title['ru'] ?? '',
+                    'characteristic_title' => $characteristic->t('title'),
                     'options' => $items->map(fn ($opt) => [
                         'id' => $opt->id,
-                        'title' => $opt->title['ua'] ?? $opt->title['ru'] ?? '',
+                        'title' => $opt->t('title'),
                         'slug' => $opt->slug,
                         'count' => $this->getOptionCountInCategory($category->id, $characteristicId, $opt->id, $currentFilters),
                     ])->values()->toArray(),
@@ -146,11 +146,12 @@ class FacetService
                     return [
                         'facet_id' => 'characteristic_'.$char->id,
                         'characteristic_id' => $char->id,
-                        'characteristic_title' => $char->title['ua'] ?? $char->title['ru'] ?? '',
+                        'characteristic_slug' => $char->slug,
+                        'characteristic_title' => $char->t('title'),
                         'is_range_type' => $char->is_range_type ?? false,
                         'options' => $items->map(fn ($opt) => [
                             'id' => $opt->id,
-                            'title' => $opt->title['ua'] ?? $opt->title['ru'] ?? '',
+                            'title' => $opt->t('title'),
                             'slug' => $opt->slug,
                             'count' => $this->getOptionCountInCategory($category->id, $char->id, $opt->id, $currentFilters),
                         ])->toArray(),

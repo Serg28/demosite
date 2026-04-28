@@ -5,7 +5,7 @@ import './components/notification';
 import './components/tooltip';
 import './components/lazy-image';
 
-// Catalog
-import './catalog/product-list';
+// Catalog filter URL manager
+import './catalog/filter';
 
 // Alpine.js & Livewire are included by Livewire
