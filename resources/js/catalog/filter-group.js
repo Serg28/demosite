@@ -14,9 +14,11 @@ document.addEventListener('alpine:init', () => {
             search: '',
             showAll: false,
             limit: 8,
+            total: 0,
 
             init() {
                 this.limit = parseInt(this.$el.dataset.limit ?? 8, 10);
+                this.total = parseInt(this.$el.dataset.total ?? 0, 10);
             },
 
             /**
@@ -39,8 +41,7 @@ document.addEventListener('alpine:init', () => {
             },
 
             get hasMore() {
-                const total = this.$el.querySelectorAll('.js-filter-option').length;
-                return !this.showAll && total > this.limit && !this.search;
+                return !this.showAll && this.total > this.limit && !this.search;
             },
         };
     });

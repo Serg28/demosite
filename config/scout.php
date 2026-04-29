@@ -165,7 +165,8 @@ return [
                     'default_sorting_field' => 'priority',
                 ],
                 'search-parameters' => [
-                    'query_by' => 'title,description',
+                    'query_by'   => 'title,description',
+                    'limit_hits' => 10000,
                 ],
             ],
         ],

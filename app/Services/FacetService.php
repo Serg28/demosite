@@ -193,7 +193,7 @@ class FacetService
     }
 
     /**
-     * Sort options: active first → numeric values → alphabetical.
+     * Sort options: numeric values first → alphabetical.
      * Extracts the first number from text (e.g. "до 15 л" → 15, "500 мл" → 500).
      *
      * @param  array<int, array<string, mixed>>  $options
@@ -202,8 +202,7 @@ class FacetService
     private function sortOptions(array $options): array
     {
         usort($options, function (array $a, array $b) {
-            // Active (selected) options always on top
-            if ($a['is_active'] !== $b['is_active']) {
+            if (config('catalog.facets.sort_active_first') && $a['is_active'] !== $b['is_active']) {
                 return $a['is_active'] ? -1 : 1;
             }
 

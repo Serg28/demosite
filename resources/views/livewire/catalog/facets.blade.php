@@ -98,7 +98,8 @@
             <div class="facet-group mb-6 pb-6 border-b"
                  wire:key="facet-{{ $facet['characteristic_id'] }}"
                  x-data="filterGroup"
-                 data-limit="8">
+                 data-limit="8"
+                 data-total="{{ count($facet['options']) }}">
 
                 <h3 class="font-semibold mb-3">{{ $facet['characteristic_title'] }}</h3>
 
