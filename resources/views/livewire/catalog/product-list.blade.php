@@ -1,25 +1,13 @@
-@php
-    $result      = $this->products;
-    $items       = $result['products'] ?? [];
-    $total       = $result['total'] ?? 0;
-    $currentPage = $result['current_page'] ?? 1;
-    $lastPage    = $result['last_page'] ?? 1;
-    $hasMore     = $result['has_more'] ?? false;
-@endphp
+@php $paginator = $this->products; @endphp
 
 <div>
-    {{-- Result count --}}
     <div class="mb-4 text-sm text-gray-500">
-        <p>{{ __t('Показано') }} {{ count($items) }} {{ __t('з') }} {{ number_format($total) }} {{ __t('товарів') }}</p>
+        <p>{{ __t('Показано') }} {{ $paginator->count() }} {{ __t('з') }} {{ number_format($paginator->total()) }} {{ __t('товарів') }}</p>
     </div>
 
-    {{-- Grid with filter/sort overlay --}}
     <div class="relative">
-        <div
-            wire:loading
-            wire:target="applyFilters,applySort,setPage"
-            class="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-white/60"
-        >
+        <div wire:loading wire:target="applyFilters"
+             class="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-white/60">
             <div class="flex items-center gap-3 rounded-full bg-white px-5 py-2.5 shadow-md">
                 <svg class="h-5 w-5 animate-spin text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -29,24 +17,19 @@
             </div>
         </div>
 
-        <div
-            wire:loading.class="opacity-40 pointer-events-none"
-            wire:target="applyFilters,applySort,setPage"
-            class="transition-opacity duration-200"
-        >
-            @if(count($items) > 0)
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    @foreach($items as $product)
+        <div wire:loading.class="opacity-40 pointer-events-none" wire:target="applyFilters"
+             class="transition-opacity duration-200">
+            @if($paginator->isNotEmpty())
+                <div id="js-product-grid"
+                     class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                     data-catalog-url="{{ $this->category->getUrl() }}"
+                     data-api-url="{{ geturl('/api/v1/catalog/' . $this->category->slug . '/products-html') }}">
+                    @foreach($paginator as $product)
                         @include('partials.catalog.product-card', compact('product'))
                     @endforeach
                 </div>
 
-                <x-catalog.pagination
-                    :current="$currentPage"
-                    :last="$lastPage"
-                    :has-more="$hasMore"
-                />
-
+                {{ $paginator->links('catalog.pagination') }}
             @else
                 <div class="py-16 text-center">
                     <svg class="mx-auto mb-4 h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,7 +39,6 @@
                     <p class="mt-1 text-sm text-gray-400">{{ __t('Спробуй змінити фільтри') }}</p>
                 </div>
             @endif
-
         </div>
     </div>
 </div>

@@ -21,10 +21,13 @@
 
             <!-- Main: Sort + Products -->
             <main class="flex-1 min-w-0">
-                <livewire:catalog.sort-bar />
+                <livewire:catalog.sort-bar :sortBy="$sortBy" :sortDir="$sortDir" />
                 <livewire:catalog.product-list
                     :category="$category"
                     :initialFilters="$initialFilters"
+                    :sortBy="$sortBy"
+                    :sortDir="$sortDir"
+                    :initialPage="$initialPage"
                 />
             </main>
         </div>

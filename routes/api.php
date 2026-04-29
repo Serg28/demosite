@@ -9,4 +9,5 @@ Route::prefix('v1')->group(function () {
     Route::get('/catalog/options/{characteristicId}/search', [CatalogController::class, 'searchOptions']);
     Route::get('/catalog/options/{characteristicId}/range-stats', [CatalogController::class, 'getRangeStats']);
     Route::get('/catalog/products', [CatalogController::class, 'getProducts']);
+    Route::get('/catalog/{category:slug}/products-html', [CatalogController::class, 'getProductsHtml']);
 });

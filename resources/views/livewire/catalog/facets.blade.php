@@ -99,7 +99,9 @@
                  wire:key="facet-{{ $facet['characteristic_id'] }}"
                  x-data="filterGroup"
                  data-limit="8"
-                 data-total="{{ count($facet['options']) }}">
+                 data-total="{{ count($facet['options']) }}"
+                 data-label-show="{{ __t('Показати всі') }}"
+                 data-label-collapse="{{ __t('Згорнути') }}">
 
                 <h3 class="font-semibold mb-3">{{ $facet['characteristic_title'] }}</h3>
 
@@ -139,14 +141,14 @@
                     @endforeach
                 </div>
 
-                {{-- Show all button — hidden without JS --}}
+                {{-- Toggle button — hidden without JS --}}
                 @if(count($facet['options']) > 8)
                     <button
                         x-cloak
-                        x-show="hasMore"
-                        @click="showAll = true"
+                        x-show="total > limit"
+                        @click="showAll = !showAll"
+                        x-text="toggleLabel"
                         class="mt-2 text-sm text-blue-600 hover:underline">
-                        {{ __t('Показати всі') }} ({{ count($facet['options']) }})
                     </button>
                 @endif
             </div>

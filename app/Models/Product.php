@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\SlugUrlFieldTrait;
 use App\Models\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Laravel\Scout\Searchable;
 
 class Product extends Model
 {
-    use HasFactory, HasTranslations, Searchable;
+    use HasFactory, SlugUrlFieldTrait, HasTranslations, Searchable;
 
     protected $fillable = [
         'title',
@@ -28,6 +29,9 @@ class Product extends Model
         'is_active',
         'category_id',
         'slug',
+        'ua_url',
+        'ru_url',
+        'en_url',
         'priority',
     ];
 
@@ -98,5 +102,10 @@ class Product extends Model
     public function shouldBeSearchable(): bool
     {
         return $this->is_active;
+    }
+
+    public function getUrl(string $locale = ''): string
+    {
+        return geturl('/product/' . $this->getUrlOrSlug($locale), $locale ?: null);
     }
 }

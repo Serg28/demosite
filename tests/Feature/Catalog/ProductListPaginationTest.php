@@ -22,7 +22,6 @@ class ProductListPaginationTest extends TestCase
 
         $this->category = Category::factory()->create();
 
-        // Stub TypeSenseService so tests don't need a running TypeSense instance
         $this->mock(TypeSenseService::class, function ($mock) {
             $mock->shouldReceive('search')
                 ->andReturnUsing(function (string $query, array $filters, int $page, int $pageSize) {
@@ -44,7 +43,7 @@ class ProductListPaginationTest extends TestCase
     {
         Livewire::test(ProductList::class, ['category' => $this->category])
             ->assertStatus(200)
-            ->assertSeeHtml('product-list');
+            ->assertSeeHtml('js-product-grid');
     }
 
     public function test_starts_on_page_one(): void
@@ -54,24 +53,28 @@ class ProductListPaginationTest extends TestCase
         $this->assertSame(1, $component->get('page'));
     }
 
-    public function test_set_page_changes_current_page(): void
+    public function test_initial_page_set_via_mount(): void
     {
-        Livewire::test(ProductList::class, ['category' => $this->category])
-            ->call('setPage', 3)
-            ->assertSet('page', 3);
+        Livewire::test(ProductList::class, [
+            'category'    => $this->category,
+            'initialPage' => 3,
+        ])->assertSet('page', 3);
     }
 
-    public function test_set_page_dispatches_product_list_reset(): void
+    public function test_initial_page_minimum_is_one(): void
     {
-        Livewire::test(ProductList::class, ['category' => $this->category])
-            ->call('setPage', 2)
-            ->assertDispatched('product-list-reset');
+        Livewire::test(ProductList::class, [
+            'category'    => $this->category,
+            'initialPage' => -5,
+        ])->assertSet('page', 1);
     }
 
     public function test_filters_updated_resets_to_page_one(): void
     {
-        Livewire::test(ProductList::class, ['category' => $this->category])
-            ->call('setPage', 3)
+        Livewire::test(ProductList::class, [
+            'category'    => $this->category,
+            'initialPage' => 3,
+        ])
             ->assertSet('page', 3)
             ->dispatch('filtersUpdated', filters: ['min_price' => 100])
             ->assertSet('page', 1);
@@ -84,41 +87,31 @@ class ProductListPaginationTest extends TestCase
             ->assertDispatched('product-list-reset');
     }
 
-    public function test_sort_updated_resets_to_page_one(): void
+    public function test_sort_mount_sets_sort_params(): void
     {
-        Livewire::test(ProductList::class, ['category' => $this->category])
-            ->call('setPage', 4)
-            ->dispatch('sortUpdated', sortBy: 'price', sortDir: 'asc')
-            ->assertSet('page', 1);
-    }
-
-    public function test_sort_updated_changes_sort_params(): void
-    {
-        Livewire::test(ProductList::class, ['category' => $this->category])
-            ->dispatch('sortUpdated', sortBy: 'price', sortDir: 'asc')
+        Livewire::test(ProductList::class, [
+            'category' => $this->category,
+            'sortBy'   => 'price',
+            'sortDir'  => 'asc',
+        ])
             ->assertSet('sortBy', 'price')
             ->assertSet('sortDir', 'asc');
     }
 
-    public function test_page_cannot_go_below_one(): void
+    public function test_sort_mount_starts_on_page_one(): void
     {
-        Livewire::test(ProductList::class, ['category' => $this->category])
-            ->call('setPage', -5)
-            ->assertSet('page', 1);
+        Livewire::test(ProductList::class, [
+            'category' => $this->category,
+            'sortBy'   => 'price',
+            'sortDir'  => 'asc',
+        ])->assertSet('page', 1);
     }
 
-    public function test_reset_page_sets_page_to_one(): void
+    public function test_pagination_links_rendered_as_anchors(): void
     {
         Livewire::test(ProductList::class, ['category' => $this->category])
-            ->call('setPage', 3)
-            ->call('resetPage')
-            ->assertSet('page', 1);
-    }
-
-    public function test_pagination_numbers_visible_when_multiple_pages(): void
-    {
-        Livewire::test(ProductList::class, ['category' => $this->category])
-            ->assertSeeHtml('wire:click="setPage(');
+            ->assertSeeHtml('js-load-more')
+            ->assertSeeHtml('<a href=');
     }
 
     public function test_empty_state_shown_when_no_products(): void

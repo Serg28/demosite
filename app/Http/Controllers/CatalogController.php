@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ResolvesSort;
 use App\Models\Category;
 use App\Services\FilterUrlService;
 use App\Services\TypeSenseService;
@@ -10,12 +11,17 @@ use Illuminate\View\View;
 
 class CatalogController extends Controller
 {
+    use ResolvesSort;
+
     public function show(Category $category, Request $request, string $filters = ''): View
     {
         $urlService = app(FilterUrlService::class);
         $slugMap = $urlService->buildSlugMap($category);
         $initialFilters = $urlService->parseFilterPath($filters, $slugMap);
         $basePath = '/catalog/'.$category->slug;
+
+        [$sortBy, $sortDir] = $this->resolveSortParam($request->get('sort'));
+        $initialPage = max(1, (int) $request->get('page', 1));
 
         $count = app(TypeSenseService::class)->count(filters: [
             'category_ids' => [$category->id],
@@ -24,6 +30,6 @@ class CatalogController extends Controller
             'max_price' => $initialFilters['max_price'],
         ]);
 
-        return view('catalog.index', compact('category', 'initialFilters', 'basePath', 'filters', 'count'));
+        return view('catalog.index', compact('category', 'initialFilters', 'basePath', 'filters', 'count', 'sortBy', 'sortDir', 'initialPage'));
     }
 }

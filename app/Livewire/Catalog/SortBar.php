@@ -12,22 +12,28 @@ class SortBar extends Component
 
     public function mount(string $sortBy = 'priority', string $sortDir = 'desc'): void
     {
-        $this->sortBy = $sortBy;
+        $this->sortBy  = $sortBy;
         $this->sortDir = $sortDir;
     }
 
-    public function updateSort(string $sortBy, string $sortDir = 'desc'): void
+    /** @return array<int, array<string, mixed>> */
+    public function getSortOptionsProperty(): array
     {
-        $this->sortBy = $sortBy;
-        $this->sortDir = $sortDir;
+        return array_map(function (array $option) {
+            $params = request()->query();
+            if ($option['url_key']) {
+                $params['sort'] = $option['url_key'];
+            } else {
+                unset($params['sort']);
+            }
 
-        $this->dispatch('sortUpdated', sortBy: $sortBy, sortDir: $sortDir);
-    }
+            $query = $params ? '?' . http_build_query($params) : '';
 
-    public function toggleDirection(): void
-    {
-        $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
-        $this->dispatch('sortUpdated', sortBy: $this->sortBy, sortDir: $this->sortDir);
+            return array_merge($option, [
+                'url'       => url()->current() . $query,
+                'is_active' => $option['key'] === $this->sortBy && $option['dir'] === $this->sortDir,
+            ]);
+        }, config('catalog.sort_options', []));
     }
 
     public function render()

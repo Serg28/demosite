@@ -1,36 +1,13 @@
-<div class="sort-bar flex items-center justify-between mb-8 pb-4 border-b">
-    <div class="flex items-center gap-4">
-        <label class="text-sm font-medium">{{ __t('Сортування') }}:</label>
+<div class="sort-bar flex items-center gap-4 mb-8 pb-4 border-b">
+    <span class="text-sm font-medium">{{ __t('Сортування') }}:</span>
 
-        <select
-            wire:change="updateSort($event.target.value, '{{ $sortDir }}')"
-            class="px-3 py-2 border rounded-lg text-sm"
-        >
-            <option value="priority" {{ $sortBy === 'priority' ? 'selected' : '' }}>
-                {{ __t('По популярності') }}
-            </option>
-            <option value="price" {{ $sortBy === 'price' ? 'selected' : '' }}>
-                {{ __t('По ціні') }}
-            </option>
-            <option value="title" {{ $sortBy === 'title' ? 'selected' : '' }}>
-                {{ __t('По назві') }}
-            </option>
-            <option value="created_at" {{ $sortBy === 'created_at' ? 'selected' : '' }}>
-                {{ __t('Новинки') }}
-            </option>
-        </select>
-
-        <button
-            wire:click="toggleDirection()"
-            class="px-3 py-2 border rounded-lg text-sm font-medium hover:bg-gray-100"
-        >
-            {{ $sortDir === 'asc' ? '↑ ' . __t('Зростаючо') : '↓ ' . __t('Спадаючо') }}
-        </button>
-    </div>
-
-    <div class="text-sm text-gray-600">
-        <span wire:loading wire:target="updateSort,toggleDirection" class="text-blue-600">
-            {{ __t('Завантаження...') }}
-        </span>
-    </div>
+    @foreach($this->sortOptions as $option)
+        <a href="{{ $option['url'] }}"
+           class="text-sm px-3 py-1.5 rounded-lg border transition-colors
+               {{ $option['is_active']
+                   ? 'bg-blue-600 text-white border-blue-600'
+                   : 'border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600' }}">
+            {{ __t($option['label']) }}
+        </a>
+    @endforeach
 </div>

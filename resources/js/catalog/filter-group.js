@@ -15,10 +15,14 @@ document.addEventListener('alpine:init', () => {
             showAll: false,
             limit: 8,
             total: 0,
+            labelShow: '',
+            labelCollapse: '',
 
             init() {
-                this.limit = parseInt(this.$el.dataset.limit ?? 8, 10);
-                this.total = parseInt(this.$el.dataset.total ?? 0, 10);
+                this.limit         = parseInt(this.$el.dataset.limit ?? 8, 10);
+                this.total         = parseInt(this.$el.dataset.total ?? 0, 10);
+                this.labelShow     = this.$el.dataset.labelShow ?? 'Показати всі';
+                this.labelCollapse = this.$el.dataset.labelCollapse ?? 'Згорнути';
             },
 
             /**
@@ -40,8 +44,10 @@ document.addEventListener('alpine:init', () => {
                 return (this.showAll || index < this.limit) && matchesSearch;
             },
 
-            get hasMore() {
-                return !this.showAll && this.total > this.limit && !this.search;
+            get toggleLabel() {
+                return this.showAll
+                    ? this.labelCollapse
+                    : `${this.labelShow} (${this.total})`;
             },
         };
     });

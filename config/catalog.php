@@ -28,10 +28,10 @@ return [
     |
     */
     'sort_options' => [
-        ['key' => 'priority', 'dir' => 'desc', 'label' => 'За популярністю'],
-        ['key' => 'price',    'dir' => 'asc',  'label' => 'Дешевше'],
-        ['key' => 'price',    'dir' => 'desc', 'label' => 'Дорожче'],
-        ['key' => 'newest',   'dir' => 'desc', 'label' => 'Новинки'],
+        ['key' => 'priority', 'dir' => 'desc', 'url_key' => null,        'label' => 'За популярністю'],
+        ['key' => 'price',    'dir' => 'asc',  'url_key' => 'priceup',   'label' => 'Дешевше'],
+        ['key' => 'price',    'dir' => 'desc', 'url_key' => 'pricedown', 'label' => 'Дорожче'],
+        ['key' => 'newest',   'dir' => 'desc', 'url_key' => 'newest',    'label' => 'Новинки'],
     ],
 
     /*
