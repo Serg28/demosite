@@ -19,6 +19,14 @@ class Category extends Model
         return geturl('/catalog/' . $this->getUrlOrSlug($locale), $locale ?: null);
     }
 
+    /** Canonical fallback: explicit from DB or clean category URL (without filter segments). */
+    public function getSeoCanonical(): string
+    {
+        $value = $this->seo?->t('seo_canonical');
+
+        return strip_tags($value ?: $this->getUrl());
+    }
+
     protected $fillable = [
         'parent_id',
         'lft',

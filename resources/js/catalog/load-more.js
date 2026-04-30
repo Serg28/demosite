@@ -47,7 +47,7 @@ document.addEventListener('click', async (e) => {
         }
 
         if (paginationFragment) {
-            const paginationEl = document.getElementById('js-pagination');
+            const paginationEl = document.querySelector('[data-js-paginator]');
             if (paginationEl) {
                 paginationEl.outerHTML = paginationFragment.innerHTML;
             }

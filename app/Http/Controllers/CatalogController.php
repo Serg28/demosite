@@ -18,7 +18,7 @@ class CatalogController extends Controller
         $urlService = app(FilterUrlService::class);
         $slugMap = $urlService->buildSlugMap($category);
         $initialFilters = $urlService->parseFilterPath($filters, $slugMap);
-        $basePath = '/catalog/'.$category->slug;
+        $basePath = rtrim((string) parse_url($category->getUrl(), PHP_URL_PATH), '/');
 
         [$sortBy, $sortDir] = $this->resolveSortParam($request->get('sort'));
         $initialPage = max(1, (int) $request->get('page', 1));

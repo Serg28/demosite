@@ -20,4 +20,7 @@ import './catalog/filter';
 // Catalog: "Show more" — fetch HTML partial + replaceState
 import './catalog/load-more';
 
+// Catalog: numbered pagination — SPA intercept, no full reload
+import './catalog/pagination';
+
 // Alpine.js & Livewire are included by Livewire

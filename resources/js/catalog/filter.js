@@ -19,6 +19,7 @@ class CatalogFilter {
         this._offClick = null;
         this._offChange = null;
         this._offPopstate = null;
+        this._morphHookCleanup = null;
     }
 
     init() {
@@ -78,7 +79,9 @@ class CatalogFilter {
     _bindPopstate() {
         this._offPopstate = () => {
             if (typeof Livewire !== 'undefined') {
-                Livewire.dispatch('filter-changed', { path: window.location.pathname });
+                const url = new URL(location.href);
+                const page = parseInt(url.searchParams.get('page') || '1', 10);
+                Livewire.dispatch('filter-changed', { path: url.pathname, page });
             }
         };
 
@@ -91,13 +94,14 @@ class CatalogFilter {
             this._sliders.push(slider);
         });
 
-        // Redraw range slider values after Livewire morph
-        if (typeof Livewire !== 'undefined') {
-            Livewire.hook('morph.updated', ({ el }) => {
-                if (el.classList && el.classList.contains('js-range-slider')) {
-                    const match = this._sliders.find((s) => s.container === el);
-                    if (match) { match.redraw(); }
-                }
+        // Register once — survives _destroy() since _sliders is always current via `this`
+        if (typeof Livewire !== 'undefined' && !this._morphHookCleanup) {
+            this._morphHookCleanup = Livewire.hook('morph.updated', ({ el }) => {
+                this._sliders.forEach((s) => {
+                    if (s.container === el || el.contains(s.container)) {
+                        s.redraw();
+                    }
+                });
             });
         }
     }

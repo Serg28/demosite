@@ -1,4 +1,4 @@
-<div id="js-pagination">
+<div data-js-paginator>
 @if($paginator->hasPages())
     <div class="mt-10 space-y-6">
 

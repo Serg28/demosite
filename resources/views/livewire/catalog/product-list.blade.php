@@ -21,9 +21,10 @@
              class="transition-opacity duration-200">
             @if($paginator->isNotEmpty())
                 <div id="js-product-grid"
+                     data-js-product-grid
                      class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                      data-catalog-url="{{ $this->category->getUrl() }}"
-                     data-api-url="{{ geturl('/api/v1/catalog/' . $this->category->slug . '/products-html') }}">
+                     data-api-url="{{ route('api.v1.catalog.products-html', $this->category) }}">
                     @foreach($paginator as $product)
                         @include('partials.catalog.product-card', compact('product'))
                     @endforeach

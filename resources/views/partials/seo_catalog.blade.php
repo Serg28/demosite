@@ -13,7 +13,7 @@
         $seoImage       = $page->getSeoPicture();
         $adminNoindex   = $page->getSeoNoindex();
         $adminNofollow  = $page->getSeoNofollow();
-        // Canonical always points to the clean category URL (no filter path)
+        // Canonical: explicit from DB, or clean category URL (without filter segments)
         $canonicalUrl   = $page->getSeoCanonical();
     } else {
         $seoTitle       = $seoTitle ?? config('app.name');

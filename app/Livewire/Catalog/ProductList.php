@@ -46,11 +46,17 @@ class ProductList extends Component
     }
 
     #[On('filtersUpdated')]
-    public function applyFilters(array $filters): void
+    public function applyFilters(array $filters, int $page = 1): void
     {
         $this->filters = $filters;
-        $this->page    = 1;
+        $this->page    = max(1, $page);
         $this->dispatch('product-list-reset');
+    }
+
+    #[On('page-changed')]
+    public function setPage(int $page): void
+    {
+        $this->page = max(1, $page);
     }
 
     #[Computed]

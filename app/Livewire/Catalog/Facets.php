@@ -23,22 +23,24 @@ class Facets extends Component
     public function mount(Category $category, string $basePath = '', string $initialFiltersPath = '', array $initialFilters = []): void
     {
         $this->category = $category;
-        $this->basePath = $basePath ?: '/catalog/'.$category->slug;
+        $this->basePath = $basePath ?: rtrim((string) parse_url($category->getUrl(), PHP_URL_PATH), '/');
         $this->filtersPath = $initialFiltersPath;
     }
 
     /**
      * Called by JS when browser URL changes (filter click or popstate).
+     * $page is forwarded from popstate so filters + page are restored in one round-trip.
      */
     #[On('filter-changed')]
-    public function onFilterChanged(string $path): void
+    public function onFilterChanged(string $path, int $page = 1): void
     {
-        $prefix = '/catalog/'.$this->category->slug.'/';
+        $prefix = rtrim((string) parse_url($this->category->getUrl(), PHP_URL_PATH), '/').'/';
+
         $this->filtersPath = str_starts_with($path, $prefix)
             ? substr($path, strlen($prefix))
             : '';
 
-        $this->dispatch('filtersUpdated', filters: $this->activeFilters);
+        $this->dispatch('filtersUpdated', filters: $this->activeFilters, page: $page);
     }
 
     /** @return array{characteristics: array<int, int[]>, min_price: int|null, max_price: int|null} */
