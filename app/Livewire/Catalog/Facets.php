@@ -61,9 +61,7 @@ class Facets extends Component
     #[Computed]
     public function facets(): array
     {
-        $raw = app(FacetService::class)->getFacetsForCategory($this->category, $this->activeFilters);
-
-        return $this->enrichWithUrls($raw);
+        return app(FacetService::class)->getFacetsForCategory($this->category, $this->activeFilters);
     }
 
     /** @return array<int, array{char_title: string, opt_title: string, remove_url: string}> */
@@ -104,46 +102,5 @@ class Facets extends Component
     public function render(): View
     {
         return view('livewire.catalog.facets');
-    }
-
-    /**
-     * Enrich raw facets with toggle_url and seo_url per option.
-     *
-     * @param  array{price: array{min: int, max: int}, characteristics: array<int, array<string, mixed>>}  $raw
-     * @return array{price: array{min: int, max: int}, characteristics: array<int, array<string, mixed>>, clear_url: string}
-     */
-    private function enrichWithUrls(array $raw): array
-    {
-        $urlService = app(FilterUrlService::class);
-
-        foreach ($raw['characteristics'] as &$facet) {
-            foreach ($facet['options'] as &$option) {
-                $toggleUrl = $urlService->buildOptionUrl(
-                    $this->basePath,
-                    $this->filtersPath,
-                    $facet['characteristic_slug'],
-                    $option['slug']
-                );
-                $option['toggle_url'] = $toggleUrl;
-                $option['seo_url'] = $toggleUrl;
-            }
-            unset($option);
-
-            if ($facet['is_range_type']) {
-                $active = $this->activeFilters;
-                $rangeData = $active['characteristics'][$facet['characteristic_id']] ?? null;
-                $facet['range_current_min'] = is_array($rangeData) && isset($rangeData['min']) ? $rangeData['min'] : null;
-                $facet['range_current_max'] = is_array($rangeData) && isset($rangeData['max']) ? $rangeData['max'] : null;
-                $facet['range_url_base'] = $this->basePath;
-                $facet['range_filters_path'] = $this->filtersPath;
-            }
-        }
-        unset($facet);
-
-        $raw['clear_url'] = $urlService->buildClearUrl($this->basePath);
-        $raw['price']['current_min'] = $this->activeFilters['min_price'];
-        $raw['price']['current_max'] = $this->activeFilters['max_price'];
-
-        return $raw;
     }
 }

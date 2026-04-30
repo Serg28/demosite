@@ -1,4 +1,6 @@
-<div class="lw-catalog-facets" wire:key="facets-{{ $this->category->id }}">
+<div class="lw-catalog-facets"
+     wire:key="facets-{{ $this->category->id }}"
+     data-base-path="{{ $this->basePath }}">
 
     {{-- Active filter tags --}}
     @if(!empty($this->activeFilterTags))
@@ -10,7 +12,7 @@
                     <span aria-hidden="true">&times;</span>
                 </a>
             @endforeach
-            <a href="{{ $this->facets['clear_url'] }}"
+            <a href="{{ rtrim($this->basePath, '/') . '/' }}"
                class="js-filter-link text-xs text-red-500 hover:underline self-center">
                 {{ __t('Скинути все') }}
             </a>
@@ -22,8 +24,8 @@
         @php
             $priceMin = $this->facets['price']['min'];
             $priceMax = $this->facets['price']['max'];
-            $priceCurrentMin = $this->facets['price']['current_min'] ?? $priceMin;
-            $priceCurrentMax = $this->facets['price']['current_max'] ?? $priceMax;
+            $priceCurrentMin = $this->activeFilters['min_price'] ?? $priceMin;
+            $priceCurrentMax = $this->activeFilters['max_price'] ?? $priceMax;
         @endphp
         <div class="facet-group mb-6 pb-6 border-b" wire:key="facet-price">
             <h3 class="font-semibold mb-3">{{ __t('Ціна') }}</h3>
@@ -62,15 +64,16 @@
             @php
                 $rMin = $facet['range_min'] ?? 0;
                 $rMax = $facet['range_max'] ?? 100;
-                $rCurMin = $facet['range_current_min'] ?? $rMin;
-                $rCurMax = $facet['range_current_max'] ?? $rMax;
+                $rangeData = $this->activeFilters['characteristics'][$facet['characteristic_id']] ?? null;
+                $rCurMin = is_array($rangeData) && isset($rangeData['min']) ? $rangeData['min'] : $rMin;
+                $rCurMax = is_array($rangeData) && isset($rangeData['max']) ? $rangeData['max'] : $rMax;
             @endphp
             <div class="facet-group mb-6 pb-6 border-b" wire:key="facet-{{ $facet['characteristic_id'] }}">
                 <h3 class="font-semibold mb-3">{{ $facet['characteristic_title'] }}</h3>
                 <div class="js-range-slider"
                      data-char-slug="{{ $facet['characteristic_slug'] }}"
-                     data-base-path="{{ $facet['range_url_base'] }}"
-                     data-filters-path="{{ $facet['range_filters_path'] }}"
+                     data-base-path="{{ $this->basePath }}"
+                     data-filters-path="{{ $this->filtersPath }}"
                      data-min="{{ $rMin }}"
                      data-max="{{ $rMax }}"
                      data-current-min="{{ $rCurMin }}"
@@ -127,11 +130,12 @@
                             <input
                                 type="checkbox"
                                 id="opt-{{ $option['id'] }}"
-                                data-url="{{ $option['toggle_url'] }}"
+                                data-char-slug="{{ $facet['characteristic_slug'] }}"
+                                data-opt-slug="{{ $option['slug'] }}"
                                 class="js-filter-input w-4 h-4 rounded border-gray-300 text-blue-600 flex-shrink-0"
                                 @checked($option['is_active'])
                                 @disabled($option['is_disabled'])>
-                            <a href="{{ $option['seo_url'] }}"
+                            <a href="#"
                                class="js-filter-link flex-1 flex items-center justify-between text-sm"
                                data-input-id="opt-{{ $option['id'] }}">
                                 <span>{{ $option['title'] }}</span>

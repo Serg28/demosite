@@ -170,18 +170,20 @@ class FacetService
             $query->where('p.price', '<=', $maxPrice);
         }
 
-        // AND between groups, AND within group (each option = separate subquery)
+        // AND between groups, OR within group
         foreach ($otherCharFilters as $optIds) {
             if (is_array($optIds) && isset($optIds['type'])) {
                 continue; // range type — skip for now
             }
-            foreach ((array) $optIds as $optId) {
-                $query->whereIn('p.id', function ($q) use ($optId) {
-                    $q->select('product_id')
-                        ->from('product_characteristic_options')
-                        ->where('characteristic_option_id', (int) $optId);
-                });
+            $ids = array_values(array_filter((array) $optIds));
+            if (empty($ids)) {
+                continue;
             }
+            $query->whereIn('p.id', function ($q) use ($ids) {
+                $q->select('product_id')
+                    ->from('product_characteristic_options')
+                    ->whereIn('characteristic_option_id', $ids);
+            });
         }
 
         return $query

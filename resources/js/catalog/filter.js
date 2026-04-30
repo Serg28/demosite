@@ -2,14 +2,15 @@
  * CatalogFilter — SEO path-based filter manager.
  *
  * Responsibilities:
- *  - Intercept clicks on .js-filter-link (SEO anchor → reads paired input's data-url)
+ *  - Intercept clicks on .js-filter-link (SEO anchor → reads paired input's data-char-slug/data-opt-slug)
  *  - Intercept changes on .js-filter-input (direct checkbox interaction)
  *  - Both actions: history.pushState(newPath) + Livewire.dispatch('filter-changed')
  *  - Initialize .js-range-slider elements via CatalogRangeSlider
  *  - Handle popstate (browser back/forward) → re-dispatch filter-changed
  *  - Re-initialize on wire:navigate (livewire:navigated event)
  *
- * No logic in HTML attributes — configured entirely via data-* and CSS classes.
+ * URL building happens in JS from data-char-slug + data-opt-slug attributes,
+ * using basePath from [data-base-path] on the root element.
  */
 class CatalogFilter {
     /** @param {string} rootSelector - CSS selector for the filter sidebar root */
@@ -51,13 +52,14 @@ class CatalogFilter {
             if (!inputId) {
                 // Direct link: active filter tag, clear-all — navigate to href
                 const href = link.getAttribute('href');
-                if (href) { this._navigate(href); }
+                if (href && href !== '#') { this._navigate(href); }
                 return;
             }
 
             const input = document.getElementById(inputId);
             if (input && !input.disabled) {
-                this._navigate(input.dataset.url || link.getAttribute('href'));
+                const url = this._resolveInputUrl(input);
+                if (url) { this._navigate(url); }
             }
         };
 
@@ -69,7 +71,7 @@ class CatalogFilter {
             const input = e.target.closest('.js-filter-input');
             if (!input || input.disabled) { return; }
 
-            const url = input.dataset.url;
+            const url = this._resolveInputUrl(input);
             if (url) { this._navigate(url); }
         };
 
@@ -106,12 +108,72 @@ class CatalogFilter {
         }
     }
 
+    /**
+     * Resolve the toggle URL for a checkbox input.
+     * Prefers data-url (legacy), then builds from data-char-slug + data-opt-slug.
+     */
+    _resolveInputUrl(input) {
+        if (input.dataset.url) { return input.dataset.url; }
+
+        const charSlug = input.dataset.charSlug;
+        const optSlug  = input.dataset.optSlug;
+        if (!charSlug || !optSlug) { return null; }
+
+        return this._buildOptionUrl(charSlug, optSlug);
+    }
+
+    /**
+     * Build a toggle URL for a checkbox option.
+     * Reads basePath from [data-base-path] on the root element.
+     * Computes filtersPath from window.location.pathname by stripping basePath.
+     */
+    _buildOptionUrl(charSlug, optSlug) {
+        const root = document.querySelector(this.root);
+        const basePath = root ? (root.dataset.basePath || '') : '';
+        const prefix   = basePath.replace(/\/$/, '') + '/';
+        const pathname = window.location.pathname;
+
+        const filtersPath = pathname.startsWith(prefix)
+            ? pathname.slice(prefix.length)
+            : '';
+
+        const segments = {};
+        for (const seg of filtersPath.replace(/^\/|\/$/g, '').split('/').filter(Boolean)) {
+            const eqIdx = seg.indexOf('=');
+            if (eqIdx > 0) {
+                segments[seg.slice(0, eqIdx)] = seg.slice(eqIdx + 1);
+            }
+        }
+
+        if (segments[charSlug] !== undefined) {
+            const opts = segments[charSlug].split(',').filter(Boolean);
+            const idx  = opts.indexOf(optSlug);
+            if (idx >= 0) {
+                opts.splice(idx, 1);
+            } else {
+                opts.push(optSlug);
+            }
+            if (opts.length === 0) {
+                delete segments[charSlug];
+            } else {
+                segments[charSlug] = opts.join(',');
+            }
+        } else {
+            segments[charSlug] = optSlug;
+        }
+
+        const parts = Object.entries(segments).map(([k, v]) => `${k}=${v}`);
+        return parts.length > 0
+            ? basePath.replace(/\/$/, '') + '/' + parts.join('/') + '/'
+            : basePath.replace(/\/$/, '') + '/';
+    }
+
     /** Push new URL and dispatch Livewire filter-changed event. */
     _navigate(url) {
         if (!url || url === '#') { return; }
 
         try {
-            const parsed = new URL(url, window.location.origin);
+            const parsed  = new URL(url, window.location.origin);
             const finalUrl = parsed.pathname + (parsed.search || '');
             history.pushState({}, '', finalUrl);
 

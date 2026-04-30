@@ -102,8 +102,8 @@ class TypeSenseService
     }
 
     /**
-     * AND between groups, AND within each group.
-     * Each selected option requires a separate subquery — the product must have ALL options.
+     * AND between groups, OR within each group.
+     * Product must match at least one option per group (OR), and all groups (AND).
      */
     private function getProductIdsByCharacteristics(array $characteristics): Collection
     {
@@ -120,14 +120,12 @@ class TypeSenseService
                 continue;
             }
 
-            // AND within group: each option is its own subquery
-            foreach ($optionIds as $optionId) {
-                $query->whereIn('id', function ($q) use ($optionId) {
-                    $q->select('product_id')
-                        ->from('product_characteristic_options')
-                        ->where('characteristic_option_id', (int) $optionId);
-                });
-            }
+            // OR within group: single subquery with whereIn over all option IDs
+            $query->whereIn('id', function ($q) use ($optionIds) {
+                $q->select('product_id')
+                    ->from('product_characteristic_options')
+                    ->whereIn('characteristic_option_id', $optionIds);
+            });
         }
 
         return $query->pluck('id');

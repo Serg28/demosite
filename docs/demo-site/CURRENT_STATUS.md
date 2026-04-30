@@ -1,24 +1,30 @@
 # Поточний статус demo.loc — читати на початку кожної сесії
 
-**Оновлено:** 2026-04-30 (сесія 4)  
-**Прогрес:** Фази 0.5 + 1 + 2 + 3 + 3.7 + SEO + Каталог-оптимізація Blocks A + B + Баги + Пагінація SPA. Поточна: **Блок C** (пріоритет).
+**Оновлено:** 2026-04-30 (сесія 5)  
+**Прогрес:** Фази 0.5 + 1 + 2 + 3 + 3.7 + SEO + Каталог-оптимізація Blocks A + B + C + Баги + Пагінація SPA. Поточна: **Фаза 4**.
 
 ---
 
 ## ▶ Продовжити звідси (пріоритет зверху вниз)
 
-1. **[ПРІОРИТЕТ] Блок C — оптимізація Livewire:**
-   - Прибрати `enrichWithUrls` з PHP → URL в JS
-   - Debounce 600ms для range-слайдерів
-   - Серіалізація: `filter-changed` → Facets → `filtersUpdated` → ProductList
+1. **[ПРІОРИТЕТ] Фаза 4 — Корзина:** `CartSidebar` + slide-in в shop layout
 
-2. **[ПІСЛЯ C] Фаза 4 — Корзина:** `CartSidebar` + slide-in в shop layout
-
-3. **[ПІСЛЯ 4] Фаза 5 — Сторінка товару**
+2. **[ПІСЛЯ 4] Фаза 5 — Сторінка товару**
 
 ---
 
-## Що зроблено в останній сесії (2026-04-30, сесія 4)
+## Що зроблено в останній сесії (2026-04-30, сесія 5)
+
+**Блок C — оптимізація Livewire:**
+- ✅ `Facets::enrichWithUrls` видалено — URL більше не генеруються в PHP
+- ✅ `facets()` повертає сирі дані з `FacetService` без збагачення URL-ами
+- ✅ `facets.blade.php` — `data-char-slug`/`data-opt-slug` на checkbox замість `data-url`; `data-base-path` на root div
+- ✅ `filter.js` — `_buildOptionUrl(charSlug, optSlug)` будує URL з pathname + basePath в JS; `_resolveInputUrl()` уніфікує старий і новий формат
+- ✅ `filter-range.js` — debounce 600ms на Livewire dispatch (URL оновлюється одразу, запит — через 600ms)
+- ✅ Тести оновлено: `test_facets_renders_option_data_attributes`, `test_facets_renders_checkbox_inputs`
+- ✅ 42/42 тести pass, npm run build OK
+
+## Що зроблено раніше (сесія 4, 2026-04-30)
 
 **Баги виправлено:**
 - ✅ SEO canonical — `$page->getUrl()` замість `currentUrl()` (фільтр-сторінки мали неправильний canonical)

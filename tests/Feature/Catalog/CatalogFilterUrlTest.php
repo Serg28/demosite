@@ -130,14 +130,15 @@ class CatalogFilterUrlTest extends TestCase
 
     // ─── Facets: rendering & options ─────────────────────────────────────────
 
-    public function test_facets_renders_option_seo_urls(): void
+    public function test_facets_renders_option_data_attributes(): void
     {
         Livewire::test(Facets::class, [
             'category' => $this->category,
             'basePath' => '/catalog/phones',
         ])
-            ->assertSeeHtml('/catalog/phones/color=red/')
-            ->assertSeeHtml('/catalog/phones/color=blue/');
+            ->assertSeeHtml('data-char-slug="color"')
+            ->assertSeeHtml('data-opt-slug="red"')
+            ->assertSeeHtml('data-opt-slug="blue"');
     }
 
     public function test_facets_renders_checkbox_inputs(): void
@@ -147,7 +148,7 @@ class CatalogFilterUrlTest extends TestCase
             'basePath' => '/catalog/phones',
         ])
             ->assertSeeHtml('class="js-filter-input')
-            ->assertSeeHtml('data-url=');
+            ->assertSeeHtml('data-char-slug=');
     }
 
     public function test_facets_initializes_from_path(): void

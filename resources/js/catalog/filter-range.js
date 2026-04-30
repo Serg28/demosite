@@ -25,6 +25,7 @@ class CatalogRangeSlider {
     /** @param {Element} container */
     constructor(container) {
         this.container = container;
+        this._debounce = null;
         this._setup();
     }
 
@@ -76,9 +77,13 @@ class CatalogRangeSlider {
         const max = parseInt(this.maxSlider.value, 10);
         const url = this._buildUrl(min, max);
         history.pushState({}, '', url);
-        if (typeof Livewire !== 'undefined') {
-            Livewire.dispatch('filter-changed', { path: window.location.pathname });
-        }
+
+        clearTimeout(this._debounce);
+        this._debounce = setTimeout(() => {
+            if (typeof Livewire !== 'undefined') {
+                Livewire.dispatch('filter-changed', { path: window.location.pathname });
+            }
+        }, 600);
     }
 
     _updateTrack() {
