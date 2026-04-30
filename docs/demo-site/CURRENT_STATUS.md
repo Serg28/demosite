@@ -15,6 +15,11 @@
 
 ## Що зроблено в останній сесії (2026-04-30, сесія 5)
 
+**Баги фільтрів і пагінації:**
+- ✅ `TypeSenseService::getProductIdsByCharacteristics` — AND→OR всередині групи (checkbox UX)
+- ✅ `FacetService::getDisjunctiveCounts` — AND→OR всередині групи
+- ✅ `ProductList::basePath` — `#[Locked]` prop з `parse_url($category->getUrl())` замість `request()->path()` (який в AJAX = `/livewire-xxx/update`)
+
 **Блок C — оптимізація Livewire:**
 - ✅ `Facets::enrichWithUrls` видалено — URL більше не генеруються в PHP
 - ✅ `facets()` повертає сирі дані з `FacetService` без збагачення URL-ами
