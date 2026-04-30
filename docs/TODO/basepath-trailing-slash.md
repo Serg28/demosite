@@ -1,40 +1,85 @@
-# TODO: basePath + trailing slash configuration
+# TODO: basePath + trailing slash + DRY pagination
 
-## Problem
+## 1. trailing_slash_enabled — default false, config-driven
 
-`ProductList::basePath` and `Facets::basePath` are set via:
+Current code hardcodes `rtrim(..., '/')` (no slash). When trailing slash feature
+is implemented (ТЗ: `/linecore-demo/ТЗ урлы со слешем в конце.md`):
 
-```php
-$this->basePath = rtrim((string) parse_url($category->getUrl(), PHP_URL_PATH), '/');
-```
+- Default: **false** (no trailing slash)
+- Config: `config('cms.trailing_slash_enabled', false)`
 
-`rtrim(..., '/')` always strips the trailing slash. When the `trailing_slash_enabled`
-feature is implemented (see ТЗ: `/linecore-demo/ТЗ урлы со слешем в конце.md`),
-the `basePath` must respect the CMS setting.
-
-## Fix needed
-
-After implementing `TrailingSlashUrlGenerator` + `CustomLaravelLocalization`:
-
-```php
-$path = (string) parse_url($category->getUrl(), PHP_URL_PATH);
-$this->basePath = config('cms.trailing_slash_enabled', true)
-    ? rtrim($path, '/')
-    : rtrim($path, '/');
-// OR: derive from geturl() which will already include trailing slash
-$this->basePath = rtrim((string) parse_url(geturl($category->getUrl()), PHP_URL_PATH), '/');
-```
-
-The `withPath($this->basePath)` in the paginator generates `?page=N` links —
-trailing slash on the base path doesn't affect paginator URL format.
-
-The real concern is `FilterUrlService::buildPath()` and `filter.js::_buildOptionUrl()`
-which manually construct paths — those must also respect the trailing slash config.
-
-## References
-
-- `app/Livewire/Catalog/ProductList.php` — `$basePath` prop
-- `app/Livewire/Catalog/Facets.php` — `$basePath` prop
+Places that need to respect the setting:
 - `app/Services/FilterUrlService.php` — `buildPath()`, `buildClearUrl()`
 - `resources/js/catalog/filter.js` — `_buildOptionUrl()`
 - `resources/js/catalog/filter-range.js` — `_buildUrl()`
+
+---
+
+## 2. DRY Pagination — trait for all Livewire components
+
+**Problem**: `basePath`, `baseQuery`, `page`, `perPage`, `setPage()`, `buildPaginator()`
+are hardcoded in `ProductList`. Should be reusable for any model/page.
+
+**Plan**: create `app/Livewire/Concerns/HasPagination.php` trait:
+
+```php
+trait HasPagination
+{
+    #[Locked]
+    public string $paginatorPath = '';
+
+    #[Locked]
+    public array $paginatorQuery = [];
+
+    public int $page = 1;
+    public int $perPage = 24;
+
+    protected function bootPagination(string $canonicalUrl): void
+    {
+        $this->paginatorPath  = rtrim((string) parse_url($canonicalUrl, PHP_URL_PATH), '/');
+        $this->paginatorQuery = request()->except('page');
+    }
+
+    #[On('page-changed')]
+    public function setPage(int $page): void
+    {
+        $this->page = max(1, $page);
+    }
+
+    protected function makePaginator(array $items, int $total): LengthAwarePaginator
+    {
+        return (new LengthAwarePaginator(
+            items: $items,
+            total: $total,
+            perPage: $this->perPage,
+            currentPage: $this->page,
+        ))
+            ->withPath($this->paginatorPath)
+            ->appends($this->paginatorQuery);
+    }
+}
+```
+
+**Usage** in any Livewire component:
+
+```php
+use HasPagination;
+
+public function mount(Category $category): void
+{
+    $this->bootPagination($category->getUrl());
+}
+
+public function products(): LengthAwarePaginator
+{
+    $result = ...; // TypeSense/Eloquent
+    return $this->makePaginator($result['items'], $result['total']);
+}
+```
+
+**Standard Blade view** — `resources/views/components/paginator.blade.php`:
+- `<x-paginator :paginator="$paginator" />` — works everywhere without configuration
+
+**References to update**:
+- `app/Livewire/Catalog/ProductList.php` → use trait, remove duplicate code
+- Future: blog, search, news, any paginated list
