@@ -21,7 +21,8 @@
                     @if($paginator->onFirstPage())
                         <span class="flex h-9 w-9 cursor-not-allowed items-center justify-center rounded border border-gray-200 text-sm text-gray-300">←</span>
                     @else
-                        <a href="{{ $paginator->previousPageUrl() }}"
+                        {{-- page 2 → prev is page 1 → clean URL without ?page=1 --}}
+                        <a href="{{ $paginator->currentPage() === 2 ? $paginator->path() : $paginator->previousPageUrl() }}"
                            class="flex h-9 w-9 items-center justify-center rounded border border-gray-300 text-sm text-gray-600 transition hover:border-gray-400 hover:bg-gray-50"
                            aria-label="{{ __t('Попередня') }}">←</a>
                     @endif
@@ -37,7 +38,8 @@
                                     <span aria-current="page"
                                           class="flex h-9 w-9 items-center justify-center rounded border border-blue-500 bg-blue-500 text-sm font-semibold text-white">{{ $page }}</span>
                                 @else
-                                    <a href="{{ $url }}"
+                                    {{-- page 1 link → clean URL without ?page=1 --}}
+                                    <a href="{{ $page === 1 ? $paginator->path() : $url }}"
                                        class="flex h-9 w-9 items-center justify-center rounded border border-gray-300 text-sm text-gray-600 transition hover:border-gray-400 hover:bg-gray-50">{{ $page }}</a>
                                 @endif
                             </li>
