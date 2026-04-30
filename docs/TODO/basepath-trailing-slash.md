@@ -83,3 +83,13 @@ public function products(): LengthAwarePaginator
 **References to update**:
 - `app/Livewire/Catalog/ProductList.php` → use trait, remove duplicate code
 - Future: blog, search, news, any paginated list
+
+---
+
+## 3. CatalogList — опціональний merge для highload
+
+**Поточно:** Facets + ProductList = 2 XHR при фільтрації (прийнятно для <500 конкурентних)
+**Оптимізація:** Merge в один `CatalogList` = 1 XHR
+
+**Коли робити:** тільки якщо профілювання покаже що 2 XHR є bottleneck.
+**Реальний highload** вирішується через Octane + Redis + TypeSense, не кількістю компонентів.
