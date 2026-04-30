@@ -15,6 +15,9 @@ class ProductList extends Component
 {
     public Category $category;
 
+    #[Locked]
+    public string $basePath = '';
+
     public int $page = 1;
 
     public int $perPage = 24;
@@ -36,6 +39,7 @@ class ProductList extends Component
         int $initialPage = 1,
     ): void {
         $this->category = $category;
+        $this->basePath = rtrim((string) parse_url($category->getUrl(), PHP_URL_PATH), '/');
         $this->sortBy   = $sortBy;
         $this->sortDir  = $sortDir;
         $this->page     = max(1, $initialPage);
@@ -80,7 +84,7 @@ class ProductList extends Component
             perPage: $this->perPage,
             currentPage: $this->page,
         ))
-            ->withPath(geturl(request()->path()))
+            ->withPath($this->basePath)
             ->appends(request()->except('page'));
     }
 
