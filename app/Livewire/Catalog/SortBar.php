@@ -40,8 +40,27 @@ class SortBar extends Component
     /** @return array<int, array<string, mixed>> */
     public function getSortOptionsProperty(): array
     {
-        return array_map(function (array $option) {
+        // currentUrl() handles livewire/update requests by falling back to Referer header,
+        // so the filter path segments (e.g. /color=red/) are always included correctly.
+        $currentUrl = currentUrl();
+        $parsed = parse_url($currentUrl);
+        parse_str($parsed['query'] ?? '', $currentQuery);
+        $basePath = $parsed['path'] ?? '/';
+
+        return array_map(function (array $option) use ($basePath, $currentQuery) {
+            $params = $currentQuery;
+            unset($params['page']); // sort change resets pagination
+
+            if ($option['url_key']) {
+                $params['sort'] = $option['url_key'];
+            } else {
+                unset($params['sort']);
+            }
+
+            $query = $params ? '?' . http_build_query($params) : '';
+
             return array_merge($option, [
+                'url'       => $basePath . $query,
                 'is_active' => $option['key'] === $this->sortBy && $option['dir'] === $this->sortDir,
             ]);
         }, config('catalog.sort_options', []));
