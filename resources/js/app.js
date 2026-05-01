@@ -3,10 +3,17 @@ import './bootstrap';
 // SEO: remove ?page=1 from URL
 import './base/remove-first-page-from-url';
 
-// Web Components for UI
+// Toast notifications (Alpine.js, замінює Web Component)
 import './components/notification';
+
+// Tooltip Web Component
 import './components/tooltip';
-import './components/lazy-image';
+
+// Lazy image loading (IntersectionObserver + MutationObserver)
+import './base/lazy-loading-img';
+
+// Modal: виклик Livewire-модалок через [data-js-modal]
+import './base/livewire-modal';
 
 // Catalog: filter group Alpine component (registered before Alpine init)
 import './catalog/filter-group';

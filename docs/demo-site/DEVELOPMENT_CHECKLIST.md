@@ -1,7 +1,7 @@
 # Demo.loc Розробка - Прогресс
 
-**Дата оновлення:** 2026-04-26
-**Версія:** Phase 3+ (виправлення каталогу)
+**Дата оновлення:** 2026-05-01
+**Версія:** Phase 3+ + Security + UI Foundation
 
 > **Правила коду:** [`docs/code/CODE_RULES.md`](../code/CODE_RULES.md) | [`.junie/guidelines.md`](../../.junie/guidelines.md)
 > **Команди:** `docker exec -it laradock-php-fpm-1 bash` (composer/artisan — тільки в контейнері)
@@ -65,6 +65,65 @@
 - [x] Precise cache tags (category_ID)
 - [x] Atomic locks від cache stampede
 - [x] Chunk-based indexing
+
+---
+
+## Phase 0.6: Security Foundation ✅ (2026-05-01)
+
+- [x] `BlockBotRequests` middleware — 204 на службових ендпоінтах для ботів
+- [x] `ValidateLivewireMethod` middleware — захист від RCE/ін'єкцій (Livewire 4)
+- [x] `Livewire::setUpdateRoute()` в `web.php` — обидва middleware на `/livewire/update`
+- [x] `security` log channel → `storage/logs/security/security-YYYY-MM-DD.log` (30 днів)
+
+## Phase 0.6b: UI Foundation ✅ (2026-05-01)
+
+- [x] Tailwind config — brand/ink/surface кольори з UI Kit.html (`#2563EB`, `#111827`, `#F5F6F8`)
+- [x] Inter font (bunny.net) у shop.blade.php
+- [x] Рішення по стеку: Flux (auth only), без WireUI, без wire-elements/modal (Livewire 4 incompatible)
+
+### ModalManager System (замінює wire-elements/modal, Livewire 4 native) ✅
+- [x] `app/Livewire/Components/ModalManager.php` — compatible API: openModal / closeModal / closeModalWithEvents / modalMaxWidth
+- [x] `app/Livewire/Concerns/IsModalForm.php` — trait замість `extends ModalComponent`
+- [x] `app/Livewire/Concerns/HasNotifications.php` — notifySuccess/Error/Info/Warning
+- [x] `resources/views/livewire/components/modal-manager.blade.php` — lazy render (NOT in DOM until called)
+- [x] `resources/js/base/livewire-modal.js` — `[data-js-modal]` атрибутний виклик
+- [x] `docs/developers/modal-and-notifications.md` — гайд + таблиця міграції
+
+### Toast Notifications (замінює Web Component) ✅
+- [x] `resources/js/components/notification.js` — Alpine.js, Tailwind, нуль залежностей
+- [x] `resources/views/components/toast.blade.php` — `<x-toast />`
+
+### Lazy Images ✅
+- [x] `resources/js/base/lazy-loading-img.js` — IntersectionObserver + MutationObserver, Livewire morph aware
+
+---
+
+## Phase 0.7: i18n Routing + Smart Cache 🔲
+
+### i18n Routing (порт з linecore-demo + Velosipedi fix)
+- [ ] `composer require mcamara/laravel-localization`
+- [ ] `app/Http/PatchedRequest.php` + `LaravelLocalizationServiceProvider` (fix getBaseUrl='/')
+- [ ] `config/laravellocalization.php` — налаштування локалей (uk, ru, en…)
+- [ ] `web.php` — `Route::group(['prefix' => LaravelLocalization::setLocale(), ...], ...)`
+- [ ] `LocaleCookieRedirect` middleware у web-групу
+- [ ] `CheckValidLanguage` global middleware
+- [ ] `routes/api_localized.php` — API ендпоінти з підтримкою поточної локалі
+- [ ] Оновити `geturl()`, `$model->getUrl()` — перевірити сумісність з locale prefix
+
+### Smart Cache (per-entity invalidation)
+- [ ] Аналіз поточного кешу: `FacetService`, `TypeSenseService`, `ProductList`
+- [ ] Product/Category Observers → інвалідація тільки конкретних ключів (не весь Redis)
+- [ ] Cache-key strategy: `product:{id}`, `facets:cat:{id}`, `category:{id}` з TTL
+- [ ] Оцінити `lacodix/laravel-model-filter` — Model-level фільтри замість raw queries
+- [ ] Оцінити `mr-punyapal/laravel-extended-relationships` — зменшення кількості запитів у зв'язках
+- [ ] Оцінити `iazaran/smart-cache` — LRU/smart invalidation поверх Redis
+
+---
+
+## Phase 0.7+: Pipeline & Events (для Phase 6 — Checkout) 🔲
+
+- [ ] Оцінити `michael-rubel/laravel-enhanced-pipeline` — для checkout flow (Pipeline з rollback)
+- [ ] Оцінити `josepostiga/attribute-events` — field-level events на Product/Category моделях
 
 ---
 

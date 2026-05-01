@@ -1,78 +1,70 @@
-class NotificationsPopup extends HTMLElement {
-    constructor() {
-        super();
-        this.messages = [];
-        this.attachShadow({ mode: 'open' });
-    }
+/**
+ * @file notification.js
+ * Alpine.js toast-сповіщення. Реєструється через Alpine.data('toast').
+ *
+ * @version 3.0 — переписано з Web Component на Alpine.js (Tailwind CSS, нуль зовнішніх залежностей)
+ * @author  Serg28 tsv.art.com@gmail.com for Linecore
+ *
+ * @usage Blade (один раз у shop.blade.php):
+ *   <x-toast />
+ *
+ * @usage PHP (Livewire, з трейтом HasNotifications):
+ *   $this->notify('Товар додано', 'Успіх', 'success')
+ *   $this->notifyError('Щось пішло не так')
+ *
+ * @usage JS (з будь-якого місця):
+ *   window.notify('success', 'Done!')
+ *   Livewire.dispatch('notify', { type: 'success', message: 'Done!', title: '' })
+ */
 
-    connectedCallback() {
-        this.render();
-        Livewire.on('notify', this.addNotification.bind(this));
-    }
+const TOAST_DURATION = 5000;
 
-    addNotification(event) {
-        const { type, title = '', message } = event;
-        const newMessage = { type, title, message, key: Date.now() };
-        this.messages.push(newMessage);
-        this.render();
+const ICONS = {
+    success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+    error:   '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+    info:    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+    warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>',
+};
 
-        setTimeout(() => {
-            this.removeNotification(newMessage.key);
-        }, 5000);
-    }
+const COLORS = {
+    success: 'bg-green-50 border-green-200 text-green-800',
+    error:   'bg-red-50   border-red-200   text-red-800',
+    info:    'bg-blue-50  border-blue-200  text-blue-800',
+    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+};
 
-    removeNotification(key) {
-        this.messages = this.messages.filter(msg => msg.key !== key);
-        this.render();
-    }
+const ICON_COLORS = {
+    success: 'text-green-500',
+    error:   'text-red-500',
+    info:    'text-blue-500',
+    warning: 'text-yellow-500',
+};
 
-    render() {
-        this.shadowRoot.innerHTML = `
-            <style>
-                @import "${this.getAttribute('styles-path')}"
-            </style>
-            <div class="notification">
-                ${this.messages.map(msg => `
-                    <div class="popup bg-${msg.type}"
-                         style="transition: opacity 0.3s; opacity: 1;">
-                        <div class="icon">
-                            <svg class="${msg.type}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                ${this.getIconSVG(msg.type)}
-                            </svg>
-                        </div>
-                        <div class="content">
-                            <p class="notification-title">${msg.title}</p>
-                            <p class="notification-message">${msg.message}</p>
-                        </div>
-                        <div class="closer">
-                            <button onclick="this.getRootNode().host.removeNotification(${msg.key})">
-                                <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    }
+document.addEventListener('alpine:init', () => {
+    Alpine.data('toast', () => ({
+        items: [],
 
-    getIconSVG(type) {
-        switch (type) {
-            case 'success':
-                return `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />`;
-            case 'error':
-                return `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />`;
-            case 'info':
-                return `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />`;
-            case 'warning':
-                return `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01" />`;
-            default:
-                return '';
-        }
-    }
-}
+        add(type, message, title = '') {
+            const id = Date.now();
+            this.items.push({ id, type, message, title, visible: true });
+            setTimeout(() => this.remove(id), TOAST_DURATION);
+        },
 
-if (!customElements.get('notifications-popup')) {
-    customElements.define('notifications-popup', NotificationsPopup);
-}
+        remove(id) {
+            const item = this.items.find(n => n.id === id);
+            if (item) { item.visible = false; }
+            setTimeout(() => {
+                this.items = this.items.filter(n => n.id !== id);
+            }, 300);
+        },
+
+        iconSvg(type)    { return ICONS[type]      ?? ICONS.info; },
+        colorClass(type) { return COLORS[type]     ?? COLORS.info; },
+        iconColor(type)  { return ICON_COLORS[type] ?? ICON_COLORS.info; },
+    }));
+});
+
+// Глобальний хелпер для виклику з чистого JS (без Livewire)
+window.notify = (type, message, title = '') => {
+    window.Livewire?.dispatch('notify', { type, message, title });
+};

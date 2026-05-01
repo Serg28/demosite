@@ -1,10 +1,16 @@
 <?php
 
+use App\Http\Controllers\CatalogController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
+use Livewire\Livewire;
 use Livewire\Volt\Volt;
 
-use App\Http\Controllers\CatalogController;
+// Livewire update endpoint із захистом від ботів та ін'єкцій методів
+Livewire::setUpdateRoute(function ($handle) {
+    return Route::post('/livewire/update', $handle)
+        ->middleware(['block.bot_request', 'validate.livewire.method']);
+});
 
 Route::get('/', function () {
     return view('welcome');

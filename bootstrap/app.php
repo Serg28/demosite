@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\BlockBotRequests;
+use App\Http\Middleware\RedirectSEO;
+use App\Http\Middleware\ValidateLivewireMethod;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,7 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
-            \App\Http\Middleware\RedirectSEO::class,
+            RedirectSEO::class,
+        ]);
+
+        $middleware->alias([
+            'block.bot_request' => BlockBotRequests::class,
+            'validate.livewire.method' => ValidateLivewireMethod::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

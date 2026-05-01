@@ -1,120 +1,121 @@
 # Поточний статус demo.loc — читати на початку кожної сесії
 
-**Оновлено:** 2026-04-30 (сесія 5)  
-**Прогрес:** Фази 0.5 + 1 + 2 + 3 + 3.7 + SEO + Каталог-оптимізація Blocks A + B + C + Баги + Пагінація SPA. Поточна: **Фаза 4**.
+**Оновлено:** 2026-05-01 (сесія 8)
+**Прогрес:** Фази 0.5 + 0.6 + 0.6b + 1 + 2 + 3 + 3.7 + SEO + Каталог-оптимізація A+B+C + Баги + Пагінація SPA. Поточна: **Фаза 4 (не почата)**.
 
 ---
 
 ## ▶ Продовжити звідси (пріоритет зверху вниз)
 
-1. **[ПРІОРИТЕТ] Фаза 4 — Корзина:** `CartSidebar` + slide-in в shop layout
+1. **[ПРІОРИТЕТ] Фаза 4 — Корзина:** повна реалізація згідно `memory/cart_phase4_architecture.md`
+   - Вивчення linecore-demo завершено в сесії 7
+   - Ключове уточнення: репозиторії НЕ використовуємо — логіку DB напряму в сервіс/модель
+   - Реалізацію НЕ починали — починати з нуля
+   - Порядок: **міграції → моделі → DTO → сервіс → контролер → routes → JS → Livewire → views → layout**
 
-2. **[ПІСЛЯ 4] Фаза 5 — Сторінка товару**
-
----
-
-## Що зроблено в останній сесії (2026-04-30, сесія 5)
-
-**Баги фільтрів і пагінації:**
-- ✅ `TypeSenseService::getProductIdsByCharacteristics` — AND→OR всередині групи (checkbox UX)
-- ✅ `FacetService::getDisjunctiveCounts` — AND→OR всередині групи
-- ✅ `ProductList::basePath` — `#[Locked]` prop з `parse_url($category->getUrl())` замість `request()->path()` (який в AJAX = `/livewire-xxx/update`)
-
-**Блок C — оптимізація Livewire:**
-- ✅ `Facets::enrichWithUrls` видалено — URL більше не генеруються в PHP
-- ✅ `facets()` повертає сирі дані з `FacetService` без збагачення URL-ами
-- ✅ `facets.blade.php` — `data-char-slug`/`data-opt-slug` на checkbox замість `data-url`; `data-base-path` на root div
-- ✅ `filter.js` — `_buildOptionUrl(charSlug, optSlug)` будує URL з pathname + basePath в JS; `_resolveInputUrl()` уніфікує старий і новий формат
-- ✅ `filter-range.js` — debounce 600ms на Livewire dispatch (URL оновлюється одразу, запит — через 600ms)
-- ✅ Тести оновлено: `test_facets_renders_option_data_attributes`, `test_facets_renders_checkbox_inputs`
-- ✅ 42/42 тести pass, npm run build OK
-
-## Що зроблено раніше (сесія 4, 2026-04-30)
-
-**Баги виправлено:**
-- ✅ SEO canonical — `$page->getUrl()` замість `currentUrl()` (фільтр-сторінки мали неправильний canonical)
-- ✅ Range slider morph — `_morphHookCleanup` (хук більше не накопичується), перевірка `el.contains(s.container)`
-- ✅ `Facets::onFilterChanged` — приймає `page` параметр, передає в `filtersUpdated`
-- ✅ `ProductList::applyFilters` — приймає `page` параметр (не завжди reset до 1)
-- ✅ `_bindPopstate` — передає `page` з URL в `filter-changed` (відновлення page при back/forward)
-
-**Пагінація без перезавантаження:**
-- ✅ `resources/js/catalog/pagination.js` — generic перехватчик кліків на `[data-js-paginator] a`
-- ✅ `ProductList` — новий `#[On('page-changed')] setPage(int $page)` обробник
-- ✅ `catalog/pagination.blade.php` — `id="js-pagination"` → `data-js-paginator` (без хардкоду)
-- ✅ `load-more.js` — `getElementById` → `querySelector('[data-js-paginator]')`
-- ✅ `product-list.blade.php` — додано `data-js-product-grid` атрибут
-- ✅ `app.js` — імпорт `pagination.js`
-
-**Без хардкоду:**
-- ✅ `CatalogController` — `basePath` через `parse_url($category->getUrl(), PHP_URL_PATH)`
-- ✅ `Facets` mount + `onFilterChanged` — аналогічно через `getUrl()`
-- ✅ `product-list.blade.php` API URL — `route('api.v1.catalog.products-html', $category)`
-- ✅ `routes/api.php` — додано name `api.v1.catalog.products-html`
-
-**Тести:** 15/15 pass. `npm run build` — OK.
+2. **[ЗАПЛАНОВАНО] Phase 0.7 — i18n Routing + Smart Cache** (деталі в DEVELOPMENT_CHECKLIST.md)
 
 ---
 
-## Що зроблено раніше
+## Зроблено в сесії 8
 
-**Блок B (сесія 3, 2026-04-29):**
-- ✅ `ProductList::products()` → `LengthAwarePaginator`
-- ✅ `withPath(geturl(request()->path()))` — locale-aware pagination
-- ✅ Custom paginator view `catalog.pagination`
-- ✅ `SortBar` — `<a href="?sort=...">` (не wire:change)
-- ✅ `ResolvesSort` trait
-- ✅ API `getProductsHtml()` — fragments для load-more
-- ✅ `load-more.js` — DOMParser + фрагменти
-- ✅ `RedirectSEO` middleware — 301 для `?page=1`, `www.`, trailing slash
-- ✅ `remove-first-page-from-url.js`
+### Phase 0.6 — Security Foundation ✅
+- `BlockBotRequests` middleware — 204 ботам на службових ендпоінтах
+- `ValidateLivewireMethod` middleware — захист від RCE/ін'єкцій через Livewire 3/4
+- `Livewire::setUpdateRoute()` у `web.php` — обидва middleware на `/livewire/update`
+- `security` log channel → `storage/logs/security/security-YYYY-MM-DD.log` (30 днів)
 
-**Блок A + каталог-оптимізація (сесія 2, 2026-04-29):**
-- ✅ `CatalogDemoSeeder` — 220 товарів, 8 категорій
-- ✅ `filter-group.js`, сортування через URL
-- ✅ `SlugUrlFieldTrait` + `Product::getUrl()`
+### Phase 0.6b — UI Foundation ✅
+- **Tailwind config** — brand colors UI Kit: `brand #2563EB`, `ink #111827`, `surface #F5F6F8`
+- **Inter font** у shop.blade.php (bunny.net)
+- **Рішення по UI-стеку** (зафіксовано в пам'яті):
+  - Flux — тільки auth/settings (вже є, 248+ вживань)
+  - WireUI — НЕ встановлюємо (важкий для PageSpeed)
+  - wire-elements/modal — НЕ сумісний з Livewire 4
+  - Volt — не розвиваємо (scaffolding залишається)
+  - Live/залежні списки — Alpine.data() + fetch
 
-**Фази 0.5—3.7:**
-- ✅ TypeSense + Scout, каталог 200 OK
-- ✅ SEO-інфраструктура: HasSeo, Seo, SeoComposer
-- ✅ PATH-based SEO фільтри: FilterUrlService, FacetService, filter.js
+### ModalManager System ✅ (замінює wire-elements/modal, Livewire 4 native)
+- `app/Livewire/Components/ModalManager.php` — wire-elements/modal-compatible API
+  - `openModal` / `closeModal` / `closeModalWithEvents` events ✅
+  - `modalMaxWidth()` static override ✅
+  - Lazy: HTML модалки NOT в DOM до виклику ✅
+  - TODO: Винести в пакет `linecore/modal`
+- `app/Livewire/Concerns/IsModalForm.php` — trait замість `extends ModalComponent`
+- `app/Livewire/Concerns/HasNotifications.php` — `$this->notify()`, `notifySuccess()` тощо
+- `resources/views/livewire/components/modal-manager.blade.php`
+- `resources/js/base/livewire-modal.js` — `[data-js-modal]` атрибутний підхід
+- `resources/js/base/lazy-loading-img.js` — IntersectionObserver + MutationObserver
+
+### Toast Notifications ✅ (замінює Web Component + окремий CSS)
+- `resources/js/components/notification.js` — Alpine.js, Tailwind, без зовнішніх залежностей
+- `resources/views/components/toast.blade.php` — `<x-toast />`
+- Виклик: `$this->notifySuccess('...')` | `window.notify('success', '...')` | `Livewire.dispatch('notify', ...)`
+
+### Документація ✅
+- `docs/developers/modal-and-notifications.md` — повний гайд + таблиця міграції з wire-elements/modal
 
 ---
 
-## Контекст проекту
+## Що вивчено (сесія 7, linecore-demo) — готово до портування Фази 4
 
-**demo.loc = порт linecore-demo на нову архітектуру:**
-- Laravel 12 + Livewire 3 + Alpine.js + TypeSense
-- SEO filter URLs в path (`/char=val/`)
-- Нативний JS + history API
-- URL: `$model->getUrl()`, звичайні: `geturl()`, API: `route()`
+### Джерела в linecore-demo
+- `app/Services/Basket.php` — CartService (повертає JsonResponse — в demo.loc замінити на CartResult DTO)
+- `app/Services/UnfinishedBasketService.php` — OK, але прибрати Repository
+- `app/Jobs/StoreUnfinishedBasket.php` — OK (dispatchSync)
+- `app/Models/UnfinishedBasket.php` — OK (без $revisionEnabled)
+- `app/Models/UnfinishedBasketsProducts.php` — OK
+- `app/Livewire/Cart/Count.php` — OK (з #[Lazy])
+- `app/Livewire/Cart/Content.php` → в demo.loc буде `Cart\Sidebar` (slide-in, не modal)
+- `resources/dev/js/base/basket.js` — стара версія; в demo.loc — data-attr-based
+
+### Структура Actions (ПІДТВЕРДЖЕНО)
+- `app/Actions/Cart/AddToCartAction::handle(Product, int, array): CartResult`
+- `app/Actions/Cart/RemoveFromCartAction::handle(string): CartResult`
+- `app/Actions/Cart/UpdateCartItemAction::handle(string, int): CartResult`
+- `CartService` — утилітний: `availableForOrder`, `updateAvailabilityAndPrices` тощо
+- `CartController` — тонкий, перетворює `CartResult → JsonResponse`
+
+### Що НЕ портуємо в Phase 4
+- `Addtocart` Livewire компонент — додавання через JS (`data-js-add-to-cart` + basket.js)
+- `CartOpener` trait, Analytics, addMulti, buyOneClick, payparts
+- Репозиторії — логіку напряму в сервіс/модель
+
+### Product — методи для Phase 4
+```php
+getPrice(): float
+getQuantity(): int  // повертає $this->quantity ?? 9999
+isActiveForOrder(): bool  // $this->is_active && $this->getQuantity() > 0
+getWholesalePrices(): ?array
+getProductDataAnalitic(): array
+```
 
 ---
 
-## Критичні правила
+## Відкриті питання / TODO
+
+- 🟡 Фільтри 3.7 — клік → URL → reload → відновлення (потребує браузерної перевірки)
+- 🟡 Phase 0.7 — i18n routing (`mcamara/laravel-localization`) + smart cache (per-entity invalidation)
+- 🟡 `linecore/modal` пакет — ModalManager + IsModalForm (після стабілізації)
+
+---
+
+## Правила розробки
 
 - `$model->getUrl()` → URL моделей; `geturl()` → локалізовані URL; `route()` → API/named routes
 - `parse_url($model->getUrl(), PHP_URL_PATH)` → тільки path для basePath, prefix
 - `withPath(geturl(request()->path()))` — завжди для пагінатора (locale prefix!)
-- `page_base` від клієнта — завжди валідувати `str_starts_with`
 - `[data-js-paginator]` — wrapper пагінатора; `[data-js-product-grid]` — grid
 - `__t()` — фронтенд; `__cms()` — тільки адмінка
 - Alpine: NO inline JS → `Alpine.data()` в JS файлах; `data-config` замість `@json()` в `x-data`
 - Vendor файли — НЕ копіювати в `app/`
 - Портувати з linecore-demo, не вигадувати
-
----
-
-## Відкриті баги
-
-- 🟡 Фільтри 3.7 — клік → URL; reload → відновлення; "Скинути" (потребує браузерної перевірки)
-
----
-
-## TODO (зафіксовано в docs/TODO/)
-
-- `models-traits-basemodel.md` — BaseModel + трейти (Sluggable, PrepareModelFields)
-- `trait-slughurl-refactor.md` — per-instance кешування getUrl()
+- Репозиторії — НЕ використовуємо (логіку DB напряму в сервіс/модель)
+- **Логи** — кожен канал у підпапку: `storage/logs/{channel}/{channel}.log`
+- **Modal виклик** — `[data-js-modal]` атрибут у Blade; `IsModalForm` trait у компоненті
+- **Toast** — `HasNotifications` trait → `$this->notifySuccess()`; JS → `window.notify()`
+- **Дизайн** — Demo Shop.html + UI Kit.html в `linecore-demo/docs/demo-site/Demo shop (1)/`
+- **НЕ SPA** — кожна сторінка = окремий Blade шаблон + Livewire
 
 ---
 
@@ -123,15 +124,13 @@
 ```bash
 # PHP/Artisan/Composer
 docker exec laradock-php-fpm-1 bash -c "cd /var/www/demo.loc && php artisan ..."
+docker exec laradock-php-fpm-1 bash -c "cd /var/www/demo.loc && php /var/www/demo.loc/composer ..."
 
 # npm — на хості
 cd /mnt/DataM2/Job/Sites/Linecore/demo.loc && npm run build
 
 # Тести
 docker exec laradock-php-fpm-1 bash -c "cd /var/www/demo.loc && php artisan test --compact --filter=Catalog"
-
-# Після migrate:fresh
-docker exec laradock-php-fpm-1 bash -c "cd /var/www/demo.loc && php artisan migrate:fresh --seed && php artisan scout:import 'App\Models\Product'"
 ```
 
 ---
@@ -139,6 +138,6 @@ docker exec laradock-php-fpm-1 bash -c "cd /var/www/demo.loc && php artisan migr
 ## Посилання
 
 - Повний ТЗ: `DEVELOPMENT_CHECKLIST.md`
-- Правила: `RULES.md`
-- TODO: `docs/TODO/`
-- Skills: `.agents/skills/README.md`
+- Дизайн: `linecore-demo/docs/demo-site/Demo shop (1)/Demo Shop.html` + `UI Kit.html`
+- Docs для розробників: `docs/developers/`
+- TODO архітектура: `docs/TODO/`
