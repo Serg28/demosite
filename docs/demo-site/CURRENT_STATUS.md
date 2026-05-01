@@ -1,13 +1,14 @@
 # Поточний статус demo.loc — читати на початку кожної сесії
 
-**Оновлено:** 2026-05-01 (сесія 8)
-**Прогрес:** Фази 0.5 + 0.6 + 0.6b + 1 + 2 + 3 + 3.7 + SEO + Каталог-оптимізація A+B+C + Баги + Пагінація SPA. Поточна: **Фаза 4 (не почата)**.
+**Оновлено:** 2026-05-02 (сесія 9)
+**Прогрес:** Фази 0.5 + 0.6 + 0.6b + 0.6c + 1 + 2 + 3 + 3.7 + SEO + Каталог-оптимізація A+B+C + Баги + Пагінація SPA. Поточна: **Фаза 4 (не почата)**.
 
 ---
 
 ## ▶ Продовжити звідси (пріоритет зверху вниз)
 
 1. **[ПРІОРИТЕТ] Фаза 4 — Корзина:** повна реалізація згідно `memory/cart_phase4_architecture.md`
+   *(Баги каталогу зафіксовано, Фаза 0.6c завершена)*
    - Вивчення linecore-demo завершено в сесії 7
    - Ключове уточнення: репозиторії НЕ використовуємо — логіку DB напряму в сервіс/модель
    - Реалізацію НЕ починали — починати з нуля
@@ -16,6 +17,17 @@
 2. **[ЗАПЛАНОВАНО] Phase 0.7 — i18n Routing + Smart Cache** (деталі в DEVELOPMENT_CHECKLIST.md)
 
 ---
+
+## Зроблено в сесії 9 (2026-05-02)
+
+### Phase 0.6c — Catalog Bug Fixes ✅
+- **Bug 1 (фільтр скидав сортування):** `filter.js _navigate()` зберігає `?sort=` з `window.location`
+- **Bug 2 (сортування скидало фільтри):** `sort.js` читає `window.location.pathname` при кліку; `SortBar` → `currentUrl()` (CMS helper, Referer fallback для Livewire)
+- **Bug 3 (пагінація втрачала сортування):** `pagination.js` зберігає `?sort=`, перша сторінка без `?page=`
+- `ProductList` — `#[On('sort-changed')]` + `resolveSortKey()`, скидає page
+- `SortBar` — `#[On('sort-changed')]` active-стан; `href` для SEO-ботів, `data-js-sort` для JS
+- `filter.js _bindPopstate()` — диспатчить `sort-changed` при back/forward
+- **Ключовий урок:** в Livewire-компонентах `url()->current()` = `/livewire/update`; завжди `currentUrl()` з CMS-пакету
 
 ## Зроблено в сесії 8
 
@@ -94,6 +106,7 @@ getProductDataAnalitic(): array
 
 ## Відкриті питання / TODO
 
+- ✅ Баги каталогу — фільтр/сорт/пагінація: зафіксовано в Phase 0.6c
 - 🟡 Фільтри 3.7 — клік → URL → reload → відновлення (потребує браузерної перевірки)
 - 🟡 Phase 0.7 — i18n routing (`mcamara/laravel-localization`) + smart cache (per-entity invalidation)
 - 🟡 `linecore/modal` пакет — ModalManager + IsModalForm (після стабілізації)
@@ -103,6 +116,8 @@ getProductDataAnalitic(): array
 ## Правила розробки
 
 - `$model->getUrl()` → URL моделей; `geturl()` → локалізовані URL; `route()` → API/named routes
+- `currentUrl()` → ЗАВЖДИ замість `url()->current()` в Livewire-компонентах (Referer fallback!)
+- `getQueryParam('p')` → замість `request()->query()` в Livewire (читає реальний `$_GET`)
 - `parse_url($model->getUrl(), PHP_URL_PATH)` → тільки path для basePath, prefix
 - `withPath(geturl(request()->path()))` — завжди для пагінатора (locale prefix!)
 - `[data-js-paginator]` — wrapper пагінатора; `[data-js-product-grid]` — grid

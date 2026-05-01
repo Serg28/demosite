@@ -1,7 +1,7 @@
 # Demo.loc Розробка - Прогресс
 
-**Дата оновлення:** 2026-05-01
-**Версія:** Phase 3+ + Security + UI Foundation
+**Дата оновлення:** 2026-05-02
+**Версія:** Phase 3+ + Security + UI Foundation + Catalog Bug Fixes
 
 > **Правила коду:** [`docs/code/CODE_RULES.md`](../code/CODE_RULES.md) | [`.junie/guidelines.md`](../../.junie/guidelines.md)
 > **Команди:** `docker exec -it laradock-php-fpm-1 bash` (composer/artisan — тільки в контейнері)
@@ -74,6 +74,15 @@
 - [x] `ValidateLivewireMethod` middleware — захист від RCE/ін'єкцій (Livewire 4)
 - [x] `Livewire::setUpdateRoute()` в `web.php` — обидва middleware на `/livewire/update`
 - [x] `security` log channel → `storage/logs/security/security-YYYY-MM-DD.log` (30 днів)
+
+## Phase 0.6c: Catalog Bug Fixes ✅ (2026-05-02)
+
+- [x] **Bug: фільтр скидав сортування** — `filter.js _navigate()` тепер зберігає `?sort=` з `window.location`
+- [x] **Bug: сортування скидало фільтри** — `sort.js` читає `window.location.pathname` (актуальний після pushState), `SortBar` використовує `currentUrl()` хелпер з CMS-пакету (Referer fallback для Livewire-запитів)
+- [x] **Bug: пагінація втрачала сортування** — `pagination.js` зберігає `?sort=`, перша сторінка без `?page=`
+- [x] `ProductList` — `#[On('sort-changed')]` handler, скидає page при зміні сорту
+- [x] `SortBar` — `#[On('sort-changed')]` для оновлення active-стану; `href` коректний для SEO-ботів
+- [x] `filter.js _bindPopstate()` — також диспатчить `sort-changed` при back/forward
 
 ## Phase 0.6b: UI Foundation ✅ (2026-05-01)
 
