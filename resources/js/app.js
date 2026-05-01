@@ -30,4 +30,7 @@ import './catalog/load-more';
 // Catalog: numbered pagination — SPA intercept, no full reload
 import './catalog/pagination';
 
+// Catalog: sort links — SPA intercept, preserves filter path
+import './catalog/sort';
+
 // Alpine.js & Livewire are included by Livewire

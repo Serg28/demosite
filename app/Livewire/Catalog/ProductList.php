@@ -53,6 +53,28 @@ class ProductList extends Component
         $this->dispatch('product-list-reset');
     }
 
+    #[On('sort-changed')]
+    public function onSortChanged(string $sortKey = ''): void
+    {
+        [$this->sortBy, $this->sortDir] = $this->resolveSortKey($sortKey);
+        $this->page = 1;
+        $this->dispatch('product-list-reset');
+    }
+
+    /** @return array{string, string} */
+    private function resolveSortKey(string $sortKey): array
+    {
+        foreach (config('catalog.sort_options') as $option) {
+            if ($option['url_key'] === ($sortKey ?: null)) {
+                return [$option['key'], $option['dir']];
+            }
+        }
+
+        $default = config('catalog.sort_options.0');
+
+        return [$default['key'], $default['dir']];
+    }
+
     #[Computed]
     public function products(): LengthAwarePaginator
     {

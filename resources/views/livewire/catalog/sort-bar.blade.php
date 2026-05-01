@@ -2,7 +2,8 @@
     <span class="text-sm font-medium">{{ __t('Сортування') }}:</span>
 
     @foreach($this->sortOptions as $option)
-        <a href="{{ $option['url'] }}"
+        <a href="#"
+           data-js-sort="{{ $option['url_key'] ?? '' }}"
            class="text-sm px-3 py-1.5 rounded-lg border transition-colors
                {{ $option['is_active']
                    ? 'bg-blue-600 text-white border-blue-600'

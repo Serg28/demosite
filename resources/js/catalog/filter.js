@@ -83,7 +83,9 @@ class CatalogFilter {
             if (typeof Livewire !== 'undefined') {
                 const url = new URL(location.href);
                 const page = parseInt(url.searchParams.get('page') || '1', 10);
+                const sort = url.searchParams.get('sort') || '';
                 Livewire.dispatch('filter-changed', { path: url.pathname, page });
+                Livewire.dispatch('sort-changed', { sortKey: sort });
             }
         };
 
@@ -173,7 +175,16 @@ class CatalogFilter {
         if (!url || url === '#') { return; }
 
         try {
-            const parsed  = new URL(url, window.location.origin);
+            const parsed = new URL(url, window.location.origin);
+
+            // Preserve ?sort= from current URL (filter changes must not reset sort)
+            const currentSort = new URL(window.location.href).searchParams.get('sort');
+            if (currentSort && !parsed.searchParams.has('sort')) {
+                parsed.searchParams.set('sort', currentSort);
+            }
+            // Filter change always resets pagination
+            parsed.searchParams.delete('page');
+
             const finalUrl = parsed.pathname + (parsed.search || '');
             history.pushState({}, '', finalUrl);
 
