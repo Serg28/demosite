@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use App\Models\Traits\SlugUrlFieldTrait;
 use App\Models\Traits\HasTranslations;
+use App\Models\Traits\SlugUrlFieldTrait;
+use App\Traits\AnaliticProductTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,16 @@ use Laravel\Scout\Searchable;
 
 class Product extends Model
 {
-    use HasFactory, SlugUrlFieldTrait, HasTranslations, Searchable;
+    use AnaliticProductTrait, HasFactory, HasTranslations, Searchable, SlugUrlFieldTrait;
+
+    /** @var string[] */
+    protected array $cardFields = [
+        'id', 'title', 'code', 'price', 'price_old', 'picture',
+        'is_active', 'quantity', 'slug', 'ua_url', 'ru_url', 'en_url',
+    ];
+
+    /** @var string[] */
+    protected array $cartFields = ['id', 'title', 'picture'];
 
     protected $fillable = [
         'title',
@@ -33,6 +43,8 @@ class Product extends Model
         'ru_url',
         'en_url',
         'priority',
+        'quantity',
+        'weight',
     ];
 
     protected $casts = [
@@ -45,7 +57,29 @@ class Product extends Model
         'other_pictures' => 'json',
         'link_to_youtube' => 'json',
         'priority' => 'integer',
+        'quantity' => 'integer',
+        'weight'   => 'decimal:3',
     ];
+
+    public function scopeCardFields($query): void
+    {
+        $query->select($this->cardFields);
+    }
+
+    public function scopeCartFields($query): void
+    {
+        $query->select($this->cartFields);
+    }
+
+    public function scopeActive($query): void
+    {
+        $query->where('is_active', true);
+    }
+
+    public function scopeAvailable($query): void
+    {
+        $query->where('is_active', true)->where('quantity', '>', 0);
+    }
 
     public function category(): BelongsTo
     {
@@ -106,6 +140,68 @@ class Product extends Model
 
     public function getUrl(string $locale = ''): string
     {
-        return geturl('/product/' . $this->getUrlOrSlug($locale), $locale ?: null);
+        return geturl('/product/'.$this->getUrlOrSlug($locale), $locale ?: null);
     }
+
+    public function getArticle(): string
+    {
+        return $this->code ?? (string) $this->id;
+    }
+
+    public function getPrice(): float
+    {
+        return (float) $this->price;
+    }
+
+    public function getPriceOld(): ?float
+    {
+        return $this->price_old ? (float) $this->price_old : null;
+    }
+
+    public function hasDiscount(): bool
+    {
+        $old = $this->getPriceOld();
+
+        return $old !== null && $old > $this->getPrice();
+    }
+
+    public function getPriceDifferencePercentage(): ?int
+    {
+        if (! $this->hasDiscount()) {
+            return null;
+        }
+
+        return (int) round((1 - $this->getPrice() / $this->getPriceOld()) * 100);
+    }
+
+    public function getWeight(): float
+    {
+        return (float) ($this->weight ?? 0);
+    }
+
+    public function getQuantity(): int
+    {
+        return $this->quantity ?? 9999;
+    }
+
+    public function isActiveForOrder(): bool
+    {
+        return $this->is_active && $this->getQuantity() > 0;
+    }
+
+    public function isAvailability(): bool
+    {
+        return false;
+    }
+
+    public function isActiveForPreOrder(): bool
+    {
+        return false;
+    }
+
+    public function getWholesalePrices(): ?array
+    {
+        return null;
+    }
+
 }

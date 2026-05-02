@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
@@ -25,6 +26,11 @@ Route::get('/catalog/{category}/{filters?}', [CatalogController::class, 'show'])
 // Route::get('/product/{product:slug}', [ProductController::class, 'show'])->name('product.show');
 // Fallback одноуровневий /{slug} — для клієнтів без сегментів (СТАВИТИ ОСТАННІМ)
 // Route::get('/{slug}', [CatalogController::class, 'routeSlug'])->where('slug', '[^/]+')->name('slug.route');
+
+// Корзина (Phase 4)
+Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
+Route::patch('/cart/update/{rowId}', [CartController::class, 'update'])->name('cart.update');
+Route::delete('/cart/remove/{rowId}', [CartController::class, 'remove'])->name('cart.remove');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

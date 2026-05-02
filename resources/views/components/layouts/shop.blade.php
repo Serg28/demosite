@@ -26,6 +26,8 @@
                         <a href="/brands" class="hover:text-blue-600 transition">{{ __t('Бренди') }}</a>
                     </nav>
                     <div class="flex items-center gap-4">
+                        <livewire:cart.count />
+
                         @auth
                             <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:text-blue-600">
                                 {{ auth()->user()->name }}
@@ -51,6 +53,9 @@
                 &copy; {{ date('Y') }} {{ config('app.name') }}
             </div>
         </footer>
+
+        {{-- Корзина sidebar --}}
+        <livewire:cart.sidebar />
 
         {{-- Modal manager: lazy-loads Livewire modal components on demand --}}
         <livewire:components.modal-manager />

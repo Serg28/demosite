@@ -67,7 +67,8 @@ class TypeSenseService
         string $sortBy = 'relevance',
         string $sortDir = 'desc'
     ): ScoutBuilder {
-        $builder = Product::search($query ?: '*');
+        $builder = Product::search($query ?: '*')
+            ->query(fn ($q) => $q->cardFields());
 
         $builder->where('is_active', true);
 
@@ -148,7 +149,9 @@ class TypeSenseService
      */
     private function eloquentFallback(array $filters, int $page, int $pageSize): array
     {
-        $query = Product::query()->where('is_active', true);
+        $query = Product::query()
+            ->cardFields()
+            ->where('is_active', true);
 
         if (! empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);

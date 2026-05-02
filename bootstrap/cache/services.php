@@ -47,8 +47,10 @@
     43 => 'Pest\\Laravel\\PestServiceProvider',
     44 => 'Venturecraft\\Revisionable\\RevisionableServiceProvider',
     45 => 'App\\Providers\\AppServiceProvider',
-    46 => 'App\\Providers\\FortifyServiceProvider',
-    47 => 'App\\Providers\\VoltServiceProvider',
+    46 => 'App\\Providers\\BladeServiceProvider',
+    47 => 'App\\Providers\\EventServiceProvider',
+    48 => 'App\\Providers\\FortifyServiceProvider',
+    49 => 'App\\Providers\\VoltServiceProvider',
   ),
   'eager' => 
   array (
@@ -83,8 +85,10 @@
     28 => 'Pest\\Laravel\\PestServiceProvider',
     29 => 'Venturecraft\\Revisionable\\RevisionableServiceProvider',
     30 => 'App\\Providers\\AppServiceProvider',
-    31 => 'App\\Providers\\FortifyServiceProvider',
-    32 => 'App\\Providers\\VoltServiceProvider',
+    31 => 'App\\Providers\\BladeServiceProvider',
+    32 => 'App\\Providers\\EventServiceProvider',
+    33 => 'App\\Providers\\FortifyServiceProvider',
+    34 => 'App\\Providers\\VoltServiceProvider',
   ),
   'deferred' => 
   array (

@@ -3,6 +3,9 @@ import './bootstrap';
 // SEO: remove ?page=1 from URL
 import './base/remove-first-page-from-url';
 
+// GA4: select_item, view_item_list
+import './base/analytic';
+
 // Toast notifications (Alpine.js, замінює Web Component)
 import './components/notification';
 
@@ -32,5 +35,16 @@ import './catalog/pagination';
 
 // Catalog: sort links — SPA intercept, preserves filter path
 import './catalog/sort';
+
+// Cart: add-to-cart handler + GA4 analytics
+import './cart/basket';
+
+// Cart: open-cart-sidebar via [data-js-open-cart] click
+document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-js-open-cart]')) {
+        e.preventDefault();
+        window.Livewire?.dispatch('open-cart-sidebar');
+    }
+});
 
 // Alpine.js & Livewire are included by Livewire
