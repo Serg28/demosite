@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\BlockBotRequests;
+use App\Http\Middleware\RecoverBasketFromCookies;
 use App\Http\Middleware\RedirectSEO;
 use App\Http\Middleware\ValidateLivewireMethod;
 use Illuminate\Foundation\Application;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             RedirectSEO::class,
+            RecoverBasketFromCookies::class,
         ]);
 
         $middleware->alias([

@@ -54,8 +54,8 @@
             </div>
         </footer>
 
-        {{-- Корзина sidebar --}}
-        <livewire:cart.sidebar />
+        {{-- Корзина drawer --}}
+        <livewire:cart.drawer />
 
         {{-- Modal manager: lazy-loads Livewire modal components on demand --}}
         <livewire:components.modal-manager />

@@ -1,7 +1,7 @@
 const CART_CONFIG = {
     mode:           'sidebar',
     addUrl:         '/cart/add/',
-    sidebarEvent:   'open-cart-sidebar',
+    sidebarEvent:   'open-cart-drawer',
     selectors: {
         addToCart: '[data-js-add-to-cart]',
         spinner:   '[data-js-spinner]',
@@ -107,9 +107,9 @@ document.addEventListener('livewire:navigated', () => { cartHandler.init(); });
 
 // Alpine stepper для кількості товару (sidebar + сторінка товару)
 document.addEventListener('alpine:init', () => {
-    Alpine.data('cartStepper', ({ rowId, qty, unitPrice = 0, updateUrl }) => ({
+    Alpine.data('cartStepper', ({ rowId, unitPrice = 0, updateUrl }) => ({
         rowId,
-        qty,
+        qty: 0,
         unitPrice,
         updateUrl: updateUrl ?? `/cart/update/${rowId}`,
         _timer:    null,
@@ -121,11 +121,13 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
-            // Sync qty from data-qty when Livewire morphs the element (only when no pending save)
+            const v = parseInt(this.$el.dataset.qty, 10);
+            if (!isNaN(v)) { this.qty = v; }
+
             this._observer = new MutationObserver(() => {
                 if (this._syncing) { return; }
-                const v = parseInt(this.$el.dataset.qty, 10);
-                if (!isNaN(v) && v !== this.qty) { this.qty = v; }
+                const dv = parseInt(this.$el.dataset.qty, 10);
+                if (!isNaN(dv) && dv !== this.qty) { this.qty = dv; }
             });
             this._observer.observe(this.$el, { attributes: true, attributeFilter: ['data-qty'] });
         },

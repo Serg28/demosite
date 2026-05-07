@@ -1,7 +1,9 @@
+@props(['item', 'product' => null])
+
 @php
-    $product   = $products[$item->id] ?? null;
-    $unitPrice = (float) $item->price; // ціна в кошику завжди актуальна (CartService::updateAvailabilityAndPrices)
+    $unitPrice = (float) $item->price;
 @endphp
+
 <div wire:key="cart-item-{{ $item->rowId }}"
      data-qty="{{ $item->qty }}"
      x-data="cartStepper({ rowId: '{{ $item->rowId }}', unitPrice: {{ $unitPrice }} })"
@@ -28,12 +30,27 @@
         <p class="text-sm font-medium text-ink truncate">{{ $item->name }}</p>
         <p class="text-xs text-gray-500 mt-0.5">@money($unitPrice) {{ setting('currency') }}</p>
 
+        {{-- Оптова ціна: наступний рівень --}}
+        {{-- @php $tiers = $product?->getWholesalePrices(); $nextTier = null;
+             if ($tiers) {
+                 foreach ($tiers as $minQty => $tierPrice) {
+                     if ($minQty > $item->qty) { $nextTier = ['qty' => $minQty, 'price' => $tierPrice, 'left' => $minQty - $item->qty]; break; }
+                 }
+             }
+        @endphp
+        @if($nextTier)
+            <p class="text-xs text-brand mt-0.5">
+                {{ __t('Від') }} {{ $nextTier['qty'] }} {{ __t('шт.') }} — @money($nextTier['price']) {{ setting('currency') }}
+                ({{ __t('ще') }} {{ $nextTier['left'] }} {{ __t('шт.') }})
+            </p>
+        @endif --}}
+
         {{-- Кількість --}}
         <div class="flex items-center gap-2 mt-2">
             <button type="button"
                     @click="dec"
                     class="w-6 h-6 rounded border border-gray-200 flex items-center justify-center text-gray-500 hover:border-brand hover:text-brand transition-colors">
-                <span class="sr-only">-</span>−
+                <span class="sr-only">-</span>&minus;
             </button>
 
             <input type="number"

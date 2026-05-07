@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Models\Traits\HasSeo;
 use App\Models\Traits\HasTranslations;
 use App\Models\Traits\SlugUrlFieldTrait;
+use App\ValueObjects\PriceTier;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Category extends Model
 {
@@ -39,12 +41,22 @@ class Category extends Model
     ];
 
     protected $casts = [
-        'title' => 'json',
-        'is_active' => 'boolean',
-        'depth' => 'integer',
-        'lft' => 'integer',
-        'rgt' => 'integer',
+        'title'            => 'json',
+        'is_active'        => 'boolean',
+        'depth'            => 'integer',
+        'lft'              => 'integer',
+        'rgt'              => 'integer',
+        'wholesale_tiers'  => 'json',
     ];
+
+    /** @return Collection<int, PriceTier> */
+    public function getWholesaleTiers(): Collection
+    {
+        return collect($this->wholesale_tiers ?? [])
+            ->map(fn (array $tier) => PriceTier::from($tier))
+            ->sortBy('minQty')
+            ->values();
+    }
 
     public function products(): HasMany
     {

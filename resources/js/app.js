@@ -39,11 +39,11 @@ import './catalog/sort';
 // Cart: add-to-cart handler + GA4 analytics
 import './cart/basket';
 
-// Cart: open-cart-sidebar via [data-js-open-cart] click
+// Cart: open-cart-drawer via [data-js-open-cart] click
 document.addEventListener('click', (e) => {
     if (e.target.closest('[data-js-open-cart]')) {
         e.preventDefault();
-        window.Livewire?.dispatch('open-cart-sidebar');
+        window.Livewire?.dispatch('open-cart-drawer');
     }
 });
 

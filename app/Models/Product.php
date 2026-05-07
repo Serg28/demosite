@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Traits\HasTranslations;
 use App\Models\Traits\SlugUrlFieldTrait;
 use App\Traits\AnaliticProductTrait;
+use App\ValueObjects\PriceTier;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ class Product extends Model
     protected array $cardFields = [
         'id', 'title', 'code', 'price', 'price_old', 'picture',
         'is_active', 'quantity', 'slug', 'ua_url', 'ru_url', 'en_url',
+        'category_id', // потрібен для eager-load category → getWholesalePrices()
     ];
 
     /** @var string[] */
@@ -199,9 +201,25 @@ class Product extends Model
         return false;
     }
 
+    /**
+     * Оптові ціни за рівнями кількості (з категорії товару).
+     * Формат: [min_qty => price_per_unit]
+     *
+     * @return array<int, float>|null
+     */
     public function getWholesalePrices(): ?array
     {
-        return null;
+        $tiers = $this->category?->getWholesaleTiers();
+
+        if (! $tiers || $tiers->isEmpty()) {
+            return null;
+        }
+
+        $base = $this->getPrice();
+
+        return $tiers->mapWithKeys(
+            fn (PriceTier $tier) => [$tier->minQty => $tier->priceFor($base)]
+        )->all();
     }
 
 }

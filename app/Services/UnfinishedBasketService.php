@@ -57,6 +57,8 @@ class UnfinishedBasketService
 
     public function dispatchSave(): void
     {
+        // dispatchSync навмисно: saveRelationProducts() встановлює cookie() під час запиту.
+        // Async-варіант не має доступу до HTTP-відповіді → cookie не зберігається → дублювання кошиків.
         StoreUnfinishedBasket::dispatchSync();
     }
 
