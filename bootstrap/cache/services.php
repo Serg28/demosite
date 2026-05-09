@@ -48,9 +48,11 @@
     44 => 'Venturecraft\\Revisionable\\RevisionableServiceProvider',
     45 => 'App\\Providers\\AppServiceProvider',
     46 => 'App\\Providers\\BladeServiceProvider',
-    47 => 'App\\Providers\\EventServiceProvider',
-    48 => 'App\\Providers\\FortifyServiceProvider',
-    49 => 'App\\Providers\\VoltServiceProvider',
+    47 => 'App\\Providers\\DeliveryServiceProvider',
+    48 => 'App\\Providers\\EventServiceProvider',
+    49 => 'App\\Providers\\FortifyServiceProvider',
+    50 => 'App\\Providers\\PaymentServiceProvider',
+    51 => 'App\\Providers\\VoltServiceProvider',
   ),
   'eager' => 
   array (
@@ -86,9 +88,11 @@
     29 => 'Venturecraft\\Revisionable\\RevisionableServiceProvider',
     30 => 'App\\Providers\\AppServiceProvider',
     31 => 'App\\Providers\\BladeServiceProvider',
-    32 => 'App\\Providers\\EventServiceProvider',
-    33 => 'App\\Providers\\FortifyServiceProvider',
-    34 => 'App\\Providers\\VoltServiceProvider',
+    32 => 'App\\Providers\\DeliveryServiceProvider',
+    33 => 'App\\Providers\\EventServiceProvider',
+    34 => 'App\\Providers\\FortifyServiceProvider',
+    35 => 'App\\Providers\\PaymentServiceProvider',
+    36 => 'App\\Providers\\VoltServiceProvider',
   ),
   'deferred' => 
   array (

@@ -8,17 +8,29 @@ use App\Models\Traits\SlugUrlFieldTrait;
 use App\ValueObjects\PriceTier;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Kalnoy\Nestedset\NodeTrait;
 
 class Category extends Model
 {
-    use HasFactory, HasSeo, HasTranslations, SlugUrlFieldTrait;
+    use HasFactory, HasSeo, HasTranslations, NodeTrait, SlugUrlFieldTrait;
+
+    public function getLftName(): string
+    {
+        return 'lft';
+    }
+
+    public function getRgtName(): string
+    {
+        return 'rgt';
+    }
 
     public function getUrl(string $locale = ''): string
     {
-        return geturl('/catalog/' . $this->getUrlOrSlug($locale), $locale ?: null);
+        return geturl('/catalog/'.$this->getUrlOrSlug($locale), $locale ?: null);
     }
 
     /** Canonical fallback: explicit from DB or clean category URL (without filter segments). */
@@ -41,12 +53,12 @@ class Category extends Model
     ];
 
     protected $casts = [
-        'title'            => 'json',
-        'is_active'        => 'boolean',
-        'depth'            => 'integer',
-        'lft'              => 'integer',
-        'rgt'              => 'integer',
-        'wholesale_tiers'  => 'json',
+        'title' => 'json',
+        'is_active' => 'boolean',
+        'depth' => 'integer',
+        'lft' => 'integer',
+        'rgt' => 'integer',
+        'wholesale_tiers' => 'json',
     ];
 
     /** @return Collection<int, PriceTier> */
@@ -61,6 +73,11 @@ class Category extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
     }
 
     public function children(): HasMany

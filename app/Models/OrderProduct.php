@@ -2,26 +2,23 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrderProduct extends Model
 {
-    use HasFactory;
-
     protected $table = 'order_products';
 
-    protected $fillable = [
-        'order_id',
-        'product_id',
-        'quantity',
-        'price',
-    ];
+    protected $guarded = [];
 
-    protected $casts = [
-        'price' => 'decimal:2',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'price'      => 'float',
+            'base_price' => 'float',
+            'amount'     => 'float',
+        ];
+    }
 
     public function order(): BelongsTo
     {
@@ -32,5 +29,4 @@ class OrderProduct extends Model
     {
         return $this->belongsTo(Product::class);
     }
-
 }

@@ -47,6 +47,17 @@ trait HasSeo
         return strip_tags((string) $value);
     }
 
+    /**
+     * SEO-заголовок для хлібних крихт — seo_h1 без {{pagenumber}}, fallback → title.
+     * API-сумісний з linecore-demo SeoTrait::getSeoBreadcrumbTitle().
+     */
+    public function getSeoBreadcrumbTitle(): string
+    {
+        $h1 = $this->getSeoH1();
+
+        return (string) preg_replace('/\{\{pagenumber\}\}|%pagenumber%/i', '', $h1);
+    }
+
     public function getSeoKeywords(): string
     {
         return strip_tags((string) ($this->seo?->t('seo_keywords') ?? ''));
