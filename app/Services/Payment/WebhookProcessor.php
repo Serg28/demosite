@@ -44,6 +44,19 @@ class WebhookProcessor
 
     private function extractOrderId(array $payload): ?int
     {
-        return isset($payload['order_id']) ? (int) $payload['order_id'] : null;
+        if (isset($payload['order_id'])) {
+            return (int) $payload['order_id'];
+        }
+
+        // LiqPay: order_id знаходиться в закодованому полі data у форматі "{id}_{uniqid}"
+        if (isset($payload['data'])) {
+            $decoded = json_decode(base64_decode($payload['data']), true);
+            $rawId   = $decoded['order_id'] ?? null;
+            if ($rawId) {
+                return (int) explode('_', $rawId)[0];
+            }
+        }
+
+        return null;
     }
 }
