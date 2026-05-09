@@ -16,6 +16,16 @@
 | `title` | json | `{"ua": "...", "ru": "..."}` |
 | `address` | varchar | |
 | `is_active` | boolean | |
+| `meta` | json\|null | **Carrier-specific поля** (div. нижче) |
+
+**`meta` — поля по кар'єрах:**
+```jsonc
+// НП
+{"only_receiving_parcel": true, "max_weight": 30}
+
+// Rozetka
+{"can_give_out_tracks": true, "can_receive_tracks": false, "volume_weight": 30, "schedule": "..."}
+```
 
 Унікальний індекс: `(carrier, carrier_ref)`.
 
@@ -119,3 +129,58 @@ $order->deliveryWarehouse->carrier_ref   // UUID/int від API кар'єра
 $order->deliveryWarehouse->carrier       // 'np' | 'ukrposhta' | ...
 $order->city->carrierCodes               // всі прив'язки міста до кар'єрів
 ```
+
+## Сумісність з CMS-адмінкою (linecore-demo)
+
+### Принцип: per-carrier сторінки через фільтр
+
+Адмінка linecore-demo має окремі CMS-визначення для кожного кар'єра:
+`NpWarehouse`, `UkrposhtaWarehouse`, `JustinWarehouse`, `MeestWarehouse`, `RozetkaWarehouses`.
+
+У demo.loc це одна таблиця `delivery_warehouses`. Коли будемо будувати CMS для demo.loc — кожна сторінка кар'єра просто фільтрує `DeliveryWarehouse::where('carrier', 'np')` тощо.
+
+### `Delivery.type` vs `Delivery.slug`
+
+| linecore-demo `type` | demo.loc `slug` |
+|---|---|
+| `np` | `np_branch` |
+| `np_pochtomat` | `np_poshtamat` |
+| `np_address` | *(немає — адресна НП не виділена окремо)* |
+| `pickup` | `pickup` |
+| `ukrposhta` | `ukrposhta` |
+| `justin` | `justin` |
+| `meest` | `meest` |
+| `rozetka` | `rozetka` |
+
+У demo.loc використовується `slug` (замість `type`). При побудові CMS-визначення `Deliveries` для demo.loc — колонка `slug`.
+
+### Міста
+
+| linecore-demo | demo.loc |
+|---|---|
+| `np_cities` (NPCity) | `cities` + `city_carrier_codes` (carrier=np) |
+| `cities` (City — Укрпошта/Justin/Meest) | `cities` + `city_carrier_codes` |
+| `rozetka_cities` (RozetkaCity з полем `ref`) | `cities` + `city_carrier_codes` (carrier=rozetka, ref) |
+
+CMS-сторінки міст у demo.loc будуть фільтрувати через `city_carrier_codes.carrier`.
+
+### Специфічні поля кар'єрів → `meta`
+
+| Кар'єр | linecore-demo поле | demo.loc `meta` ключ |
+|---|---|---|
+| НП | `pochtomat` | → `type = 'poshtamat'` (в основній схемі) |
+| НП | `only_receiving_parcel` | `meta.only_receiving_parcel` |
+| НП | `max_weight` | `meta.max_weight` |
+| Rozetka | `ref` | → `carrier_ref` (в основній схемі) |
+| Rozetka | `can_give_out_tracks` | `meta.can_give_out_tracks` |
+| Rozetka | `can_receive_tracks` | `meta.can_receive_tracks` |
+| Rozetka | `volume_weight` | `meta.volume_weight` |
+| Rozetka | `schedule` | `meta.schedule` |
+
+### DeliveryPickupPoints
+
+Повністю сумісно: `delivery_pickup_points.delivery_id` + `city_id`. CMS-визначення `DeliveryPickupPoints` портується без змін.
+
+### Checkout UI
+
+`DeliverySelector` показує різний UI залежно від `deliverySlug` — аналогічно тому, як в linecore-demo checkout рендерить окремий шаблон для кожного `delivery.type`. Логіка збережена.

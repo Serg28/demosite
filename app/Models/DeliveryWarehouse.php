@@ -40,6 +40,7 @@ class DeliveryWarehouse extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'meta'      => 'array',
     ];
 
     public function city(): BelongsTo
