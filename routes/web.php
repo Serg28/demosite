@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\CheckoutController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use Livewire\Livewire;
@@ -31,6 +32,10 @@ Route::get('/catalog/{category}/{filters?}', [CatalogController::class, 'show'])
 Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
 Route::patch('/cart/update/{rowId}', [CartController::class, 'update'])->name('cart.update');
 Route::delete('/cart/remove/{rowId}', [CartController::class, 'remove'])->name('cart.remove');
+
+// Checkout (Phase 4.3)
+Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

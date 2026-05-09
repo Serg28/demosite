@@ -18,9 +18,14 @@ class City extends Model
 
     protected $translatable = ['title'];
 
-    public function npWarehouses(): HasMany
+    public function warehouses(): HasMany
     {
-        return $this->hasMany(NPWarehouse::class);
+        return $this->hasMany(DeliveryWarehouse::class);
+    }
+
+    public function carrierCodes(): HasMany
+    {
+        return $this->hasMany(CityCarrierCode::class);
     }
 
     public function scopeActive($query)

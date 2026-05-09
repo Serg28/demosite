@@ -51,9 +51,9 @@ class Order extends Model
         return $this->belongsTo(City::class);
     }
 
-    public function npWarehouse(): BelongsTo
+    public function deliveryWarehouse(): BelongsTo
     {
-        return $this->belongsTo(NPWarehouse::class);
+        return $this->belongsTo(DeliveryWarehouse::class);
     }
 
     public function deliveryPickupPoint(): BelongsTo

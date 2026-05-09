@@ -53,10 +53,7 @@ class CheckoutContext
 
     // Delivery details
     public ?int $cityId = null;
-    public ?int $npWarehouseId = null;
-    public ?int $ukrposhtaWarehouseId = null;
-    public ?int $justinWarehouseId = null;
-    public ?int $meestWarehouseId = null;
+    public ?int $deliveryWarehouseId = null;   // unified: delivery_warehouses.id
     public ?int $deliveryPickupPointId = null;
     public string $address = '';
 
