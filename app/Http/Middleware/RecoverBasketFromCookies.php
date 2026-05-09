@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\UnfinishedBasketService;
+use App\Services\Cart\UnfinishedBasketService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;

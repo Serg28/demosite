@@ -2,13 +2,13 @@
 
 namespace Tests\Feature\Checkout;
 
-use App\Gateways\LiqPayCodGateway;
-use App\Gateways\LiqPayGateway;
+use App\Services\Payment\Gateways\LiqPay\LiqPayCodGateway;
+use App\Services\Payment\Gateways\LiqPay\LiqPayGateway;
 use App\Models\Order;
 use App\Models\PayMethod;
 use App\Models\PaymentCredential;
 use App\Models\PaymentInvoice;
-use App\Services\Payment\LiqPayClient;
+use App\Services\Payment\Gateways\LiqPay\LiqPayClient;
 use App\Services\Payment\WebhookProcessor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;

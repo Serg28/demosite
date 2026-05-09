@@ -4,11 +4,11 @@ namespace App\Providers;
 
 use App\Services\Payment\CommissionCalculator;
 use App\Services\Payment\CredentialResolver;
-use App\Services\Payment\FlatCommissionStrategy;
 use App\Services\Payment\GatewayRegistry;
-use App\Services\Payment\MonoPartsCommissionStrategy;
 use App\Services\Payment\PaymentInvoiceService;
-use App\Services\Payment\PrivatPPCommissionStrategy;
+use App\Services\Payment\Strategies\FlatCommissionStrategy;
+use App\Services\Payment\Strategies\MonoPartsCommissionStrategy;
+use App\Services\Payment\Strategies\PrivatPPCommissionStrategy;
 use App\Services\Payment\WebhookProcessor;
 use Illuminate\Support\ServiceProvider;
 

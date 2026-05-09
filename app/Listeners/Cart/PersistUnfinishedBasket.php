@@ -2,7 +2,7 @@
 
 namespace App\Listeners\Cart;
 
-use App\Services\UnfinishedBasketService;
+use App\Services\Cart\UnfinishedBasketService;
 
 final class PersistUnfinishedBasket
 {

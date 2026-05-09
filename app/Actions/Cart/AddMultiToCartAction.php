@@ -4,7 +4,7 @@ namespace App\Actions\Cart;
 
 use App\DTO\CartResult;
 use App\Models\Product;
-use App\Services\CartService;
+use App\Services\Cart\CartService;
 use Illuminate\Support\Collection;
 
 class AddMultiToCartAction

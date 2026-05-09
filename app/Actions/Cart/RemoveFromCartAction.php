@@ -5,7 +5,7 @@ namespace App\Actions\Cart;
 use App\DTO\CartResult;
 use App\Events\Cart\CartItemRemoved;
 use App\Models\Product;
-use App\Services\CartService;
+use App\Services\Cart\CartService;
 use Linecore\Shoppingcart\Exceptions\InvalidRowIDException;
 
 class RemoveFromCartAction

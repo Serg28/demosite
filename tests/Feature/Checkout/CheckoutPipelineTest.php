@@ -10,9 +10,9 @@ use App\Models\PayMethod;
 use App\Models\PromoCode;
 use App\PipelineSteps\Checkout\ApplyDiscountsStep;
 use App\PipelineSteps\Checkout\CalculateTotalsStep;
-use App\Services\Payment\FlatCommissionStrategy;
+use App\Services\Payment\Strategies\FlatCommissionStrategy;
 use App\Services\Payment\GatewayRegistry;
-use App\Services\Payment\MonoPartsCommissionStrategy;
+use App\Services\Payment\Strategies\MonoPartsCommissionStrategy;
 use Tests\TestCase;
 
 class CheckoutPipelineTest extends TestCase

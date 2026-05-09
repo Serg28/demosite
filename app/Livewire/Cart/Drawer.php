@@ -4,7 +4,7 @@ namespace App\Livewire\Cart;
 
 use App\Actions\Cart\RemoveFromCartAction;
 use App\Models\Product;
-use App\Services\CartService;
+use App\Services\Cart\CartService;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Linecore\Shoppingcart\Facades\Cart;

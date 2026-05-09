@@ -8,16 +8,16 @@ return [
     | Додати новий гейтвей = 1 клас + 1 рядок тут
     */
     'gateways' => [
-        'liqpay'           => \App\Gateways\LiqPayGateway::class,
-        'liqpay_cod'       => \App\Gateways\LiqPayCodGateway::class,
-        'monopay'          => \App\Gateways\MonoPayGateway::class,
-        'monopayparts'     => \App\Gateways\MonoPayPartsGateway::class,
-        'wayforpay'        => \App\Gateways\WayForPayGateway::class,
-        'privatpayparts'   => \App\Gateways\PrivatPayPartsGateway::class,
-        'easypay'          => \App\Gateways\EasyPayGateway::class,
-        'novapay'          => \App\Gateways\NovaPayGateway::class,
-        'paylink'          => \App\Gateways\PayLinkGateway::class,
-        'platon'           => \App\Gateways\PlatonGateway::class,
+        'liqpay'           => \App\Services\Payment\Gateways\LiqPay\LiqPayGateway::class,
+        'liqpay_cod'       => \App\Services\Payment\Gateways\LiqPay\LiqPayCodGateway::class,
+        'monopay'          => \App\Services\Payment\Gateways\MonoPay\MonoPayGateway::class,
+        'monopayparts'     => \App\Services\Payment\Gateways\MonoPay\MonoPayPartsGateway::class,
+        'wayforpay'        => \App\Services\Payment\Gateways\WayForPay\WayForPayGateway::class,
+        'privatpayparts'   => \App\Services\Payment\Gateways\Privat\PrivatPayPartsGateway::class,
+        'easypay'          => \App\Services\Payment\Gateways\EasyPay\EasyPayGateway::class,
+        'novapay'          => \App\Services\Payment\Gateways\NovaPay\NovaPayGateway::class,
+        'paylink'          => \App\Services\Payment\Gateways\PayLink\PayLinkGateway::class,
+        'platon'           => \App\Services\Payment\Gateways\Platon\PlatonGateway::class,
     ],
 
     /*
@@ -26,8 +26,8 @@ return [
     |--------------------------------------------------------------------------
     */
     'commission_strategies' => [
-        'monopayparts'   => \App\Services\Payment\MonoPartsCommissionStrategy::class,
-        'privatpayparts' => \App\Services\Payment\PrivatPPCommissionStrategy::class,
+        'monopayparts'   => \App\Services\Payment\Strategies\MonoPartsCommissionStrategy::class,
+        'privatpayparts' => \App\Services\Payment\Strategies\PrivatPPCommissionStrategy::class,
     ],
 
     /*
@@ -35,7 +35,7 @@ return [
     | Дефолтна стратегія (flat відсоток)
     |--------------------------------------------------------------------------
     */
-    'default_commission_strategy' => \App\Services\Payment\FlatCommissionStrategy::class,
+    'default_commission_strategy' => \App\Services\Payment\Strategies\FlatCommissionStrategy::class,
 
     /*
     |--------------------------------------------------------------------------

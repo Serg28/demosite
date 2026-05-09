@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\UnfinishedBasketService;
+use App\Services\Cart\UnfinishedBasketService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 

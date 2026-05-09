@@ -9,7 +9,7 @@ return [
     | BasketCalculator: baseAmount = price×qty, totalAmount = baseAmount - discount,
     | subtotal = totalAmount. Без ПДВ (tax = 0).
     */
-    'calculator' => \App\Services\Shoppingcart\Calculators\BasketCalculator::class,
+    'calculator' => \App\Services\Cart\Calculators\BasketCalculator::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -67,9 +67,9 @@ return [
     */
     'pipes' => [
         'add' => [
-            \App\Cart\Pipes\ValidateProductPipe::class,
-            \App\Cart\Pipes\CheckAvailabilityPipe::class,
-            \App\Cart\Pipes\PerformAddPipe::class,
+            \App\Services\Cart\Pipes\ValidateProductPipe::class,
+            \App\Services\Cart\Pipes\CheckAvailabilityPipe::class,
+            \App\Services\Cart\Pipes\PerformAddPipe::class,
         ],
     ],
 
