@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\Order;
 use App\Models\PaymentInvoice;
 use App\Services\Payment\GatewayRegistry;
+use Illuminate\Support\Facades\DB;
 
 class WebhookProcessor
 {
@@ -32,14 +33,16 @@ class WebhookProcessor
             return false;
         }
 
-        $invoice = $this->invoiceService->latestForOrder($order);
-        if ($invoice) {
-            $this->invoiceService->markPaid($invoice, $payload);
-        }
+        return DB::transaction(function () use ($order, $payload): bool {
+            $invoice = $this->invoiceService->latestForOrder($order);
+            if ($invoice) {
+                $this->invoiceService->markPaid($invoice, $payload);
+            }
 
-        $order->update(['order_status_id' => 12]); // Оплачений
+            $order->update(['order_status_id' => 12]); // Оплачений
 
-        return true;
+            return true;
+        });
     }
 
     private function extractOrderId(array $payload): ?int
@@ -48,7 +51,12 @@ class WebhookProcessor
             return (int) $payload['order_id'];
         }
 
-        // LiqPay: order_id знаходиться в закодованому полі data у форматі "{id}_{uniqid}"
+        // MonoPay: reference = order_id як рядок
+        if (isset($payload['reference']) && is_numeric($payload['reference'])) {
+            return (int) $payload['reference'];
+        }
+
+        // LiqPay: order_id в закодованому полі data у форматі "{id}_{uniqid}"
         if (isset($payload['data'])) {
             $decoded = json_decode(base64_decode($payload['data']), true);
             $rawId   = $decoded['order_id'] ?? null;

@@ -19,10 +19,9 @@ class CredentialResolver
         $credential = PaymentCredential::query()
             ->where('pay_method_id', $payMethodId)
             ->where(function ($query) use ($dayOfWeek): void {
-                $query->where('day_of_week', $dayOfWeek)
-                    ->orWhere('is_default', 1);
+                $query->forDay($dayOfWeek)->orWhere('is_default', 1);
             })
-            ->orderByRaw('CASE WHEN day_of_week = ? THEN 0 ELSE 1 END', [$dayOfWeek])
+            ->orderByRaw('CASE WHEN JSON_CONTAINS(days_of_week, ?) THEN 0 ELSE 1 END', [(string) $dayOfWeek])
             ->first();
 
         return $credential?->credentials ?? [];

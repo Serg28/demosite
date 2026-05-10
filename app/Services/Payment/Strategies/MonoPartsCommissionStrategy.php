@@ -12,7 +12,8 @@ class MonoPartsCommissionStrategy implements CommissionStrategy
      *
      * @var array<int, float>
      */
-    private const RATES = [
+    /** @var array<int, float> */
+    private const DEFAULT_RATES = [
         2  => 1.49,
         4  => 2.49,
         6  => 3.49,
@@ -25,7 +26,8 @@ class MonoPartsCommissionStrategy implements CommissionStrategy
     public function calculate(float $amount, array $params = []): float
     {
         $months = (int) ($params['months'] ?? 2);
-        $rate = self::RATES[$months] ?? self::RATES[2];
+        $rates = $params['rates'] ?? self::DEFAULT_RATES;
+        $rate = $rates[$months] ?? $rates[array_key_first($rates)] ?? 1.49;
 
         return round($amount * $rate / 100, 2);
     }

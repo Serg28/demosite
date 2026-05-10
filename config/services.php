@@ -35,4 +35,50 @@ return [
         ],
     ],
 
+    'liqpay' => [
+        'public_key'  => env('LIQPAY_PUBLIC_KEY'),
+        'private_key' => env('LIQPAY_PRIVATE_KEY'),
+    ],
+
+    'monopay' => [
+        'token' => env('MONOPAY_TOKEN'),
+    ],
+
+    'wayforpay' => [
+        'merchant_account' => env('WAYFORPAY_MERCHANT_ACCOUNT'),
+        'merchant_secret'  => env('WAYFORPAY_MERCHANT_SECRET'),
+        'merchant_domain'  => env('WAYFORPAY_MERCHANT_DOMAIN'),
+    ],
+
+    'privatbank' => [
+        'merchant_id' => env('PRIVATBANK_MERCHANT_ID'),
+        'password'    => env('PRIVATBANK_PASSWORD'),
+    ],
+
+    'easypay' => [
+        'account_id' => env('EASYPAY_ACCOUNT_ID'),
+        'secret_key' => env('EASYPAY_SECRET_KEY'),
+    ],
+
+    'novapay' => [
+        'merchant_id' => env('NOVAPAY_MERCHANT_ID'),
+        'private_key' => env('NOVAPAY_PRIVATE_KEY'),
+    ],
+
+    'paylink' => [
+        'api_key' => env('PAYLINK_API_KEY'),
+    ],
+
+    'platon' => [
+        'key'      => env('PLATON_KEY'),
+        'password' => env('PLATON_PASSWORD'),
+    ],
+
+    'checkbox_ua' => [
+        'domain'      => env('CHECKBOX_DOMAIN'),
+        'login'       => env('CHECKBOX_LOGIN'),
+        'password'    => env('CHECKBOX_PASSWORD'),
+        'license_key' => env('CHECKBOX_LICENSE_KEY'),
+    ],
+
 ];

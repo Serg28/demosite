@@ -9,17 +9,29 @@ class PaymentInvoiceService
 {
     public function create(Order $order, float $amount): PaymentInvoice
     {
+        $existing = $order->paymentInvoices()
+            ->whereIn('status', ['pending', 'initiated'])
+            ->latest()
+            ->first();
+
+        if ($existing !== null) {
+            return $existing;
+        }
+
         return PaymentInvoice::create([
-            'order_id'   => $order->id,
-            'amount'     => $amount,
-            'status'     => 'pending',
+            'order_id' => $order->id,
+            'amount'   => $amount,
+            'status'   => 'pending',
         ]);
     }
 
     public function markInitiated(PaymentInvoice $invoice, string|array $gatewayResponse): void
     {
+        $url = is_string($gatewayResponse) ? $gatewayResponse : ($gatewayResponse['url'] ?? null);
+
         $invoice->update([
             'status'           => 'initiated',
+            'payment_url'      => $url,
             'gateway_response' => is_array($gatewayResponse) ? $gatewayResponse : ['url' => $gatewayResponse],
         ]);
     }
