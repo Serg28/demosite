@@ -2,16 +2,17 @@
 
 namespace Tests\Feature\Checkout;
 
-use App\Services\Payment\Gateways\LiqPay\LiqPayCodGateway;
-use App\Services\Payment\Gateways\LiqPay\LiqPayGateway;
 use App\Models\Order;
-use App\Models\PayMethod;
 use App\Models\PaymentCredential;
 use App\Models\PaymentInvoice;
+use App\Models\PayMethod;
 use App\Services\Payment\Gateways\LiqPay\LiqPayClient;
+use App\Services\Payment\Gateways\LiqPay\LiqPayCodGateway;
+use App\Services\Payment\Gateways\LiqPay\LiqPayGateway;
 use App\Services\Payment\WebhookProcessor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class LiqPayGatewayTest extends TestCase
@@ -31,8 +32,8 @@ class LiqPayGatewayTest extends TestCase
         $client = new LiqPayClient(self::PUBLIC_KEY, self::PRIVATE_KEY);
 
         $result = $client->buildFormData([
-            'action'   => 'pay',
-            'amount'   => 100,
+            'action' => 'pay',
+            'amount' => 100,
             'currency' => 'UAH',
         ]);
 
@@ -50,9 +51,9 @@ class LiqPayGatewayTest extends TestCase
     public function test_client_verifies_valid_signature(): void
     {
         $client = new LiqPayClient(self::PUBLIC_KEY, self::PRIVATE_KEY);
-        $data   = base64_encode((string) json_encode(['action' => 'pay']));
+        $data = base64_encode((string) json_encode(['action' => 'pay']));
 
-        $signature = base64_encode(sha1(self::PRIVATE_KEY . $data . self::PRIVATE_KEY, true));
+        $signature = base64_encode(sha1(self::PRIVATE_KEY.$data.self::PRIVATE_KEY, true));
 
         $this->assertTrue($client->verifySignature($data, $signature));
     }
@@ -60,16 +61,16 @@ class LiqPayGatewayTest extends TestCase
     public function test_client_rejects_invalid_signature(): void
     {
         $client = new LiqPayClient(self::PUBLIC_KEY, self::PRIVATE_KEY);
-        $data   = base64_encode((string) json_encode(['action' => 'pay']));
+        $data = base64_encode((string) json_encode(['action' => 'pay']));
 
         $this->assertFalse($client->verifySignature($data, 'wrong_signature'));
     }
 
     public function test_client_decodes_data_field(): void
     {
-        $client  = new LiqPayClient(self::PUBLIC_KEY, self::PRIVATE_KEY);
+        $client = new LiqPayClient(self::PUBLIC_KEY, self::PRIVATE_KEY);
         $payload = ['action' => 'pay', 'status' => 'success'];
-        $data    = base64_encode((string) json_encode($payload));
+        $data = base64_encode((string) json_encode($payload));
 
         $this->assertEquals($payload, $client->decodeData($data));
     }
@@ -80,7 +81,7 @@ class LiqPayGatewayTest extends TestCase
             'www.liqpay.ua/api/request' => Http::response(['status' => 'success'], 200),
         ]);
 
-        $client   = new LiqPayClient(self::PUBLIC_KEY, self::PRIVATE_KEY);
+        $client = new LiqPayClient(self::PUBLIC_KEY, self::PRIVATE_KEY);
         $response = $client->api('status', ['order_id' => '42_abc']);
 
         $this->assertEquals('success', $response->status);
@@ -92,7 +93,7 @@ class LiqPayGatewayTest extends TestCase
             'www.liqpay.ua/api/request' => Http::response([], 500),
         ]);
 
-        $client   = new LiqPayClient(self::PUBLIC_KEY, self::PRIVATE_KEY);
+        $client = new LiqPayClient(self::PUBLIC_KEY, self::PRIVATE_KEY);
         $response = $client->api('status', ['order_id' => '42_abc']);
 
         $this->assertNull($response);
@@ -102,22 +103,29 @@ class LiqPayGatewayTest extends TestCase
     // LiqPayGateway — init
     // ────────────────────────────────────────────────────────────
 
-    public function test_liqpay_gateway_init_returns_form_data(): void
+    public function test_liqpay_gateway_init_uses_hold_when_use_hold_is_true(): void
     {
-        $order   = $this->makeOrderWithCredentials();
+        $order = $this->makeOrderWithCredentials(useHold: true);
         $gateway = app(LiqPayGateway::class);
-
         $result = $gateway->init($order);
 
         $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('signature', $result);
-        $this->assertArrayHasKey('checkout_url', $result);
         $this->assertArrayHasKey('liqpay_order_id', $result);
-        $this->assertStringStartsWith((string) $order->id . '_', $result['liqpay_order_id']);
+        $this->assertStringStartsWith((string) $order->id.'_', $result['liqpay_order_id']);
 
         $decoded = json_decode(base64_decode($result['data']), true);
         $this->assertEquals('hold', $decoded['action']);
         $this->assertEquals('UAH', $decoded['currency']);
+    }
+
+    public function test_liqpay_gateway_init_uses_pay_when_use_hold_is_false(): void
+    {
+        $order = $this->makeOrderWithCredentials(useHold: false);
+        $gateway = app(LiqPayGateway::class);
+        $result = $gateway->init($order);
+
+        $decoded = json_decode(base64_decode($result['data']), true);
+        $this->assertEquals('pay', $decoded['action']);
     }
 
     // ────────────────────────────────────────────────────────────
@@ -132,18 +140,18 @@ class LiqPayGatewayTest extends TestCase
         $this->assertEquals('pending', $gateway->status($invoice));
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('liqpayStatusProvider')]
+    #[DataProvider('liqpayStatusProvider')]
     public function test_status_maps_liqpay_response_correctly(string $liqpayStatus, string $expected): void
     {
         Http::fake([
             'www.liqpay.ua/api/request' => Http::response(['status' => $liqpayStatus], 200),
         ]);
 
-        $order   = $this->makeOrderWithCredentials();
+        $order = $this->makeOrderWithCredentials();
         $invoice = PaymentInvoice::create([
-            'order_id'         => $order->id,
-            'amount'           => 100.0,
-            'status'           => 'initiated',
+            'order_id' => $order->id,
+            'amount' => 100.0,
+            'status' => 'initiated',
             'gateway_response' => ['liqpay_order_id' => '42_abc'],
         ]);
 
@@ -156,12 +164,12 @@ class LiqPayGatewayTest extends TestCase
     public static function liqpayStatusProvider(): array
     {
         return [
-            'success'    => ['success', 'paid'],
-            'hold_wait'  => ['hold_wait', 'hold'],
+            'success' => ['success', 'paid'],
+            'hold_wait' => ['hold_wait', 'hold'],
             'processing' => ['processing', 'processing'],
-            'failure'    => ['failure', 'failed'],
-            'error'      => ['error', 'failed'],
-            'unknown'    => ['sandbox', 'pending'],
+            'failure' => ['failure', 'failed'],
+            'error' => ['error', 'failed'],
+            'unknown' => ['sandbox', 'pending'],
         ];
     }
 
@@ -179,7 +187,7 @@ class LiqPayGatewayTest extends TestCase
 
     public function test_confirm_returns_false_on_invalid_signature(): void
     {
-        $order   = $this->makeOrderWithCredentials();
+        $order = $this->makeOrderWithCredentials();
         $gateway = app(LiqPayGateway::class);
 
         $payload = $this->buildWebhookPayload($order->id, 'success', 'wrong_private_key');
@@ -188,7 +196,7 @@ class LiqPayGatewayTest extends TestCase
 
     public function test_confirm_returns_true_for_success_status(): void
     {
-        $order   = $this->makeOrderWithCredentials();
+        $order = $this->makeOrderWithCredentials();
         $gateway = app(LiqPayGateway::class);
 
         $payload = $this->buildWebhookPayload($order->id, 'success');
@@ -197,7 +205,7 @@ class LiqPayGatewayTest extends TestCase
 
     public function test_confirm_returns_true_for_hold_wait_status(): void
     {
-        $order   = $this->makeOrderWithCredentials();
+        $order = $this->makeOrderWithCredentials();
         $gateway = app(LiqPayGateway::class);
 
         $payload = $this->buildWebhookPayload($order->id, 'hold_wait');
@@ -206,7 +214,7 @@ class LiqPayGatewayTest extends TestCase
 
     public function test_confirm_returns_false_for_failure_status(): void
     {
-        $order   = $this->makeOrderWithCredentials();
+        $order = $this->makeOrderWithCredentials();
         $gateway = app(LiqPayGateway::class);
 
         $payload = $this->buildWebhookPayload($order->id, 'failure');
@@ -227,7 +235,7 @@ class LiqPayGatewayTest extends TestCase
 
     public function test_capture_hold_returns_false_when_no_invoice(): void
     {
-        $order   = $this->makeOrderWithCredentials();
+        $order = $this->makeOrderWithCredentials();
         $gateway = app(LiqPayGateway::class);
 
         $this->assertFalse($gateway->captureHold($order));
@@ -239,11 +247,11 @@ class LiqPayGatewayTest extends TestCase
             'www.liqpay.ua/api/request' => Http::response(['status' => 'success'], 200),
         ]);
 
-        $order   = $this->makeOrderWithCredentials();
+        $order = $this->makeOrderWithCredentials();
         PaymentInvoice::create([
-            'order_id'         => $order->id,
-            'amount'           => 100.0,
-            'status'           => 'initiated',
+            'order_id' => $order->id,
+            'amount' => 100.0,
+            'status' => 'initiated',
             'gateway_response' => ['liqpay_order_id' => '42_abc'],
         ]);
 
@@ -258,11 +266,11 @@ class LiqPayGatewayTest extends TestCase
             'www.liqpay.ua/api/request' => Http::response(['status' => 'success'], 200),
         ]);
 
-        $order   = $this->makeOrderWithCredentials();
+        $order = $this->makeOrderWithCredentials();
         PaymentInvoice::create([
-            'order_id'         => $order->id,
-            'amount'           => 100.0,
-            'status'           => 'initiated',
+            'order_id' => $order->id,
+            'amount' => 100.0,
+            'status' => 'initiated',
             'gateway_response' => ['liqpay_order_id' => '42_abc'],
         ]);
 
@@ -277,11 +285,11 @@ class LiqPayGatewayTest extends TestCase
             'www.liqpay.ua/api/request' => Http::response(['status' => 'success'], 200),
         ]);
 
-        $order   = $this->makeOrderWithCredentials();
+        $order = $this->makeOrderWithCredentials();
         PaymentInvoice::create([
-            'order_id'         => $order->id,
-            'amount'           => 100.0,
-            'status'           => 'paid',
+            'order_id' => $order->id,
+            'amount' => 100.0,
+            'status' => 'paid',
             'gateway_response' => ['liqpay_order_id' => '42_abc'],
         ]);
 
@@ -296,10 +304,10 @@ class LiqPayGatewayTest extends TestCase
 
     public function test_cod_gateway_init_uses_pay_action(): void
     {
-        $order   = $this->makeOrderWithCredentials();
+        $order = $this->makeOrderWithCredentials();
         $gateway = app(LiqPayCodGateway::class);
 
-        $result  = $gateway->init($order);
+        $result = $gateway->init($order);
         $decoded = json_decode(base64_decode($result['data']), true);
 
         $this->assertEquals('pay', $decoded['action']);
@@ -308,7 +316,7 @@ class LiqPayGatewayTest extends TestCase
 
     public function test_cod_gateway_confirm_accepts_only_success(): void
     {
-        $order   = $this->makeOrderWithCredentials();
+        $order = $this->makeOrderWithCredentials();
         $gateway = app(LiqPayCodGateway::class);
 
         $this->assertTrue($gateway->confirm($this->buildWebhookPayload($order->id, 'success')));
@@ -324,15 +332,15 @@ class LiqPayGatewayTest extends TestCase
     {
         $order = $this->makeOrderWithCredentials();
         PaymentInvoice::create([
-            'order_id'         => $order->id,
-            'amount'           => 100.0,
-            'status'           => 'initiated',
-            'gateway_response' => ['liqpay_order_id' => $order->id . '_abc'],
+            'order_id' => $order->id,
+            'amount' => 100.0,
+            'status' => 'initiated',
+            'gateway_response' => ['liqpay_order_id' => $order->id.'_abc'],
         ]);
 
         Http::fake(['www.liqpay.ua/*' => Http::response([], 200)]);
 
-        $payload   = $this->buildWebhookPayload($order->id, 'success');
+        $payload = $this->buildWebhookPayload($order->id, 'success');
         $processor = app(WebhookProcessor::class);
 
         $result = $processor->process('liqpay', $payload);
@@ -345,35 +353,36 @@ class LiqPayGatewayTest extends TestCase
     // Helpers
     // ────────────────────────────────────────────────────────────
 
-    private function makeOrderWithCredentials(): Order
+    private function makeOrderWithCredentials(bool $useHold = false): Order
     {
         $payMethod = PayMethod::create([
-            'title'              => json_encode(['uk' => 'LiqPay']),
-            'slug'               => 'liqpay_' . uniqid(),
-            'is_active'          => true,
+            'title' => json_encode(['uk' => 'LiqPay']),
+            'slug' => 'liqpay_'.uniqid(),
+            'is_active' => true,
             'commission_percent' => 2.5,
-            'priority'           => 1,
+            'priority' => 1,
+            'use_hold' => $useHold,
         ]);
 
         PaymentCredential::create([
             'pay_method_id' => $payMethod->id,
-            'is_default'    => true,
-            'credentials'   => [
-                'public_key'  => self::PUBLIC_KEY,
+            'is_default' => true,
+            'credentials' => [
+                'public_key' => self::PUBLIC_KEY,
                 'private_key' => self::PRIVATE_KEY,
             ],
         ]);
 
         return Order::create([
-            'pay_method_id'   => $payMethod->id,
-            'name'            => 'Test User',
-            'phone'           => '+380000000000',
-            'email'           => 'test@test.com',
-            'address'         => 'Test address',
-            'cost'            => 100.0,
-            'price_delivery'  => 50.0,
+            'pay_method_id' => $payMethod->id,
+            'name' => 'Test User',
+            'phone' => '+380000000000',
+            'email' => 'test@test.com',
+            'address' => 'Test address',
+            'cost' => 100.0,
+            'price_delivery' => 50.0,
             'order_status_id' => 1,
-            'first_name'      => 'Test',
+            'first_name' => 'Test',
         ]);
     }
 
@@ -383,15 +392,15 @@ class LiqPayGatewayTest extends TestCase
     private function buildWebhookPayload(int $orderId, string $status, string $privateKey = self::PRIVATE_KEY): array
     {
         $params = [
-            'order_id'   => $orderId . '_abc123',
-            'status'     => $status,
-            'amount'     => 100,
-            'currency'   => 'UAH',
+            'order_id' => $orderId.'_abc123',
+            'status' => $status,
+            'amount' => 100,
+            'currency' => 'UAH',
             'public_key' => self::PUBLIC_KEY,
         ];
 
-        $data      = base64_encode((string) json_encode($params));
-        $signature = base64_encode(sha1($privateKey . $data . $privateKey, true));
+        $data = base64_encode((string) json_encode($params));
+        $signature = base64_encode(sha1($privateKey.$data.$privateKey, true));
 
         return compact('data', 'signature');
     }

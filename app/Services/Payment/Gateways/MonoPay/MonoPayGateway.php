@@ -10,35 +10,65 @@ use App\Models\PaymentInvoice;
 use App\Services\Payment\CredentialResolver;
 use Illuminate\Support\Facades\Log;
 
-class MonoPayGateway implements PaymentGatewayInterface, Holdable, Returnable
+class MonoPayGateway implements Holdable, PaymentGatewayInterface, Returnable
 {
     public function __construct(private readonly CredentialResolver $credentials) {}
 
     /**
-     * Ініціалізує hold-платіж через MonoPay.
+     * Ініціалізує платіж через MonoPay.
+     * Тип операції (hold/debit) визначається полем use_hold на PayMethod.
+     * basketOrder — реальний список товарів замовлення (MonoPay відображає їх у чеку).
      *
      * @return array{invoice_id: string, page_url: string}
      */
     public function init(Order $order): array
     {
+        $order->loadMissing(['payMethod', 'products']);
         $client = $this->makeClient($order->pay_method_id);
+        $paymentType = ($order->payMethod?->use_hold ?? false) ? 'hold' : 'debit';
+
         $result = $client->create([
-            'amount'           => $this->toKopecks($order->getTotalCost()),
-            'ccy'              => 980, // UAH
+            'amount' => $this->toKopecks($order->getTotalCost()),
+            'ccy' => 980, // UAH
             'merchantPaymInfo' => [
                 'reference'   => (string) $order->id,
-                'destination' => __t('Оплата замовлення № ') . $order->id,
+                'destination' => __t('Оплата замовлення № ').$order->id,
+                'basketOrder' => $this->buildBasketOrder($order),
             ],
-            'redirectUrl'      => route('checkout.success', $order),
-            'webHookUrl'       => url('/payment/webhook/monopay'),
-            'validity'         => 3600,
-            'paymentType'      => 'hold',
+            'redirectUrl' => route('checkout.success', $order),
+            'webHookUrl' => url('/payment/webhook/monopay'),
+            'validity' => 3600 * 24 * 7, // 7 днів (hold закінчується через 9 днів)
+            'paymentType' => $paymentType,
         ]);
 
         return [
             'invoice_id' => $result['invoiceId'] ?? '',
-            'page_url'   => $result['pageUrl'] ?? '',
+            'page_url' => $result['pageUrl'] ?? '',
         ];
+    }
+
+    /**
+     * Формує basketOrder для MonoPay — список товарів замовлення.
+     *
+     * @return array<int, array{name: string, qty: int, sum: int, unit: string}>
+     */
+    private function buildBasketOrder(Order $order): array
+    {
+        if ($order->products->isEmpty()) {
+            return [];
+        }
+
+        return $order->products->map(fn ($p) => [
+            'name' => $this->sanitizeProductName($p->title ?? __t('Товар')),
+            'qty'  => (int) $p->count,
+            'sum'  => (int) round($p->price * 100),
+            'unit' => 'шт.',
+        ])->toArray();
+    }
+
+    private function sanitizeProductName(string $name): string
+    {
+        return str_replace(["'", '"', '&#39;', '&'], '', htmlspecialchars_decode($name));
     }
 
     /**
@@ -53,7 +83,7 @@ class MonoPayGateway implements PaymentGatewayInterface, Holdable, Returnable
         }
 
         $invoice->loadMissing('order');
-        $client   = $this->makeClient($invoice->order->pay_method_id);
+        $client = $this->makeClient($invoice->order->pay_method_id);
         $response = $client->status($invoiceId);
 
         return $this->mapStatus($response?->status ?? '');
@@ -67,13 +97,13 @@ class MonoPayGateway implements PaymentGatewayInterface, Holdable, Returnable
      */
     public function confirm(array $payload): bool
     {
-        $status    = $payload['status'] ?? '';
-        $rawBody   = $payload['_raw_body'] ?? null;
+        $status = $payload['status'] ?? '';
+        $rawBody = $payload['_raw_body'] ?? null;
 
         if ($rawBody !== null) {
-            $xSign     = $payload['_x_sign'] ?? '';
+            $xSign = $payload['_x_sign'] ?? '';
             $reference = $payload['reference'] ?? null;
-            $order     = $reference ? Order::find((int) $reference) : null;
+            $order = $reference ? Order::find((int) $reference) : null;
 
             if ($order) {
                 $client = $this->makeClient($order->pay_method_id);
@@ -102,7 +132,7 @@ class MonoPayGateway implements PaymentGatewayInterface, Holdable, Returnable
             return false;
         }
 
-        $client   = $this->makeClient($order->pay_method_id);
+        $client = $this->makeClient($order->pay_method_id);
         $response = $client->finalize($invoiceId, $this->toKopecks($order->getTotalCost()));
 
         return $response !== null;
@@ -119,7 +149,7 @@ class MonoPayGateway implements PaymentGatewayInterface, Holdable, Returnable
             return false;
         }
 
-        $client   = $this->makeClient($order->pay_method_id);
+        $client = $this->makeClient($order->pay_method_id);
         $response = $client->cancel($invoiceId);
 
         return $response !== null;
@@ -136,7 +166,7 @@ class MonoPayGateway implements PaymentGatewayInterface, Holdable, Returnable
             return false;
         }
 
-        $client   = $this->makeClient($order->pay_method_id);
+        $client = $this->makeClient($order->pay_method_id);
         $response = $client->cancel($invoiceId);
 
         return $response !== null;
@@ -162,11 +192,12 @@ class MonoPayGateway implements PaymentGatewayInterface, Holdable, Returnable
     private function mapStatus(string $monoStatus): string
     {
         return match ($monoStatus) {
-            'success'                          => 'paid',
-            'hold'                             => 'hold',
-            'processing'                       => 'processing',
-            'failure', 'reversed', 'expired'   => 'failed',
-            default                            => 'pending',
+            'success' => 'paid',
+            'hold' => 'hold',
+            'processing' => 'processing',
+            'reversed' => 'refunded',
+            'failure', 'expired' => 'failed',
+            default => 'pending',
         };
     }
 

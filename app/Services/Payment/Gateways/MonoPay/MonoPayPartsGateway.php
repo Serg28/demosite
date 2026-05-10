@@ -2,17 +2,19 @@
 
 namespace App\Services\Payment\Gateways\MonoPay;
 
+use App\Contracts\Holdable;
 use App\Contracts\Installmentable;
 use App\Contracts\PaymentGatewayInterface;
+use App\Contracts\Returnable;
 use App\Models\Order;
 use App\Models\PaymentInvoice;
 use App\Services\Payment\CredentialResolver;
 use App\Services\Payment\Strategies\MonoPartsCommissionStrategy;
 use Illuminate\Support\Facades\Log;
 
-class MonoPayPartsGateway implements PaymentGatewayInterface, Installmentable
+class MonoPayPartsGateway implements Holdable, Installmentable, PaymentGatewayInterface, Returnable
 {
-    /** Доступні строки розстрочки (місяці). */
+    /** @var int[] Доступні строки розстрочки (місяці) за замовчуванням. */
     private const AVAILABLE_MONTHS = [2, 4, 6, 9, 12, 18, 24];
 
     public function __construct(
@@ -21,80 +23,169 @@ class MonoPayPartsGateway implements PaymentGatewayInterface, Installmentable
     ) {}
 
     /**
-     * Ініціалізує платіж частинами через MonoPay.
-     * Строк розстрочки вибирає покупець на сторінці MonoPay.
+     * Ініціалізує заявку MonoPayParts через MonoBank Parts API.
+     * Покупець отримує push-повідомлення у додатку монобанк.
      *
-     * @return array{invoice_id: string, page_url: string}
+     * @return array{mono_order_id: string, store_order_id: string, url: string}
      */
     public function init(Order $order): array
     {
+        $order->loadMissing(['payMethod', 'products']);
         $client = $this->makeClient($order->pay_method_id);
-        $result = $client->create([
-            'amount'           => $this->toKopecks($order->getTotalCost()),
-            'ccy'              => 980, // UAH
-            'merchantPaymInfo' => [
-                'reference'   => (string) $order->id,
-                'destination' => __t('Оплата замовлення № ') . $order->id . ' ' . __t('у розстрочку'),
+
+        $storeOrderId = $order->id . '_' . time();
+        $months       = (int) ($order->installment_months ?? 0);
+        $partsCount   = $months > 0 ? [$months] : self::AVAILABLE_MONTHS;
+
+        $body = [
+            'store_order_id'     => $storeOrderId,
+            'client_phone'       => $order->phone ?? '',
+            'total_sum'          => round($order->getTotalCost(), 2),
+            'invoice'            => [
+                'date'   => now()->format('Y-m-d'),
+                'number' => (string) $order->id,
+                'source' => 'INTERNET',
             ],
-            'redirectUrl'      => route('checkout.success', $order),
-            'webHookUrl'       => url('/payment/webhook/monopayparts'),
-            'validity'         => 3600,
-            'paymentType'      => 'deferred',
-        ]);
+            'available_programs' => [
+                [
+                    'available_parts_count' => $partsCount,
+                    'type'                  => 'payment_installments',
+                ],
+            ],
+            'products'           => $this->buildProducts($order),
+            'result_callback'    => url('/payment/webhook/monopayparts'),
+        ];
+
+        $response = $client->create($body) ?? [];
+
+        if (isset($response['errors'])) {
+            Log::channel('payments')->error('MonoParts: order create failed', [
+                'order_id' => $order->id,
+                'errors'   => $response['errors'],
+            ]);
+        }
 
         return [
-            'invoice_id' => $result['invoiceId'] ?? '',
-            'page_url'   => $result['pageUrl'] ?? '',
+            'mono_order_id'  => $response['order_id'] ?? '',
+            'store_order_id' => $storeOrderId,
+            'url'            => route('checkout.success', $order),
         ];
     }
 
     /**
-     * Перевіряє поточний статус оплати через MonoPay API.
+     * Перевіряє поточний статус заявки через MonoBank Parts API.
      */
     public function status(PaymentInvoice $invoice): string
     {
-        $invoiceId = $invoice->gateway_response['invoice_id'] ?? null;
+        $monoOrderId = $invoice->gateway_response['mono_order_id'] ?? null;
 
-        if (! $invoiceId) {
+        if (! $monoOrderId) {
             return 'pending';
         }
 
         $invoice->loadMissing('order');
         $client   = $this->makeClient($invoice->order->pay_method_id);
-        $response = $client->status($invoiceId);
+        $response = $client->state($monoOrderId) ?? [];
 
-        return $this->mapStatus($response?->status ?? '');
+        return $this->mapStatus(
+            $response['state'] ?? '',
+            $response['order_sub_state'] ?? ''
+        );
     }
 
     /**
-     * Підтверджує webhook від MonoPay.
+     * Підтверджує webhook від MonoBank Parts: перевіряє підпис та стан заявки.
+     * WAITING_FOR_STORE_CONFIRM = кредит підтверджено клієнтом, можна передавати товар.
      *
-     * @param  array{status: string, reference?: string, _raw_body?: string, _x_sign?: string}  $payload
+     * @param  array<string, mixed>  $payload
      */
     public function confirm(array $payload): bool
     {
-        $status  = $payload['status'] ?? '';
         $rawBody = $payload['_raw_body'] ?? null;
 
         if ($rawBody !== null) {
-            $xSign     = $payload['_x_sign'] ?? '';
-            $reference = $payload['reference'] ?? null;
-            $order     = $reference ? \App\Models\Order::find((int) $reference) : null;
+            $signature = $payload['_signature'] ?? '';
+            $orderId   = $payload['order_id'] ?? null;
 
-            if ($order) {
-                $client = $this->makeClient($order->pay_method_id);
+            if ($orderId) {
+                $invoice = PaymentInvoice::where('gateway_response->mono_order_id', $orderId)->first();
 
-                if (! $client->verifyWebhookSignature($rawBody, $xSign)) {
-                    Log::channel('payments')->warning('MonoPayParts: invalid webhook signature', [
-                        'reference' => $reference,
-                    ]);
+                if ($invoice) {
+                    $invoice->loadMissing('order');
+                    $client = $this->makeClient($invoice->order->pay_method_id);
 
-                    return false;
+                    if (! $client->verifyWebhookSignature($rawBody, $signature)) {
+                        Log::channel('payments')->warning('MonoParts: invalid webhook signature', [
+                            'mono_order_id' => $orderId,
+                        ]);
+
+                        return false;
+                    }
                 }
             }
         }
 
-        return $status === 'success';
+        $state    = $payload['state'] ?? '';
+        $subState = $payload['order_sub_state'] ?? '';
+
+        if ($state === 'IN_PROCESS' && $subState === 'WAITING_FOR_STORE_CONFIRM') {
+            return true;
+        }
+
+        return $state === 'SUCCESS'
+            && in_array($subState, ['ACTIVE', 'DONE', 'EARLY_CLOSED_BY_CLIENT'], true);
+    }
+
+    /**
+     * Підтверджує видачу товару клієнтові — WAITING_FOR_STORE_CONFIRM → confirm.
+     */
+    public function captureHold(Order $order): bool
+    {
+        $monoOrderId = $this->resolveMonoOrderId($order);
+
+        if (! $monoOrderId) {
+            return false;
+        }
+
+        $client   = $this->makeClient($order->pay_method_id);
+        $response = $client->confirm($monoOrderId) ?? [];
+
+        return isset($response['state']) && ! isset($response['error']);
+    }
+
+    /**
+     * Скасовує заявку (товар не видано клієнтові).
+     */
+    public function releaseHold(Order $order): bool
+    {
+        $monoOrderId = $this->resolveMonoOrderId($order);
+
+        if (! $monoOrderId) {
+            return false;
+        }
+
+        $client   = $this->makeClient($order->pay_method_id);
+        $response = $client->reject($monoOrderId) ?? [];
+
+        return isset($response['state']) && ! isset($response['error']);
+    }
+
+    /**
+     * Повертає кошти клієнтові (повне повернення).
+     */
+    public function return(Order $order): bool
+    {
+        $monoOrderId = $this->resolveMonoOrderId($order);
+
+        if (! $monoOrderId) {
+            return false;
+        }
+
+        $storeReturnId = $order->id . '_ret_' . time();
+        $client        = $this->makeClient($order->pay_method_id);
+        $response      = $client->returnOrder($monoOrderId, $storeReturnId, $order->getTotalCost()) ?? [];
+
+        return isset($response['state']) && ! isset($response['error']);
     }
 
     /**
@@ -119,25 +210,67 @@ class MonoPayPartsGateway implements PaymentGatewayInterface, Installmentable
         return $this->commission->calculate($amount, ['months' => $months]);
     }
 
-    private function makeClient(int $payMethodId): MonoPayClient
+    private function buildProducts(Order $order): array
+    {
+        if ($order->products->isNotEmpty()) {
+            return $order->products->map(fn ($p) => [
+                'name'  => $this->sanitizeProductName($p->title ?? __t('Товар')),
+                'count' => (int) $p->count,
+                'sum'   => round((float) $p->price, 2),
+            ])->toArray();
+        }
+
+        return [
+            [
+                'name'  => __t('Замовлення № ') . $order->id,
+                'count' => 1,
+                'sum'   => round($order->getTotalCost(), 2),
+            ],
+        ];
+    }
+
+    private function sanitizeProductName(string $name): string
+    {
+        return str_replace(["'", '"', '&#39;', '&'], '', htmlspecialchars_decode($name));
+    }
+
+    private function makeClient(int $payMethodId): MonoPartsClient
     {
         $creds = $this->credentials->resolve($payMethodId);
 
-        return new MonoPayClient($creds['token'] ?? '');
+        return new MonoPartsClient(
+            storeId: $creds['store_id'] ?? '',
+            secret:  $creds['secret'] ?? '',
+            apiUrl:  $creds['api_url'] ?? config('services.monopayparts.api_base_url', 'https://u2-demo-ext.mono.st4g3.com'),
+        );
     }
 
-    private function mapStatus(string $monoStatus): string
+    private function resolveMonoOrderId(Order $order): ?string
     {
-        return match ($monoStatus) {
-            'success'                        => 'paid',
-            'processing'                     => 'processing',
-            'failure', 'reversed', 'expired' => 'failed',
-            default                          => 'pending',
-        };
+        return $order->paymentInvoices()
+            ->latest()
+            ->first()
+            ?->gateway_response['mono_order_id'] ?? null;
     }
 
-    private function toKopecks(float $amount): int
+    private function mapStatus(string $state, string $subState): string
     {
-        return (int) round($amount * 100);
+        if ($state === 'SUCCESS') {
+            return match ($subState) {
+                'RETURNED'                                    => 'refunded',
+                'ACTIVE', 'DONE', 'EARLY_CLOSED_BY_CLIENT'   => 'paid',
+                default                                       => 'paid',
+            };
+        }
+
+        if ($state === 'IN_PROCESS') {
+            return $subState === 'WAITING_FOR_STORE_CONFIRM' ? 'hold' : 'processing';
+        }
+
+        if ($state === 'FAIL') {
+            return 'failed';
+        }
+
+        return 'pending';
     }
 }

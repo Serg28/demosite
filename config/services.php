@@ -36,7 +36,7 @@ return [
     ],
 
     'liqpay' => [
-        'public_key'  => env('LIQPAY_PUBLIC_KEY'),
+        'public_key' => env('LIQPAY_PUBLIC_KEY'),
         'private_key' => env('LIQPAY_PRIVATE_KEY'),
     ],
 
@@ -46,38 +46,44 @@ return [
 
     'wayforpay' => [
         'merchant_account' => env('WAYFORPAY_MERCHANT_ACCOUNT'),
-        'merchant_secret'  => env('WAYFORPAY_MERCHANT_SECRET'),
-        'merchant_domain'  => env('WAYFORPAY_MERCHANT_DOMAIN'),
+        'merchant_secret' => env('WAYFORPAY_MERCHANT_SECRET'),
+        'merchant_domain' => env('WAYFORPAY_MERCHANT_DOMAIN'),
     ],
 
     'privatbank' => [
         'merchant_id' => env('PRIVATBANK_MERCHANT_ID'),
-        'password'    => env('PRIVATBANK_PASSWORD'),
+        'password' => env('PRIVATBANK_PASSWORD'),
     ],
 
     'easypay' => [
-        'account_id' => env('EASYPAY_ACCOUNT_ID'),
+        'partner_key' => env('EASYPAY_PARTNER_KEY'),
+        'service_key' => env('EASYPAY_SERVICE_KEY'),
         'secret_key' => env('EASYPAY_SECRET_KEY'),
     ],
 
     'novapay' => [
         'merchant_id' => env('NOVAPAY_MERCHANT_ID'),
         'private_key' => env('NOVAPAY_PRIVATE_KEY'),
+        'api_base_url' => env('NOVAPAY_API_BASE_URL', 'https://api-ecom.novapay.ua/v1'),
     ],
 
     'paylink' => [
-        'api_key' => env('PAYLINK_API_KEY'),
+        'merchant_id' => env('PAYLINK_MERCHANT_ID'),
+        'private_key' => env('PAYLINK_PRIVATE_KEY'),
+        'api_base_url' => env('PAYLINK_API_BASE_URL', 'https://api-inst4.paylink.com.ua'),
+        'frame_base_url' => env('PAYLINK_FRAME_BASE_URL', 'https://inst4.paylink.com.ua'),
     ],
 
     'platon' => [
-        'key'      => env('PLATON_KEY'),
+        'key' => env('PLATON_KEY'),
         'password' => env('PLATON_PASSWORD'),
+        'api_base_url' => env('PLATON_API_BASE_URL', 'https://secure.platononline.com'),
     ],
 
     'checkbox_ua' => [
-        'domain'      => env('CHECKBOX_DOMAIN'),
-        'login'       => env('CHECKBOX_LOGIN'),
-        'password'    => env('CHECKBOX_PASSWORD'),
+        'domain' => env('CHECKBOX_DOMAIN'),
+        'login' => env('CHECKBOX_LOGIN'),
+        'password' => env('CHECKBOX_PASSWORD'),
         'license_key' => env('CHECKBOX_LICENSE_KEY'),
     ],
 

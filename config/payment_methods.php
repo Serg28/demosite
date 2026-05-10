@@ -3,14 +3,14 @@
 return [
     'liqpay' => [
         'credentials' => [
-            'public_key'  => 'services.liqpay.public_key',
+            'public_key' => 'services.liqpay.public_key',
             'private_key' => 'services.liqpay.private_key',
         ],
     ],
 
     'liqpay_cod' => [
         'credentials' => [
-            'public_key'  => 'services.liqpay.public_key',
+            'public_key' => 'services.liqpay.public_key',
             'private_key' => 'services.liqpay.private_key',
         ],
     ],
@@ -30,21 +30,22 @@ return [
     'wayforpay' => [
         'credentials' => [
             'merchant_account' => 'services.wayforpay.merchant_account',
-            'merchant_secret'  => 'services.wayforpay.merchant_secret',
-            'merchant_domain'  => 'services.wayforpay.merchant_domain',
+            'merchant_secret' => 'services.wayforpay.merchant_secret',
+            'merchant_domain' => 'services.wayforpay.merchant_domain',
         ],
     ],
 
     'privatpayparts' => [
         'credentials' => [
             'merchant_id' => 'services.privatbank.merchant_id',
-            'password'    => 'services.privatbank.password',
+            'password' => 'services.privatbank.password',
         ],
     ],
 
     'easypay' => [
         'credentials' => [
-            'account_id' => 'services.easypay.account_id',
+            'partner_key' => 'services.easypay.partner_key',
+            'service_key' => 'services.easypay.service_key',
             'secret_key' => 'services.easypay.secret_key',
         ],
     ],
@@ -58,13 +59,14 @@ return [
 
     'paylink' => [
         'credentials' => [
-            'api_key' => 'services.paylink.api_key',
+            'merchant_id' => 'services.paylink.merchant_id',
+            'private_key' => 'services.paylink.private_key',
         ],
     ],
 
     'platon' => [
         'credentials' => [
-            'key'      => 'services.platon.key',
+            'key' => 'services.platon.key',
             'password' => 'services.platon.password',
         ],
     ],

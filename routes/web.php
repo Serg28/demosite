@@ -3,6 +3,8 @@
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\PaymentWebhookController;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use Livewire\Livewire;
@@ -36,6 +38,12 @@ Route::delete('/cart/remove/{rowId}', [CartController::class, 'remove'])->name('
 // Checkout (Phase 4.3)
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
+
+// Payment webhooks (Phase 4.6) — без CSRF, без auth, HTTP 200 завжди
+Route::withoutMiddleware([ValidateCsrfToken::class])->group(function () {
+    Route::post('/payment/webhook/paylink', [PaymentWebhookController::class, 'handlePayLink'])->name('payment.webhook.paylink');
+    Route::post('/payment/webhook/{gateway}', [PaymentWebhookController::class, 'handle'])->name('payment.webhook');
+});
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

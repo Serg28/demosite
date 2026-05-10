@@ -23,8 +23,9 @@ class PayMethod extends Model
     {
         return [
             'commission_percent' => 'float',
-            'commission_rates'   => 'array',
-            'is_active'         => 'boolean',
+            'commission_rates' => 'array',
+            'is_active' => 'boolean',
+            'use_hold' => 'boolean',
         ];
     }
 

@@ -10,29 +10,32 @@ use App\Models\PaymentInvoice;
 use App\Services\Payment\CredentialResolver;
 use Illuminate\Support\Facades\Log;
 
-class LiqPayGateway implements PaymentGatewayInterface, Holdable, Returnable
+class LiqPayGateway implements Holdable, PaymentGatewayInterface, Returnable
 {
     public function __construct(private readonly CredentialResolver $credentials) {}
 
     /**
-     * Ініціалізує hold-платіж. Повертає дані для рендеру форми LiqPay.
+     * Ініціалізує платіж LiqPay.
+     * Тип операції (hold/pay) визначається полем use_hold на PayMethod.
      *
      * @return array{data: string, signature: string, checkout_url: string, liqpay_order_id: string}
      */
     public function init(Order $order): array
     {
-        $client      = $this->makeClient($order->pay_method_id);
-        $liqpayOrder = $order->id . '_' . uniqid('', true);
+        $order->loadMissing('payMethod');
+        $client = $this->makeClient($order->pay_method_id);
+        $liqpayOrder = $order->id.'_'.uniqid('', true);
+        $action = ($order->payMethod?->use_hold ?? false) ? 'hold' : 'pay';
 
         return array_merge(
             $client->buildFormData([
-                'action'      => 'hold',
-                'amount'      => $order->getTotalCost(),
-                'currency'    => 'UAH',
-                'description' => __t('Оплата замовлення № ') . $order->id,
-                'order_id'    => $liqpayOrder,
-                'result_url'  => route('checkout.success', $order),
-                'server_url'  => url('/payment/webhook/liqpay'),
+                'action' => $action,
+                'amount' => $order->getTotalCost(),
+                'currency' => 'UAH',
+                'description' => __t('Оплата замовлення № ').$order->id,
+                'order_id' => $liqpayOrder,
+                'result_url' => route('checkout.success', $order),
+                'server_url' => url('/payment/webhook/liqpay'),
             ]),
             ['liqpay_order_id' => $liqpayOrder],
         );
@@ -50,7 +53,7 @@ class LiqPayGateway implements PaymentGatewayInterface, Holdable, Returnable
         }
 
         $invoice->loadMissing('order');
-        $client   = $this->makeClient($invoice->order->pay_method_id);
+        $client = $this->makeClient($invoice->order->pay_method_id);
         $response = $client->api('status', ['order_id' => $liqpayOrderId]);
 
         return $this->mapStatus($response?->status ?? '');
@@ -63,15 +66,15 @@ class LiqPayGateway implements PaymentGatewayInterface, Holdable, Returnable
      */
     public function confirm(array $payload): bool
     {
-        $data      = $payload['data'] ?? '';
+        $data = $payload['data'] ?? '';
         $signature = $payload['signature'] ?? '';
 
         if (! $data || ! $signature) {
             return false;
         }
 
-        $decoded     = json_decode(base64_decode($data), true) ?? [];
-        $orderId     = (int) explode('_', $decoded['order_id'] ?? '0')[0];
+        $decoded = json_decode(base64_decode($data), true) ?? [];
+        $orderId = (int) explode('_', $decoded['order_id'] ?? '0')[0];
         $payMethodId = Order::find($orderId)?->pay_method_id;
 
         if (! $payMethodId) {
@@ -100,10 +103,10 @@ class LiqPayGateway implements PaymentGatewayInterface, Holdable, Returnable
             return false;
         }
 
-        $client   = $this->makeClient($order->pay_method_id);
+        $client = $this->makeClient($order->pay_method_id);
         $response = $client->api('capture', [
             'order_id' => $liqpayOrderId,
-            'amount'   => $order->getTotalCost(),
+            'amount' => $order->getTotalCost(),
             'currency' => 'UAH',
         ]);
 
@@ -121,10 +124,10 @@ class LiqPayGateway implements PaymentGatewayInterface, Holdable, Returnable
             return false;
         }
 
-        $client   = $this->makeClient($order->pay_method_id);
+        $client = $this->makeClient($order->pay_method_id);
         $response = $client->api('cancel', [
             'order_id' => $liqpayOrderId,
-            'amount'   => $order->getTotalCost(),
+            'amount' => $order->getTotalCost(),
             'currency' => 'UAH',
         ]);
 
@@ -142,10 +145,10 @@ class LiqPayGateway implements PaymentGatewayInterface, Holdable, Returnable
             return false;
         }
 
-        $client   = $this->makeClient($order->pay_method_id);
+        $client = $this->makeClient($order->pay_method_id);
         $response = $client->api('refund', [
             'order_id' => $liqpayOrderId,
-            'amount'   => $order->getTotalCost(),
+            'amount' => $order->getTotalCost(),
             'currency' => 'UAH',
         ]);
 
@@ -157,7 +160,7 @@ class LiqPayGateway implements PaymentGatewayInterface, Holdable, Returnable
         $creds = $this->credentials->resolve($payMethodId);
 
         return new LiqPayClient(
-            publicKey:  $creds['public_key'] ?? '',
+            publicKey: $creds['public_key'] ?? '',
             privateKey: $creds['private_key'] ?? '',
         );
     }
@@ -173,11 +176,11 @@ class LiqPayGateway implements PaymentGatewayInterface, Holdable, Returnable
     private function mapStatus(string $liqpayStatus): string
     {
         return match ($liqpayStatus) {
-            'success'          => 'paid',
-            'hold_wait'        => 'hold',
-            'processing'       => 'processing',
+            'success' => 'paid',
+            'hold_wait' => 'hold',
+            'processing' => 'processing',
             'failure', 'error' => 'failed',
-            default            => 'pending',
+            default => 'pending',
         };
     }
 }
