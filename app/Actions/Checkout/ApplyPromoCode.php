@@ -3,6 +3,7 @@
 namespace App\Actions\Checkout;
 
 use App\Models\PromoCode;
+use App\Services\Cart\CartService;
 
 class ApplyPromoCode
 {
@@ -43,10 +44,23 @@ class ApplyPromoCode
             ];
         }
 
+        $restrictedProductIds = [];
+
+        if ($promo->hasProductRestrictions()) {
+            $restrictedProductIds = $promo->products()->pluck('products.id')->all();
+            $cartProductIds = app(CartService::class)->getIdsProductsInCart();
+            $matchingIds = array_intersect($restrictedProductIds, $cartProductIds);
+
+            if (empty($matchingIds)) {
+                return ['success' => false, 'message' => __t('Промокод не застосовується до товарів у кошику')];
+            }
+        }
+
         return [
-            'success' => true,
-            'promo' => $promo,
-            'discount' => $promo->getAmount($subtotal),
+            'success'                => true,
+            'promo'                  => $promo,
+            'discount'               => $promo->getAmount($subtotal),
+            'restrictedProductIds'   => $restrictedProductIds,
         ];
     }
 }

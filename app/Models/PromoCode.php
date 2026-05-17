@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use App\Contracts\DiscountSource;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class PromoCode extends Model implements DiscountSource
 {
+    use HasFactory;
+
     protected $table = 'promo_codes';
 
     protected $guarded = [];
@@ -23,6 +27,16 @@ class PromoCode extends Model implements DiscountSource
             'use_for_promotional'    => 'boolean',
             'use_for_discount_cards' => 'boolean',
         ];
+    }
+
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'promo_code_product');
+    }
+
+    public function hasProductRestrictions(): bool
+    {
+        return $this->products()->exists();
     }
 
     public function getType(): string

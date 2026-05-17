@@ -20,27 +20,29 @@
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div>
                         <label class="text-sm font-medium mb-1.5 block">{{ __t("Ім'я") }} *</label>
-                        <input wire:model="firstName" type="text"
-                               class="field @error('firstName') border-red-400 @enderror">
+                        <input wire:model.blur="firstName" type="text"
+                               class="field @error('firstName') border-red-400 @enderror"
+                               autocomplete="given-name">
                         @error('firstName')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="text-sm font-medium mb-1.5 block">{{ __t('Прізвище') }}</label>
-                        <input wire:model="lastName" type="text"
-                               class="field @error('lastName') border-red-400 @enderror">
+                        <input wire:model.blur="lastName" type="text"
+                               class="field @error('lastName') border-red-400 @enderror"
+                               autocomplete="family-name">
                         @error('lastName')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
-                    <div>
-                        <label class="text-sm font-medium mb-1.5 block">{{ __t('Телефон') }} *</label>
-                        <input wire:model="phone" type="tel"
-                               class="field @error('phone') border-red-400 @enderror"
-                               placeholder="+38(0__)___-__-__">
-                        @error('phone')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
+                    <x-phone-input wire-model="phone" :label="__t('Телефон') . ' *'" />
+                    <div x-data="emailField()">
                         <label class="text-sm font-medium mb-1.5 block">Email</label>
-                        <input wire:model="email" type="email"
-                               class="field @error('email') border-red-400 @enderror">
+                        <input wire:model.blur="email" type="text" inputmode="email"
+                               class="field @error('email') border-red-400 @enderror"
+                               :class="clientError ? 'border-red-400' : ''"
+                               x-model="value"
+                               @input.debounce.500ms="validate()"
+                               @blur="clientError = ''"
+                               placeholder="example@mail.com" autocomplete="email">
+                        <p x-show="clientError" x-text="clientError" class="text-red-500 text-xs mt-1"></p>
                         @error('email')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
                 </div>
@@ -107,17 +109,17 @@
                                        class="field @error('receiverPatronymic') border-red-400 @enderror">
                                 @error('receiverPatronymic')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
-                            <div>
-                                <label class="text-sm font-medium mb-1.5 block">{{ __t('Телефон') }} *</label>
-                                <input wire:model="receiverPhone" type="tel"
-                                       class="field @error('receiverPhone') border-red-400 @enderror"
-                                       placeholder="+38(0__)___-__-__">
-                                @error('receiverPhone')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                            </div>
-                            <div class="sm:col-span-2">
+                            <x-phone-input wire-model="receiverPhone" :label="__t('Телефон') . ' *'" />
+                            <div class="sm:col-span-2" x-data="emailField()">
                                 <label class="text-sm font-medium mb-1.5 block">Email</label>
-                                <input wire:model="receiverEmail" type="email"
-                                       class="field @error('receiverEmail') border-red-400 @enderror">
+                                <input wire:model.blur="receiverEmail" type="text" inputmode="email"
+                                       class="field @error('receiverEmail') border-red-400 @enderror"
+                                       :class="clientError ? 'border-red-400' : ''"
+                                       x-model="value"
+                                       @input.debounce.500ms="validate()"
+                                       @blur="clientError = ''"
+                                       placeholder="example@mail.com" autocomplete="email">
+                                <p x-show="clientError" x-text="clientError" class="text-red-500 text-xs mt-1"></p>
                                 @error('receiverEmail')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
                         </div>
@@ -131,66 +133,91 @@
                         <span class="text-sm">{{ __t('Передзвоніть мені для підтвердження замовлення') }}</span>
                     </label>
                 </div>
+
+                @guest
+                <div class="mt-3">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input wire:model="registerMe" type="checkbox"
+                               class="rounded border-gray-300 text-brand focus:ring-brand">
+                        <span class="text-sm">{{ __t('Створити акаунт після оформлення замовлення') }}</span>
+                    </label>
+                </div>
+                @endguest
             </div>
 
             {{-- 2. Спосіб доставки ──────────────────────────────────────── --}}
-            <div class="card p-6">
-                <h2 class="font-bold text-lg mb-5">{{ __t('Спосіб доставки') }}</h2>
+            <div class="card p-6" :class="! $wire.contactsStepValid ? 'opacity-60' : ''">
+                <h2 class="font-bold text-lg {{ $contactsStepValid ? 'mb-5' : '' }}">
+                    {{ __t('Спосіб доставки') }}
+                    @if(! $contactsStepValid)
+                        <span class="text-xs font-normal text-ink-muted ml-2">{{ __t('— заповніть контактні дані') }}</span>
+                    @endif
+                </h2>
 
-                @if($this->deliveries->isEmpty())
-                    <p class="text-ink-muted text-sm">
-                        {{ $cityId ? __t('Способи доставки тимчасово недоступні') : __t('Оберіть місто для відображення доставок') }}
-                    </p>
-                @else
-                    <div class="space-y-2 mb-4">
-                        @foreach($this->deliveries as $delivery)
-                            <x-checkout.delivery-option
-                                :delivery="$delivery"
-                                :selected="$deliveryId === $delivery->id"
-                                :wire:key="'dopt-'.$delivery->id"
-                            />
-                        @endforeach
-                    </div>
-                    @error('deliveryId')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-
-                    @if($this->selectedDelivery !== null)
-                        <livewire:checkout.delivery-selector
-                            :deliveryId="$deliveryId"
-                            :deliverySlug="$this->selectedDelivery->slug"
-                            :cityId="$cityId"
-                            :wire:key="'ds-'.$deliveryId"
-                        />
+                @if($contactsStepValid)
+                    @if($this->deliveries->isEmpty())
+                        <p class="text-ink-muted text-sm">
+                            {{ __t('Способи доставки тимчасово недоступні') }}
+                        </p>
+                    @else
+                        <div class="space-y-2">
+                            @foreach($this->deliveries as $delivery)
+                                <x-checkout.delivery-option
+                                    :delivery="$delivery"
+                                    :selected="$deliveryId === $delivery->id"
+                                    :wire:key="'dopt-'.$delivery->id"
+                                />
+                                @if($deliveryId === $delivery->id)
+                                    <div class="ml-4 mt-1 mb-2" wire:key="'sub-'.$delivery->id">
+                                        <livewire:checkout.delivery-selector
+                                            :deliveryId="$deliveryId"
+                                            :deliverySlug="$delivery->slug"
+                                            :cityId="$cityId"
+                                            :wire:key="'ds-'.$deliveryId"
+                                        />
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                        @error('deliveryId')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                     @endif
                 @endif
             </div>
 
             {{-- 3. Спосіб оплати ─────────────────────────────────────────── --}}
-            <div class="card p-6">
-                <h2 class="font-bold text-lg mb-5">{{ __t('Спосіб оплати') }}</h2>
+            <div class="card p-6" :class="! $wire.deliveryStepValid ? 'opacity-60' : ''">
+                <h2 class="font-bold text-lg {{ $deliveryStepValid ? 'mb-5' : '' }}">
+                    {{ __t('Спосіб оплати') }}
+                    @if(! $deliveryStepValid)
+                        <span class="text-xs font-normal text-ink-muted ml-2">{{ __t('— оберіть спосіб доставки') }}</span>
+                    @endif
+                </h2>
 
-                @if($this->payMethods->isEmpty())
-                    <p class="text-ink-muted text-sm">
-                        {{ $deliveryId ? __t('Методи оплати тимчасово недоступні') : __t('Оберіть спосіб доставки для відображення методів оплати') }}
-                    </p>
-                @else
-                    <div class="space-y-2">
-                        @foreach($this->payMethods as $payMethod)
-                            <x-checkout.payment-option
-                                :pay-method="$payMethod"
-                                :selected="$payMethodId === $payMethod->id"
-                                :wire:key="'popt-'.$payMethod->id"
-                            />
-                        @endforeach
-                    </div>
-                    @error('payMethodId')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                @if($deliveryStepValid)
+                    @if($this->payMethods->isEmpty())
+                        <p class="text-ink-muted text-sm">
+                            {{ __t('Методи оплати тимчасово недоступні') }}
+                        </p>
+                    @else
+                        <div class="space-y-2">
+                            @foreach($this->payMethods as $payMethod)
+                                <x-checkout.payment-option
+                                    :pay-method="$payMethod"
+                                    :selected="$payMethodId === $payMethod->id"
+                                    :wire:key="'popt-'.$payMethod->id"
+                                />
+                            @endforeach
+                        </div>
+                        @error('payMethodId')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
 
-                    @if($this->selectedPayMethod !== null)
-                        @php $gateway = $this->selectedPayMethod->gateway; @endphp
-                        @includeIf('livewire.checkout.payment.' . $gateway, [
-                            'gateway'     => $gateway,
-                            'payMethodId' => $payMethodId,
-                            'orderAmount' => $this->total,
-                        ])
+                        @if($this->selectedPayMethod !== null)
+                            @php $gateway = $this->selectedPayMethod->gateway; @endphp
+                            @includeIf('livewire.checkout.payment.' . $gateway, [
+                                'gateway'     => $gateway,
+                                'payMethodId' => $payMethodId,
+                                'orderAmount' => $this->total,
+                            ])
+                        @endif
                     @endif
                 @endif
             </div>
@@ -199,16 +226,19 @@
 
         {{-- ── ПРАВА КОЛОНКА: підсумок ─────────────────────────────────── --}}
         <div class="w-full lg:w-80 flex-shrink-0">
-            <div class="card p-6 sticky top-24">
+            <div class="card p-6 sticky top-24" x-data="{ editing: false }">
 
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="font-bold text-lg">{{ __t('Ваше замовлення') }}</h3>
-                    <a href="/cart" class="text-xs text-brand underline hover:no-underline">
-                        {{ __t('Редагувати') }}
-                    </a>
+                    <button
+                        @click="editing = !editing"
+                        type="button"
+                        class="text-xs text-brand underline hover:no-underline"
+                        x-text="editing ? '{{ __t('Готово') }}' : '{{ __t('Редагувати') }}'"
+                    ></button>
                 </div>
 
-                <div class="space-y-3 mb-4 max-h-48 overflow-y-auto">
+                <div class="space-y-3 mb-4 max-h-64 overflow-y-auto">
                     @foreach($this->cartItems as $item)
                         <div class="flex gap-3" wire:key="cart-{{ $item->rowId }}">
                             <div class="w-12 h-12 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
@@ -225,9 +255,37 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-xs font-medium leading-snug line-clamp-2">{{ $item->name }}</p>
-                                <p class="text-xs text-ink-muted mt-1">
+                                {{-- Звичайний вигляд --}}
+                                <p class="text-xs text-ink-muted mt-1" x-show="!editing">
                                     {{ $item->qty }} × @money($item->price)
                                 </p>
+                                {{-- Режим редагування --}}
+                                <div class="flex items-center gap-2 mt-1" x-show="editing" x-cloak>
+                                    <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                                        <button
+                                            type="button"
+                                            wire:click="updateCartQty('{{ $item->rowId }}', {{ $item->qty - 1 }})"
+                                            class="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 text-sm font-bold"
+                                        >−</button>
+                                        <span class="w-7 text-center text-xs font-medium">{{ $item->qty }}</span>
+                                        <button
+                                            type="button"
+                                            wire:click="updateCartQty('{{ $item->rowId }}', {{ $item->qty + 1 }})"
+                                            class="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 text-sm font-bold"
+                                        >+</button>
+                                    </div>
+                                    <span class="text-xs text-ink-muted">@money($item->price)</span>
+                                    <button
+                                        type="button"
+                                        wire:click="removeCartItem('{{ $item->rowId }}')"
+                                        class="ml-auto text-red-400 hover:text-red-600 text-xs"
+                                        aria-label="{{ __t('Видалити') }}"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     @endforeach
@@ -285,6 +343,17 @@
                         </div>
                         @if($cardMessage && ! $cardApplied)
                             <p class="text-red-500 text-xs mt-1.5">{{ $cardMessage }}</p>
+                        @endif
+                        @if($autoDetectedCard !== null)
+                            <div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                                <span class="text-blue-700 text-sm">
+                                    {{ __t('Знайдено дисконтну картку. Знижка: :amount', ['amount' => number_format($autoDetectedCard['discount'], config('cart.format.decimals', 0), config('cart.format.decimal_point', '.'), config('cart.format.thousand_separator', ' '))]) }}
+                                </span>
+                                <button wire:click="applyAutoDetectedCard"
+                                        class="btn btn-sm btn-brand ml-2">
+                                    {{ __t('Застосувати') }}
+                                </button>
+                            </div>
                         @endif
                     @endif
                 </div>
@@ -397,4 +466,22 @@
         </div>
 
     </div>
+
+    @once
+    <script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('emailField', () => ({
+            value: '',
+            clientError: '',
+            emailRegex: /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/,
+            validate() {
+                if (!this.value) { this.clientError = ''; return; }
+                this.clientError = this.emailRegex.test(this.value)
+                    ? ''
+                    : '{{ __t('Невірний формат email') }}';
+            },
+        }));
+    });
+    </script>
+    @endonce
 </div>

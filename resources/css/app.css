@@ -72,3 +72,86 @@ textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
+
+/* ── Shop UI Kit utilities (shop-styles.css port) ───────────────────────── */
+@layer components {
+    .card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .07);
+    }
+
+    .field {
+        width: 100%;
+        border: 1.5px solid #E5E7EB;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 14px;
+        outline: none;
+        transition: border .15s;
+        font-family: inherit;
+    }
+    .field:focus {
+        border-color: #2563EB;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
+    }
+    select.field {
+        background: #fff;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 10px 20px;
+        transition: all .15s;
+        cursor: pointer;
+        border: none;
+        line-height: 1;
+    }
+    .btn-sm { padding: 8px 14px; font-size: 13px; }
+    .btn-xs { padding: 5px 10px; font-size: 12px; }
+
+    .btn-p { background: #2563EB; color: #fff; }
+    .btn-p:hover { background: #1D4ED8; }
+
+    .btn-o { background: #fff; color: #111827; border: 1.5px solid #E5E7EB; }
+    .btn-o:hover { border-color: #2563EB; color: #2563EB; background: #EFF6FF; }
+
+    .btn-ghost { background: transparent; color: #6B7280; border: none; }
+    .btn-ghost:hover { background: #F3F4F6; color: #111827; }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 7px;
+        line-height: 1.4;
+    }
+    .bdg-new { background: #ECFDF5; color: #059669; }
+    .bdg-sale { background: #FEF2F2; color: #DC2626; }
+    .bdg-hit { background: #EFF6FF; color: #2563EB; }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #EFF6FF;
+        color: #1D4ED8;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .instock { color: #16A34A; font-weight: 500; }
+    .nostock { color: #DC2626; font-weight: 500; }
+    .star-y { color: #F59E0B; }
+    .star-e { color: #D1D5DB; }
+}

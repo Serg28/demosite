@@ -2,6 +2,7 @@
 
 namespace App\PipelineSteps\Checkout;
 
+use App\Actions\Checkout\RegisterUser;
 use App\DTO\Checkout\CheckoutContext;
 use App\Models\Order;
 use App\Models\OrderProduct;
@@ -19,8 +20,9 @@ final class CreateOrder
                 'last_name' => $context->lastName,
                 'phone' => $context->phone,
                 'email' => $context->email,
-                'comment' => $context->comment,
-                'call_me' => $context->callMe,
+                'comment'     => $context->comment,
+                'call_me'     => $context->callMe,
+                'register_me' => $context->registerMe,
                 'receiver_first_name' => $context->receiver === 'other' ? $context->receiverFirstName : null,
                 'receiver_last_name' => $context->receiver === 'other' ? $context->receiverLastName : null,
                 'receiver_patronymic' => $context->receiver === 'other' ? $context->receiverPatronymic : null,
@@ -56,6 +58,8 @@ final class CreateOrder
             }
 
             $context->order = $order;
+
+            app(RegisterUser::class)->handle($order);
 
             foreach ($context->appliedDiscounts as $discount) {
                 if (! ($discount instanceof PromoCode)) {

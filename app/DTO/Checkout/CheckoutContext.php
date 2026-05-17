@@ -51,6 +51,9 @@ class CheckoutContext
     public string $comment = '';
     public ?int $userId = null;
     public bool $callMe = false;
+    public bool $registerMe = true;
+    /** @var int[] Якщо не порожній — знижка рахується лише на ці product_id */
+    public array $promoRestrictedProductIds = [];
 
     // Receiver (другий одержувач)
     public string $receiver = 'user';

@@ -101,7 +101,7 @@
     </div>
 
     <p
-        x-show="!open && !loading && query.length >= minChars && results.length === 0"
+        x-show="!open && !loading && !isSelected && query.length >= minChars && results.length === 0"
         x-cloak
         class="text-xs text-ink-muted mt-1"
     >{{ __t('Нічого не знайдено') }}</p>

@@ -23,6 +23,8 @@ class Order extends Model
             'sale_promo'         => 'float',
             'sale_discount'      => 'float',
             'payment_commission' => 'float',
+            'call_me'            => 'boolean',
+            'register_me'        => 'boolean',
         ];
     }
 

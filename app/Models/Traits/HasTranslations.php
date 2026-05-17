@@ -10,6 +10,11 @@ trait HasTranslations
     {
         $value = $this->{$field};
 
+        if (is_string($value) && str_starts_with(trim($value), '{')) {
+            $decoded = json_decode($value, true);
+            $value = is_array($decoded) ? $decoded : null;
+        }
+
         if (! is_array($value)) {
             return (string) ($value ?? '');
         }

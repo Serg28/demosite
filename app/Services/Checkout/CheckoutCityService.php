@@ -19,13 +19,17 @@ class CheckoutCityService
             return collect();
         }
 
+        $locales = config('site.title_locales', ['ua']);
+        $primaryLocale = config('site.db_locale', $locales[0]);
+
         return City::query()
             ->active()
-            ->where(function ($query) use ($q) {
-                $query->where('title->ua', 'like', $q.'%')
-                    ->orWhere('title->ru', 'like', $q.'%');
+            ->where(function ($query) use ($q, $locales) {
+                foreach ($locales as $locale) {
+                    $query->orWhere("title_{$locale}", 'like', $q.'%');
+                }
             })
-            ->orderByRaw("JSON_UNQUOTE(JSON_EXTRACT(title, '$.ua')) ASC")
+            ->orderBy("title_{$primaryLocale}")
             ->limit($limit)
             ->get()
             ->map(fn (City $city) => ['id' => $city->id, 'title' => $city->t('title')])

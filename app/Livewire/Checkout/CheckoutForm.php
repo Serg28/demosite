@@ -4,8 +4,8 @@ namespace App\Livewire\Checkout;
 
 use App\Actions\Checkout\ApplyDiscountCard;
 use App\Actions\Checkout\ApplyPromoCode;
+use App\Actions\Checkout\AutoDetectDiscountCard;
 use App\Actions\Checkout\PlaceOrder;
-use App\Services\GiftCertificateService;
 use App\DTO\Checkout\CheckoutContext;
 use App\Http\Requests\CheckoutRequest;
 use App\Livewire\Concerns\HasNotifications;
@@ -14,6 +14,7 @@ use App\Models\DiscountCard;
 use App\Models\PayMethod;
 use App\Models\PromoCode;
 use App\Services\Delivery\DeliveryService;
+use App\Services\GiftCertificateService;
 use App\Services\Payment\CommissionCalculator;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -74,6 +75,7 @@ class CheckoutForm extends Component
 
     // Підформа безготівкового розрахунку (paylink)
     public string $b2bCompany = '';
+
     public string $b2bEdrpou = '';
 
     // ── Промокод ────────────────────────────────────────────────────────────
@@ -115,6 +117,11 @@ class CheckoutForm extends Component
 
     // ── Додатково ─────────────────────────────────────────────────────────────
     public bool $callMe = false;
+
+    public bool $registerMe = true;
+
+    /** @var array{id: int, code: string, discount: float}|null */
+    public ?array $autoDetectedCard = null;
 
     // ── Подарунковий сертифікат ──────────────────────────────────────────────
     public string $giftCodeInput = '';
@@ -288,6 +295,81 @@ class CheckoutForm extends Component
         $this->b2bCompany = '';
         $this->b2bEdrpou = '';
         $this->recalcStepValidity();
+    }
+
+    public function updatedFirstName(): void
+    {
+        $this->validateContactField('firstName');
+    }
+
+    public function updatedLastName(): void
+    {
+        $this->validateContactField('lastName');
+    }
+
+    public function updatedEmail(): void
+    {
+        $this->validateContactField('email');
+    }
+
+    public function updatedPhone(string $value): void
+    {
+        $this->validateContactField('phone');
+
+        if ($this->cardApplied) {
+            return;
+        }
+
+        $card = app(AutoDetectDiscountCard::class)->handle($value);
+
+        if ($card === null) {
+            $this->autoDetectedCard = null;
+
+            return;
+        }
+
+        $discount = $card->getAmount($this->subtotal);
+        $this->autoDetectedCard = [
+            'id' => $card->id,
+            'code' => $card->code,
+            'discount' => $discount,
+        ];
+    }
+
+    public function applyAutoDetectedCard(): void
+    {
+        if ($this->autoDetectedCard === null || $this->cardApplied) {
+            return;
+        }
+
+        $card = DiscountCard::find($this->autoDetectedCard['id']);
+
+        if ($card === null) {
+            $this->autoDetectedCard = null;
+
+            return;
+        }
+
+        $this->cardId = $card->id;
+        $this->cardDiscount = (float) $card->getAmount($this->subtotal);
+        $this->cardApplied = true;
+        $this->cardInput = $card->code;
+        $this->cardMessage = __t('Картку застосовано! Знижка: :amount', [
+            'amount' => $this->formatAmount($this->cardDiscount),
+        ]);
+        $this->autoDetectedCard = null;
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+
+    private function validateContactField(string $field): void
+    {
+        $request = new CheckoutRequest;
+        $rules = $request->rules();
+
+        if (isset($rules[$field])) {
+            $this->validateOnly($field, $rules, $request->messages());
+        }
     }
 
     // ── Helpers: правила підформ з конфігу ──────────────────────────────────
@@ -518,6 +600,25 @@ class CheckoutForm extends Component
         unset($this->appliedGiftCertificates);
     }
 
+    // ── Редагування кошика з форми ──────────────────────────────────────────
+
+    public function updateCartQty(string $rowId, int $qty): void
+    {
+        if ($qty < 1) {
+            Cart::remove($rowId);
+        } else {
+            Cart::update($rowId, $qty);
+        }
+
+        unset($this->cartItems, $this->cartCount, $this->subtotal, $this->total);
+    }
+
+    public function removeCartItem(string $rowId): void
+    {
+        Cart::remove($rowId);
+        unset($this->cartItems, $this->cartCount, $this->subtotal, $this->total);
+    }
+
     // ── Оформлення ──────────────────────────────────────────────────────────
 
     public function placeOrder(): void
@@ -544,6 +645,7 @@ class CheckoutForm extends Component
         $context->comment = $this->comment;
         $context->userId = auth()->id();
         $context->callMe = $this->callMe;
+        $context->registerMe = auth()->guest() ? $this->registerMe : false;
         $context->receiver = $this->receiver;
         $context->receiverFirstName = $this->receiverFirstName;
         $context->receiverLastName = $this->receiverLastName;

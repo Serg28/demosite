@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Захист Livewire 3 від RCE-вразливостей.
+ * Захист Livewire 4 від RCE-вразливостей.
  * Фікс CVE для nested property hydration та ін'єкції методів.
  */
 class ValidateLivewireMethod
@@ -18,11 +18,19 @@ class ValidateLivewireMethod
         'eval', 'exec', 'system', 'passthru', 'shell_exec', 'assert', 'create_function',
     ];
 
+    // __-методи Livewire (underscore prefix)
     protected const ALLOWED_INTERNAL_METHODS = [
         '__lazyLoad',
         '__dispatch',
         '__dispatchSelf',
         '__dispatchTo',
+    ];
+
+    // $-методи Livewire 4 ($refresh, $commit, $set — внутрішній протокол)
+    protected const ALLOWED_DOLLAR_METHODS = [
+        '$refresh',
+        '$commit',
+        '$set',
     ];
 
     protected const METHOD_REGEX = '/^[a-zA-Z_][a-zA-Z0-9_]*$/';
@@ -82,6 +90,15 @@ class ValidateLivewireMethod
                 }
 
                 $method = $call['method'];
+
+                // Livewire 4 internal $-methods ($refresh, $commit, $set)
+                if (isset($method[0]) && $method[0] === '$') {
+                    if (! in_array($method, self::ALLOWED_DOLLAR_METHODS, true)) {
+                        return $this->reject($request, $method, 'forbidden_dollar_method');
+                    }
+
+                    continue;
+                }
 
                 if (! preg_match(self::METHOD_REGEX, $method)) {
                     return $this->reject($request, $method, 'invalid_format');

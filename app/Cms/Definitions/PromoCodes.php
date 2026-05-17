@@ -8,7 +8,9 @@ use Linecore\Cms\Definitions\Resource;
 use Linecore\Cms\Fields\Checkbox;
 use Linecore\Cms\Fields\Date;
 use Linecore\Cms\Fields\Id;
+use Linecore\Cms\Fields\ManyToMany;
 use Linecore\Cms\Fields\Number;
+use Linecore\Cms\Fields\Relations\Options;
 use Linecore\Cms\Fields\Select;
 use Linecore\Cms\Fields\Text;
 use Linecore\Cms\Services\Actions;
@@ -44,6 +46,15 @@ class PromoCodes extends Resource
             Checkbox::make('Промо-тип (маркетинговий)', 'use_for_promotional')->onlyForm(),
             Checkbox::make('Використовується з дисконтними картками', 'use_for_discount_cards')->onlyForm(),
             Checkbox::make('Активно', 'is_active')->filter()->fastEdit(),
+            ManyToMany::make('Обмеження по товарах')
+                ->options(
+                    (new Options('products'))
+                        ->keyField('title')
+                        ->isJson()
+                        ->orderBy('id', 'desc')
+                )
+                ->className('col-md-12')
+                ->onlyForm(),
         ];
     }
 

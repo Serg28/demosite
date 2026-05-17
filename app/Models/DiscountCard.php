@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Contracts\DiscountSource;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DiscountCard extends Model implements DiscountSource
 {
+    use HasFactory;
+
     protected $table = 'discount_cards';
 
     protected $guarded = [];
