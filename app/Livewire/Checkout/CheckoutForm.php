@@ -100,6 +100,22 @@ class CheckoutForm extends Component
     #[Locked]
     public ?int $cardId = null;
 
+    // ── Одержувач ────────────────────────────────────────────────────────────
+    public string $receiver = 'user';
+
+    public string $receiverFirstName = '';
+
+    public string $receiverLastName = '';
+
+    public string $receiverPatronymic = '';
+
+    public string $receiverPhone = '';
+
+    public string $receiverEmail = '';
+
+    // ── Додатково ─────────────────────────────────────────────────────────────
+    public bool $callMe = false;
+
     // ── Подарунковий сертифікат ──────────────────────────────────────────────
     public string $giftCodeInput = '';
 
@@ -262,7 +278,6 @@ class CheckoutForm extends Component
         }
 
         $this->deliveryWarehouseId = null;
-        $this->address = '';
         $this->deliveryPickupPointId = null;
         $this->recalcStepValidity();
     }
@@ -528,6 +543,13 @@ class CheckoutForm extends Component
         $context->email = $this->email;
         $context->comment = $this->comment;
         $context->userId = auth()->id();
+        $context->callMe = $this->callMe;
+        $context->receiver = $this->receiver;
+        $context->receiverFirstName = $this->receiverFirstName;
+        $context->receiverLastName = $this->receiverLastName;
+        $context->receiverPatronymic = $this->receiverPatronymic;
+        $context->receiverPhone = $this->receiverPhone;
+        $context->receiverEmail = $this->receiverEmail;
         $context->delivery = $this->selectedDelivery;
         $context->payMethod = $this->selectedPayMethod;
         $context->cityId = $this->cityId;

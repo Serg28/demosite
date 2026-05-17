@@ -32,7 +32,7 @@
                             <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:text-blue-600">
                                 {{ auth()->user()->name }}
                             </a>
-                        @else
+                        @elseif(Route::has('login'))
                             <a href="{{ route('login') }}" class="text-sm text-gray-600 hover:text-blue-600">
                                 {{ __t('Увійти') }}
                             </a>

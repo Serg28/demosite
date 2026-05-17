@@ -50,6 +50,15 @@ class CheckoutContext
     public string $email = '';
     public string $comment = '';
     public ?int $userId = null;
+    public bool $callMe = false;
+
+    // Receiver (другий одержувач)
+    public string $receiver = 'user';
+    public string $receiverFirstName = '';
+    public string $receiverLastName = '';
+    public string $receiverPatronymic = '';
+    public string $receiverPhone = '';
+    public string $receiverEmail = '';
 
     // Delivery details
     public ?int $cityId = null;
