@@ -5,6 +5,7 @@ namespace App\PipelineSteps\Checkout;
 use App\DTO\Checkout\CheckoutContext;
 use App\Models\Order;
 use App\Models\OrderProduct;
+use App\Models\PromoCode;
 use Closure;
 use Illuminate\Support\Facades\DB;
 
@@ -49,6 +50,18 @@ final class CreateOrder
             }
 
             $context->order = $order;
+
+            foreach ($context->appliedDiscounts as $discount) {
+                if (! ($discount instanceof PromoCode)) {
+                    continue;
+                }
+
+                if ($discount->usage_type === 'once') {
+                    $discount->update(['is_used' => true]);
+                }
+
+                $discount->increment('used_count');
+            }
         });
 
         return $next($context);

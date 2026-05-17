@@ -15,8 +15,10 @@ class DiscountCard extends Model implements DiscountSource
     protected function casts(): array
     {
         return [
-            'value' => 'float',
-            'is_active' => 'boolean',
+            'value'                 => 'float',
+            'is_active'             => 'boolean',
+            'use_for_installments'  => 'boolean',
+            'use_for_promotional'   => 'boolean',
         ];
     }
 
@@ -46,6 +48,10 @@ class DiscountCard extends Model implements DiscountSource
 
     public function isCompatibleWith(DiscountSource $other): bool
     {
+        if ($other->getType() === 'promo_code' && ! $this->use_for_promotional) {
+            return false;
+        }
+
         $combinations = config('checkout.discount_combinations', []);
 
         return (bool) ($combinations[$this->getType()][$other->getType()] ?? false);

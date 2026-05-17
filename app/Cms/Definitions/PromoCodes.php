@@ -33,6 +33,16 @@ class PromoCodes extends Resource
             Number::make('Значення', 'value')->filter()->comment('Відсоток або фіксована сума залежно від типу'),
             Number::make('Мінімальна сума замовлення, грн', 'min_order_amount')->onlyForm(),
             Date::make('Дата закінчення', 'expires_at')->onlyForm(),
+            Select::make('Тип використання', 'usage_type')->options([
+                'reusable' => 'Багаторазовий',
+                'once'     => 'Одноразовий',
+            ])->filter(),
+            Checkbox::make('Використано', 'is_used')->onlyForm(),
+            Number::make('Максимум використань', 'max_uses')->onlyForm()->comment('Залиште порожнім для необмеженого'),
+            Number::make('Використано разів', 'used_count')->readonlyForEdit(),
+            Checkbox::make('Використовується з розстрочкою', 'use_for_installments')->onlyForm(),
+            Checkbox::make('Промо-тип (маркетинговий)', 'use_for_promotional')->onlyForm(),
+            Checkbox::make('Використовується з дисконтними картками', 'use_for_discount_cards')->onlyForm(),
             Checkbox::make('Активно', 'is_active')->filter()->fastEdit(),
         ];
     }

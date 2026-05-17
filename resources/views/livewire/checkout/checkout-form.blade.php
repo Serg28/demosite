@@ -205,6 +205,36 @@
                     @endif
                 </div>
 
+                {{-- Подарунковий сертифікат --}}
+                <div class="mb-4">
+                    @forelse($this->appliedGiftCertificates as $cert)
+                        <div class="flex items-center justify-between p-2 bg-purple-50 border border-purple-200 rounded-lg mb-2"
+                             wire:key="gc-{{ $cert['code'] }}">
+                            <span class="text-purple-700 text-sm font-medium">{{ $cert['code'] }} — @money($cert['amount'])</span>
+                            <button wire:click="removeGiftCode('{{ $cert['code'] }}')"
+                                    class="text-purple-400 hover:text-red-500 ml-2 text-sm">✕</button>
+                        </div>
+                    @empty
+                    @endforelse
+
+                    <div class="flex gap-2">
+                        <input wire:model="giftCodeInput"
+                               wire:keydown.enter="applyGiftCode"
+                               type="text"
+                               placeholder="{{ __t('Подарунковий сертифікат') }}"
+                               class="field flex-1 text-sm"
+                               style="padding:8px 12px">
+                        <button wire:click="applyGiftCode"
+                                class="btn btn-o btn-sm"
+                                wire:loading.attr="disabled">
+                            {{ __t('ОК') }}
+                        </button>
+                    </div>
+                    @if($giftMessage)
+                        <p class="text-xs mt-1.5 {{ $this->appliedGiftCertificates->isEmpty() ? 'text-red-500' : 'text-green-600' }}">{{ $giftMessage }}</p>
+                    @endif
+                </div>
+
                 {{-- Підсумок --}}
                 <div class="space-y-2 text-sm border-t pt-4">
                     <div class="flex justify-between">
@@ -227,6 +257,13 @@
                             <span>−@money($cardDiscount)</span>
                         </div>
                     @endif
+
+                    @foreach($this->appliedGiftCertificates as $cert)
+                        <div class="flex justify-between text-purple-500 text-xs" wire:key="gcs-{{ $cert['code'] }}">
+                            <span>{{ __t('Сертифікат :code', ['code' => $cert['code']]) }}</span>
+                            <span>@money($cert['amount']) {{ __t('(при отриманні)') }}</span>
+                        </div>
+                    @endforeach
 
                     @if($this->deliveryPrice > 0)
                         <div class="flex justify-between">

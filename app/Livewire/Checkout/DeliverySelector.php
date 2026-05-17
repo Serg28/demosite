@@ -3,7 +3,6 @@
 namespace App\Livewire\Checkout;
 
 use App\Models\DeliveryPickupPoint;
-use App\Models\DeliveryWarehouse;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -27,11 +26,23 @@ class DeliverySelector extends Component
 
     public string $selectedWarehouseTitle = '';
 
-    // Адреса (для кур'єра)
-    public string $address = '';
-
     // Пункт видачі (для pickup)
     public ?int $pickupPointId = null;
+
+    // Кур'єрська доставка — структуровані поля адреси
+    public string $street = '';
+
+    public string $house = '';
+
+    public string $apartment = '';
+
+    public string $building = '';
+
+    public string $floor = '';
+
+    public bool $isElevator = false;
+
+    public bool $isLifting = false;
 
     public function mount(?int $deliveryId = null, string $deliverySlug = '', ?int $cityId = null): void
     {
@@ -52,24 +63,6 @@ class DeliverySelector extends Component
             ->where('is_active', 1)
             ->orderBy('priority')
             ->get();
-    }
-
-    #[Computed]
-    public function hasWarehouseSearch(): bool
-    {
-        return DeliveryWarehouse::hasWarehouseSearch($this->deliverySlug);
-    }
-
-    #[Computed]
-    public function isCourierDelivery(): bool
-    {
-        return $this->deliverySlug === 'courier';
-    }
-
-    #[Computed]
-    public function isPickupDelivery(): bool
-    {
-        return $this->deliverySlug === 'pickup';
     }
 
     #[Computed]
@@ -105,17 +98,32 @@ class DeliverySelector extends Component
         $this->dispatchUpdate();
     }
 
-    public function updatedAddress(): void
-    {
-        $this->dispatchUpdate();
-    }
+    public function updatedStreet(): void { $this->dispatchUpdate(); }
+
+    public function updatedHouse(): void { $this->dispatchUpdate(); }
+
+    public function updatedApartment(): void { $this->dispatchUpdate(); }
+
+    public function updatedBuilding(): void { $this->dispatchUpdate(); }
+
+    public function updatedFloor(): void { $this->dispatchUpdate(); }
+
+    public function updatedIsElevator(): void { $this->dispatchUpdate(); }
+
+    public function updatedIsLifting(): void { $this->dispatchUpdate(); }
 
     private function dispatchUpdate(): void
     {
         $this->dispatch('delivery-details-updated',
-            deliveryWarehouseId: $this->hasWarehouseSearch ? $this->selectedWarehouseId : null,
-            address: $this->address,
-            deliveryPickupPointId: $this->isPickupDelivery ? $this->pickupPointId : null,
+            deliveryWarehouseId: $this->selectedWarehouseId,
+            street: $this->street,
+            house: $this->house,
+            apartment: $this->apartment,
+            building: $this->building,
+            floor: $this->floor,
+            isElevator: $this->isElevator,
+            isLifting: $this->isLifting,
+            deliveryPickupPointId: $this->pickupPointId,
         );
     }
 

@@ -21,6 +21,14 @@ class ApplyPromoCode
             return ['success' => false, 'message' => __t('Термін дії промокоду закінчився')];
         }
 
+        if ($promo->usage_type === 'once' && $promo->is_used) {
+            return ['success' => false, 'message' => __t('Цей промокод вже використано')];
+        }
+
+        if ($promo->max_uses !== null && $promo->used_count >= $promo->max_uses) {
+            return ['success' => false, 'message' => __t('Ліміт використань цього промокоду вичерпано')];
+        }
+
         if ($promo->min_order_amount && $subtotal < $promo->min_order_amount) {
             return [
                 'success' => false,

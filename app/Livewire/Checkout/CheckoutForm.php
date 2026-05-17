@@ -5,6 +5,7 @@ namespace App\Livewire\Checkout;
 use App\Actions\Checkout\ApplyDiscountCard;
 use App\Actions\Checkout\ApplyPromoCode;
 use App\Actions\Checkout\PlaceOrder;
+use App\Services\GiftCertificateService;
 use App\DTO\Checkout\CheckoutContext;
 use App\Http\Requests\CheckoutRequest;
 use App\Livewire\Concerns\HasNotifications;
@@ -50,7 +51,20 @@ class CheckoutForm extends Component
 
     public ?int $deliveryPickupPointId = null;
 
-    public string $address = '';
+    // Кур'єрська адреса (структуровані поля з DeliverySelector)
+    public string $street = '';
+
+    public string $house = '';
+
+    public string $apartment = '';
+
+    public string $building = '';
+
+    public string $floor = '';
+
+    public bool $isElevator = false;
+
+    public bool $isLifting = false;
 
     // ── Оплата ──────────────────────────────────────────────────────────────
     public ?int $payMethodId = null;
@@ -85,6 +99,11 @@ class CheckoutForm extends Component
 
     #[Locked]
     public ?int $cardId = null;
+
+    // ── Подарунковий сертифікат ──────────────────────────────────────────────
+    public string $giftCodeInput = '';
+
+    public string $giftMessage = '';
 
     // ── Валідність кроків (в state → доступні через $wire в Alpine) ──────────
     public bool $contactsStepValid = false;
@@ -132,8 +151,14 @@ class CheckoutForm extends Component
     {
         $this->deliveryId = null;
         $this->deliveryWarehouseId = null;
-        $this->address = '';
         $this->deliveryPickupPointId = null;
+        $this->street = '';
+        $this->house = '';
+        $this->apartment = '';
+        $this->building = '';
+        $this->floor = '';
+        $this->isElevator = false;
+        $this->isLifting = false;
     }
 
     private function resetPaymentStep(): void
@@ -224,6 +249,12 @@ class CheckoutForm extends Component
         return $this->payMethods->firstWhere('id', $this->payMethodId);
     }
 
+    #[Computed]
+    public function appliedGiftCertificates(): Collection
+    {
+        return app(GiftCertificateService::class)->getAppliedCertificates($this->subtotal);
+    }
+
     public function updatedDeliveryId(): void
     {
         if ($this->payMethodId !== null && ! $this->payMethods->contains('id', $this->payMethodId)) {
@@ -250,8 +281,16 @@ class CheckoutForm extends Component
     private function deliverySubRules(): array
     {
         $slug = $this->selectedDelivery?->slug;
+        $cfg = $slug ? config("checkout.delivery_fields.{$slug}", []) : [];
+        $rules = [];
+        foreach ($cfg['required'] ?? [] as $field) {
+            $rules[$field] = ['required'];
+        }
+        foreach ($cfg['optional'] ?? [] as $field) {
+            $rules[$field] = ['nullable'];
+        }
 
-        return $slug ? config("checkout.delivery_fields.{$slug}", []) : [];
+        return $rules;
     }
 
     /** @return array<string, array<string>> */
@@ -265,11 +304,23 @@ class CheckoutForm extends Component
     #[On('delivery-details-updated')]
     public function onDeliveryDetailsUpdated(
         ?int $deliveryWarehouseId = null,
-        string $address = '',
+        string $street = '',
+        string $house = '',
+        string $apartment = '',
+        string $building = '',
+        string $floor = '',
+        bool $isElevator = false,
+        bool $isLifting = false,
         ?int $deliveryPickupPointId = null,
     ): void {
         $this->deliveryWarehouseId = $deliveryWarehouseId;
-        $this->address = $address;
+        $this->street = $street;
+        $this->house = $house;
+        $this->apartment = $apartment;
+        $this->building = $building;
+        $this->floor = $floor;
+        $this->isElevator = $isElevator;
+        $this->isLifting = $isLifting;
         $this->deliveryPickupPointId = $deliveryPickupPointId;
         $this->recalcStepValidity();
     }
@@ -426,6 +477,32 @@ class CheckoutForm extends Component
         $this->cardMessage = '';
     }
 
+    // ── Подарунковий сертифікат ──────────────────────────────────────────────
+
+    public function applyGiftCode(): void
+    {
+        $code = trim(strtoupper($this->giftCodeInput));
+
+        if ($code === '') {
+            return;
+        }
+
+        $added = app(GiftCertificateService::class)->addCode($code);
+
+        $this->giftMessage = $added
+            ? __t('Сертифікат застосовано')
+            : __t('Сертифікат не знайдено або вже використаний');
+        $this->giftCodeInput = '';
+        unset($this->appliedGiftCertificates);
+    }
+
+    public function removeGiftCode(string $code): void
+    {
+        app(GiftCertificateService::class)->removeCode($code);
+        $this->giftMessage = '';
+        unset($this->appliedGiftCertificates);
+    }
+
     // ── Оформлення ──────────────────────────────────────────────────────────
 
     public function placeOrder(): void
@@ -456,7 +533,9 @@ class CheckoutForm extends Component
         $context->cityId = $this->cityId;
         $context->deliveryWarehouseId = $this->deliveryWarehouseId;
         $context->deliveryPickupPointId = $this->deliveryPickupPointId;
-        $context->address = $this->address;
+        $context->address = collect([$this->street, $this->house, $this->apartment, $this->building, $this->floor])
+            ->filter()
+            ->implode(', ');
         $context->payPartsCount = $this->payPartsCount;
         $context->b2bCompany = $this->b2bCompany;
         $context->b2bEdrpou = $this->b2bEdrpou;

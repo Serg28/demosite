@@ -81,20 +81,20 @@ return [
     |--------------------------------------------------------------------------
     | Правила підформ доставки (ключ = slug доставки)
     |--------------------------------------------------------------------------
-    | Визначає обов'язкові поля для кожного методу доставки.
-    | deliveryFormComplete та placeOrder() беруть правила звідси, не з коду.
+    | required — поля, що блокують перехід далі та валідуються у placeOrder().
+    | optional — поля, що зберігаються але не блокують.
     | Нова доставка — просто додати запис, без змін у PHP.
     */
     'delivery_fields' => [
-        'np_branch'     => ['deliveryWarehouseId' => ['required', 'integer']],
-        'np_poshtamat'  => ['deliveryWarehouseId' => ['required', 'integer']],
-        'ukrposhta'     => ['deliveryWarehouseId' => ['required', 'integer']],
-        'meest'         => ['deliveryWarehouseId' => ['required', 'integer']],
-        'justin'        => ['deliveryWarehouseId' => ['required', 'integer']],
-        'rozetka'       => ['deliveryWarehouseId' => ['required', 'integer']],
-        'courier'       => ['address'             => ['required', 'string', 'max:300']],
-        'pickup'        => ['deliveryPickupPointId' => ['required', 'integer']],
-        // Доставки без підформи (pickup_self, тощо) — просто не додавати запис
+        'np_branch'    => ['required' => ['deliveryWarehouseId'], 'optional' => []],
+        'np_poshtamat' => ['required' => ['deliveryWarehouseId'], 'optional' => []],
+        'ukrposhta'    => ['required' => ['deliveryWarehouseId'], 'optional' => []],
+        'meest'        => ['required' => ['deliveryWarehouseId'], 'optional' => []],
+        'justin'       => ['required' => ['deliveryWarehouseId'], 'optional' => []],
+        'rozetka'      => ['required' => ['deliveryWarehouseId'], 'optional' => []],
+        'courier'      => ['required' => ['street', 'house'], 'optional' => ['apartment', 'building', 'floor']],
+        'pickup'       => ['required' => ['deliveryPickupPointId'], 'optional' => []],
+        // Доставки без підформи — просто не додавати запис
     ],
 
     /*
