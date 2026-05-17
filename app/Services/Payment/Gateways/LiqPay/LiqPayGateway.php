@@ -84,7 +84,7 @@ class LiqPayGateway implements Holdable, PaymentGatewayInterface, Returnable
         $client = $this->makeClient($payMethodId);
 
         if (! $client->verifySignature($data, $signature)) {
-            Log::warning('LiqPay: invalid webhook signature', ['order_id' => $decoded['order_id'] ?? null]);
+            Log::channel('payments')->warning('LiqPay: invalid webhook signature', ['order_id' => $decoded['order_id'] ?? null]);
 
             return false;
         }

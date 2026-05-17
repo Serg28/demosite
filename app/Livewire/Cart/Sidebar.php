@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Cart;
 
-use App\Actions\Cart\RemoveFromCartAction;
+use App\Actions\Cart\RemoveFromCart;
 use App\Models\Product;
 use App\Services\Cart\CartService;
 use Illuminate\Support\Collection;
@@ -36,7 +36,7 @@ class Sidebar extends Component
         $this->isOpen = false;
     }
 
-    public function remove(string $rowId, RemoveFromCartAction $action): void
+    public function remove(string $rowId, RemoveFromCart $action): void
     {
         $result = $action->handle($rowId);
         $this->dispatch('cart-changed', count: $result->count, action: $result->action, products: $result->products);
@@ -47,10 +47,10 @@ class Sidebar extends Component
         $items = Cart::content();
 
         return view('livewire.cart.sidebar', [
-            'items'    => $items,
+            'items' => $items,
             'products' => $this->loadProducts($items),
-            'total'    => Cart::total(2, '.', ''),
-            'subtotal' => Cart::subtotal(2, '.', ''),
+            'total' => Cart::total(config('cart.format.decimals', 2), config('cart.format.decimal_point', '.'), config('cart.format.thousand_separator', '')),
+            'subtotal' => Cart::subtotal(config('cart.format.decimals', 2), config('cart.format.decimal_point', '.'), config('cart.format.thousand_separator', '')),
         ]);
     }
 
@@ -75,14 +75,14 @@ class Sidebar extends Component
         }
 
         $ga4Items = $items->map(function ($item) {
-            /** @var \App\Models\Product|null $product */
+            /** @var Product|null $product */
             $product = $item->model;
 
             return [
-                'item_id'   => $product ? $product->getArticle() : (string) $item->id,
+                'item_id' => $product ? $product->getArticle() : (string) $item->id,
                 'item_name' => $item->name,
-                'price'     => (float) $item->price,
-                'quantity'  => (int) $item->qty,
+                'price' => (float) $item->price,
+                'quantity' => (int) $item->qty,
             ];
         })->values()->all();
 

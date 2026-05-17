@@ -6,11 +6,12 @@ use App\DTO\Checkout\CheckoutContext;
 use Closure;
 use Linecore\Shoppingcart\Facades\Cart;
 
-final class ValidateCartStep
+final class ValidateCart
 {
     public function handle(CheckoutContext $context, Closure $next): CheckoutContext
     {
-        $items = Cart::instance('shopping')->content();
+        $cartInstance = config('cart.checkout_instance', 'default');
+        $items = Cart::instance($cartInstance)->content();
 
         if ($items->isEmpty()) {
             $context->fail(__t('Кошик порожній'));
@@ -19,7 +20,11 @@ final class ValidateCartStep
         }
 
         $context->cartItems = $items;
-        $context->subtotal = (float) Cart::instance('shopping')->subtotal(2, '.', '');
+        $context->subtotal = (float) Cart::instance($cartInstance)->subtotal(
+            config('cart.format.decimals', 2),
+            config('cart.format.decimal_point', '.'),
+            config('cart.format.thousand_separator', '')
+        );
 
         return $next($context);
     }

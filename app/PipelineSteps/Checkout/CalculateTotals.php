@@ -5,7 +5,7 @@ namespace App\PipelineSteps\Checkout;
 use App\DTO\Checkout\CheckoutContext;
 use Closure;
 
-final class CalculateTotalsStep
+final class CalculateTotals
 {
     public function handle(CheckoutContext $context, Closure $next): CheckoutContext
     {

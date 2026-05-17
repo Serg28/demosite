@@ -57,6 +57,11 @@ class CheckoutContext
     public ?int $deliveryPickupPointId = null;
     public string $address = '';
 
+    // Payment sub-form fields
+    public ?int $payPartsCount = null;         // монтяків розстрочки
+    public string $b2bCompany = '';            // paylink: назва юрособи
+    public string $b2bEdrpou = '';             // paylink: ЄДРПОУ
+
     // Result
     public ?Order $order = null;
     public bool $isPaidByCertificates = false;

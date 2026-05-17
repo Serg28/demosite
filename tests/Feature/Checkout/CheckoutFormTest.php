@@ -5,7 +5,9 @@ namespace Tests\Feature\Checkout;
 use App\Livewire\Checkout\CheckoutForm;
 use App\Livewire\Checkout\DeliverySelector;
 use App\Livewire\Checkout\PayPartsCalculator;
+use App\Models\City;
 use App\Models\Delivery;
+use App\Models\DiscountCard;
 use App\Models\Order;
 use App\Models\PayMethod;
 use App\Models\PromoCode;
@@ -20,28 +22,37 @@ class CheckoutFormTest extends TestCase
     use RefreshDatabase;
 
     protected Delivery $delivery;
+
     protected PayMethod $payMethod;
+
+    protected City $city;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        $this->city = City::create([
+            'title' => json_encode(['ua' => 'Київ', 'ru' => 'Киев']),
+            'is_active' => true,
+        ]);
+
         $this->delivery = Delivery::create([
-            'title'     => json_encode(['ua' => 'Нова Пошта', 'ru' => 'Новая Почта']),
-            'slug'      => 'np_branch',
-            'price'     => 95.00,
+            'title' => json_encode(['ua' => 'Нова Пошта', 'ru' => 'Новая Почта']),
+            'slug' => 'np_branch',
+            'price' => 95.00,
             'free_cost' => 1500.00,
-            'priority'  => 10,
+            'is_for_all_cities' => true,
+            'priority' => 10,
             'is_active' => true,
         ]);
 
         $this->payMethod = PayMethod::create([
-            'title'              => json_encode(['ua' => 'LiqPay', 'ru' => 'LiqPay']),
-            'slug'               => 'liqpay',
-            'gateway'            => 'liqpay',
+            'title' => json_encode(['ua' => 'LiqPay', 'ru' => 'LiqPay']),
+            'slug' => 'liqpay',
+            'gateway' => 'liqpay',
             'commission_percent' => 2.75,
-            'priority'           => 10,
-            'is_active'          => true,
+            'priority' => 10,
+            'is_active' => true,
         ]);
 
         $this->delivery->payments()->attach($this->payMethod->id);
@@ -68,13 +79,14 @@ class CheckoutFormTest extends TestCase
             ->assertSeeLivewire(CheckoutForm::class);
     }
 
-    public function test_checkout_form_mounts_with_delivery_preselected(): void
+    public function test_checkout_form_mounts_with_no_preselection(): void
     {
         Cart::add('1', 'Test Product', 1, 100.00);
 
         Livewire::test(CheckoutForm::class)
-            ->assertSet('deliveryId', $this->delivery->id)
-            ->assertSet('payMethodId', $this->payMethod->id);
+            ->assertSet('deliveryId', null)
+            ->assertSet('payMethodId', null)
+            ->assertSet('cityId', null);
     }
 
     public function test_checkout_form_prefills_auth_user_data(): void
@@ -118,9 +130,9 @@ class CheckoutFormTest extends TestCase
         Cart::add('1', 'Test Product', 1, 500.00);
 
         PromoCode::create([
-            'code'      => 'DEMO10',
-            'type'      => 'percent',
-            'value'     => 10,
+            'code' => 'DEMO10',
+            'type' => 'percent',
+            'value' => 10,
             'is_active' => true,
         ]);
 
@@ -147,9 +159,9 @@ class CheckoutFormTest extends TestCase
         Cart::add('1', 'Test Product', 1, 500.00);
 
         PromoCode::create([
-            'code'      => 'TEST20',
-            'type'      => 'fixed',
-            'value'     => 100,
+            'code' => 'TEST20',
+            'type' => 'fixed',
+            'value' => 100,
             'is_active' => true,
         ]);
 
@@ -166,10 +178,11 @@ class CheckoutFormTest extends TestCase
     public function test_checkout_form_resets_pay_method_when_delivery_changes(): void
     {
         $delivery2 = Delivery::create([
-            'title'     => json_encode(['ua' => 'Самовивіз', 'ru' => 'Самовывоз']),
-            'slug'      => 'pickup',
-            'price'     => 0,
-            'priority'  => 50,
+            'title' => json_encode(['ua' => 'Самовивіз', 'ru' => 'Самовывоз']),
+            'slug' => 'pickup',
+            'price' => 0,
+            'is_for_all_cities' => true,
+            'priority' => 50,
             'is_active' => true,
         ]);
         // Не прив'язуємо $this->payMethod до $delivery2 — перевірка скидання
@@ -177,6 +190,8 @@ class CheckoutFormTest extends TestCase
         Cart::add('1', 'Test Product', 1, 100.00);
 
         Livewire::test(CheckoutForm::class)
+            ->set('deliveryId', $this->delivery->id)
+            ->set('payMethodId', $this->payMethod->id)
             ->assertSet('payMethodId', $this->payMethod->id)
             ->set('deliveryId', $delivery2->id)
             ->assertSet('payMethodId', null);
@@ -184,22 +199,141 @@ class CheckoutFormTest extends TestCase
 
     public function test_checkout_form_notifies_error_when_cart_empty(): void
     {
+        // np_branch вимагає deliveryWarehouseId — встановлюємо довільний int,
+        // щоб пройти валідацію і досягти перевірки порожнього кошика
         Livewire::test(CheckoutForm::class)
             ->set('firstName', 'Іван')
             ->set('phone', '+380979408386')
+            ->set('cityId', $this->city->id)
             ->set('deliveryId', $this->delivery->id)
+            ->set('deliveryWarehouseId', 1)
             ->set('payMethodId', $this->payMethod->id)
             ->call('placeOrder')
             ->assertDispatched('notify');
     }
 
-    public function test_delivery_selector_dispatches_event_on_city_select(): void
+    public function test_checkout_form_applies_discount_card(): void
+    {
+        Cart::add('1', 'Test Product', 1, 500.00);
+
+        DiscountCard::create([
+            'code' => 'CARD50',
+            'type' => 'percent',
+            'value' => 10,
+            'is_active' => true,
+        ]);
+
+        Livewire::test(CheckoutForm::class)
+            ->set('cardInput', 'CARD50')
+            ->call('applyDiscountCard')
+            ->assertSet('cardApplied', true)
+            ->assertSet('cardDiscount', 50.00);
+    }
+
+    public function test_checkout_form_applies_fixed_discount_card(): void
+    {
+        Cart::add('1', 'Test Product', 1, 500.00);
+
+        DiscountCard::create([
+            'code' => 'FIXED100',
+            'type' => 'fixed',
+            'value' => 100,
+            'is_active' => true,
+        ]);
+
+        Livewire::test(CheckoutForm::class)
+            ->set('cardInput', 'FIXED100')
+            ->call('applyDiscountCard')
+            ->assertSet('cardApplied', true)
+            ->assertSet('cardDiscount', 100.00);
+    }
+
+    public function test_checkout_form_rejects_invalid_discount_card(): void
+    {
+        Cart::add('1', 'Test Product', 1, 500.00);
+
+        Livewire::test(CheckoutForm::class)
+            ->set('cardInput', 'INVALID')
+            ->call('applyDiscountCard')
+            ->assertSet('cardApplied', false)
+            ->assertSet('cardDiscount', 0.0);
+    }
+
+    public function test_checkout_form_removes_discount_card(): void
+    {
+        Cart::add('1', 'Test Product', 1, 500.00);
+
+        DiscountCard::create([
+            'code' => 'RMCARD',
+            'type' => 'fixed',
+            'value' => 50,
+            'is_active' => true,
+        ]);
+
+        Livewire::test(CheckoutForm::class)
+            ->set('cardInput', 'RMCARD')
+            ->call('applyDiscountCard')
+            ->assertSet('cardApplied', true)
+            ->call('removeDiscountCard')
+            ->assertSet('cardApplied', false)
+            ->assertSet('cardDiscount', 0.0)
+            ->assertSet('cardInput', '');
+    }
+
+    public function test_checkout_form_applies_promo_and_card_simultaneously(): void
+    {
+        Cart::add('1', 'Test Product', 1, 1000.00);
+
+        PromoCode::create([
+            'code' => 'PROMO10',
+            'type' => 'percent',
+            'value' => 10,
+            'is_active' => true,
+        ]);
+
+        DiscountCard::create([
+            'code' => 'CARD5',
+            'type' => 'percent',
+            'value' => 5,
+            'is_active' => true,
+        ]);
+
+        Livewire::test(CheckoutForm::class)
+            ->set('promoCodeInput', 'PROMO10')
+            ->call('applyPromoCode')
+            ->assertSet('promoApplied', true)
+            ->assertSet('promoDiscount', 100.00)
+            ->set('cardInput', 'CARD5')
+            ->call('applyDiscountCard')
+            ->assertSet('cardApplied', true)
+            ->assertSet('cardDiscount', 50.00);
+    }
+
+    public function test_checkout_form_select_city_resets_delivery(): void
+    {
+        Cart::add('1', 'Test Product', 1, 100.00);
+
+        $city2 = City::create([
+            'title' => json_encode(['ua' => 'Харків', 'ru' => 'Харьков']),
+            'is_active' => true,
+        ]);
+
+        Livewire::test(CheckoutForm::class)
+            ->set('cityId', $this->city->id)
+            ->set('deliveryId', $this->delivery->id)
+            ->call('selectCity', $city2->id, 'Харків')
+            ->assertSet('cityId', $city2->id)
+            ->assertSet('deliveryId', null);
+    }
+
+    public function test_delivery_selector_dispatches_event_on_warehouse_select(): void
     {
         Livewire::test(DeliverySelector::class, [
-            'deliveryId'   => $this->delivery->id,
+            'deliveryId' => $this->delivery->id,
             'deliverySlug' => 'np_branch',
+            'cityId' => $this->city->id,
         ])
-            ->call('selectCity', 1, 'Київ')
+            ->call('selectWarehouse', 1, 'Відділення #1')
             ->assertDispatched('delivery-details-updated');
     }
 
@@ -215,12 +349,12 @@ class CheckoutFormTest extends TestCase
     public function test_checkout_success_page_requires_session(): void
     {
         $order = Order::create([
-            'name'    => 'Test',
-            'phone'   => '+380971234567',
-            'email'   => 'test@example.com',
+            'name' => 'Test',
+            'phone' => '+380971234567',
+            'email' => 'test@example.com',
             'address' => '',
-            'cost'    => 100,
-            'status'  => 'new',
+            'cost' => 100,
+            'status' => 'new',
         ]);
 
         $this->get(route('checkout.success', $order))
@@ -230,12 +364,12 @@ class CheckoutFormTest extends TestCase
     public function test_checkout_success_page_shows_order_with_valid_session(): void
     {
         $order = Order::create([
-            'name'    => 'Test',
-            'phone'   => '+380971234567',
-            'email'   => 'test@example.com',
+            'name' => 'Test',
+            'phone' => '+380971234567',
+            'email' => 'test@example.com',
             'address' => '',
-            'cost'    => 500,
-            'status'  => 'new',
+            'cost' => 500,
+            'status' => 'new',
         ]);
 
         session(['checkout_order_id' => $order->id]);

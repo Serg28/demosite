@@ -8,7 +8,7 @@ use App\Services\Payment\GatewayRegistry;
 use App\Services\Payment\PaymentInvoiceService;
 use Closure;
 
-final class ProcessPaymentStep
+final class ProcessPayment
 {
     public function __construct(
         private readonly GatewayRegistry $registry,

@@ -7,7 +7,7 @@ use App\DTO\Checkout\CheckoutContext;
 use App\DTO\Checkout\DiscountBreakdown;
 use Closure;
 
-final class ApplyDiscountsStep
+final class ApplyDiscounts
 {
     public function handle(CheckoutContext $context, Closure $next): CheckoutContext
     {

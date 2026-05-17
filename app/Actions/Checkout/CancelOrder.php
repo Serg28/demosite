@@ -5,7 +5,7 @@ namespace App\Actions\Checkout;
 use App\Models\Order;
 use App\Services\GiftCertificateService;
 
-class CancelOrderAction
+class CancelOrder
 {
     public function __construct(private readonly GiftCertificateService $certificateService) {}
 

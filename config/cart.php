@@ -1,5 +1,10 @@
 <?php
 
+use App\Services\Cart\Calculators\BasketCalculator;
+use App\Services\Cart\Pipes\CheckAvailabilityPipe;
+use App\Services\Cart\Pipes\PerformAddPipe;
+use App\Services\Cart\Pipes\ValidateProductPipe;
+
 return [
 
     /*
@@ -9,7 +14,7 @@ return [
     | BasketCalculator: baseAmount = price×qty, totalAmount = baseAmount - discount,
     | subtotal = totalAmount. Без ПДВ (tax = 0).
     */
-    'calculator' => \App\Services\Cart\Calculators\BasketCalculator::class,
+    'calculator' => BasketCalculator::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -26,7 +31,7 @@ return [
     */
     'database' => [
         'connection' => null,
-        'table'      => 'shoppingcart',
+        'table' => 'shoppingcart',
     ],
 
     /*
@@ -42,8 +47,8 @@ return [
     |--------------------------------------------------------------------------
     */
     'format' => [
-        'decimals'           => 0,
-        'decimal_point'      => '.',
+        'decimals' => 0,
+        'decimal_point' => '.',
         'thousand_separator' => '',
     ],
 
@@ -52,9 +57,12 @@ return [
     | Екземпляри кошика
     |--------------------------------------------------------------------------
     | Розширюй тут для нових бізнес-сценаріїв (wishlists, quotes, etc.)
+    | checkout_instance — який екземпляр використовується при оформленні замовлення.
     */
+    'checkout_instance' => env('CART_CHECKOUT_INSTANCE', 'default'),
+
     'instances' => [
-        'default'  => 'default',
+        'default' => 'default',
         'wishlist' => 'wishlist',
     ],
 
@@ -67,9 +75,9 @@ return [
     */
     'pipes' => [
         'add' => [
-            \App\Services\Cart\Pipes\ValidateProductPipe::class,
-            \App\Services\Cart\Pipes\CheckAvailabilityPipe::class,
-            \App\Services\Cart\Pipes\PerformAddPipe::class,
+            ValidateProductPipe::class,
+            CheckAvailabilityPipe::class,
+            PerformAddPipe::class,
         ],
     ],
 

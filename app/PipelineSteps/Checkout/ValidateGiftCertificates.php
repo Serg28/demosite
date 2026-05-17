@@ -6,7 +6,7 @@ use App\DTO\Checkout\CheckoutContext;
 use App\Services\GiftCertificateService;
 use Closure;
 
-final class ValidateGiftCertificatesStep
+final class ValidateGiftCertificates
 {
     public function __construct(private readonly GiftCertificateService $service) {}
 

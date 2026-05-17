@@ -4,7 +4,7 @@ namespace App\Actions\Checkout;
 
 use App\Models\PromoCode;
 
-class ApplyPromoCodeAction
+class ApplyPromoCode
 {
     public function handle(string $code, float $subtotal): array
     {
@@ -25,15 +25,20 @@ class ApplyPromoCodeAction
             return [
                 'success' => false,
                 'message' => __t('Мінімальна сума замовлення для цього промокоду: :amount грн', [
-                    'amount' => number_format($promo->min_order_amount, 0, '.', ' '),
+                    'amount' => number_format(
+                        $promo->min_order_amount,
+                        config('cart.format.decimals', 0),
+                        config('cart.format.decimal_point', '.'),
+                        config('cart.format.thousand_separator', ' '),
+                    ),
                 ]),
             ];
         }
 
         return [
-            'success'   => true,
-            'promo'     => $promo,
-            'discount'  => $promo->getAmount($subtotal),
+            'success' => true,
+            'promo' => $promo,
+            'discount' => $promo->getAmount($subtotal),
         ];
     }
 }

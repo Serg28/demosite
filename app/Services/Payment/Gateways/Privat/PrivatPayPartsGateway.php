@@ -36,16 +36,16 @@ class PrivatPayPartsGateway implements Holdable, Installmentable, PaymentGateway
     {
         $order->loadMissing(['payMethod', 'products']);
 
-        $creds        = $this->credentials->resolve($order->pay_method_id);
-        $client       = $this->makeClientFromCreds($creds);
-        $useHold      = $order->payMethod?->use_hold ?? false;
+        $creds = $this->credentials->resolve($order->pay_method_id);
+        $client = $this->makeClientFromCreds($creds);
+        $useHold = $order->payMethod?->use_hold ?? false;
         $merchantType = $creds['merchant_type'] ?? 'PP';
-        $partsCount   = (int) ($order->installment_months ?? 0);
-        $privatOrderId = $order->id . '_' . time();
+        $partsCount = (int) ($order->installment_months ?? 0);
+        $privatOrderId = $order->id.'_'.time();
 
         $products = $order->products
             ->map(fn ($p) => [
-                'name'  => $p->title ?? __t('Товар'),
+                'name' => $this->sanitizeProductName($p->title ?? __t('Товар')),
                 'price' => (float) $p->price,
                 'count' => (int) $p->count,
             ])
@@ -53,26 +53,26 @@ class PrivatPayPartsGateway implements Holdable, Installmentable, PaymentGateway
 
         if (empty($products)) {
             $products = [[
-                'name'  => __t('Замовлення № ') . $order->id,
+                'name' => __t('Замовлення № ').$order->id,
                 'count' => 1,
                 'price' => $order->getTotalCost() ?: (float) $order->cost,
             ]];
         }
 
         $result = $client->createPayment(
-            orderId:      $privatOrderId,
-            amount:       $order->getTotalCost() ?: (float) $order->cost,
-            redirectUrl:  route('checkout.success', $order),
-            responseUrl:  url('/payment/webhook/privatpayparts'),
-            partsCount:   $partsCount,
-            products:     $products,
+            orderId: $privatOrderId,
+            amount: $order->getTotalCost() ?: (float) $order->cost,
+            redirectUrl: route('checkout.success', $order),
+            responseUrl: url('/payment/webhook/privatpayparts'),
+            partsCount: $partsCount,
+            products: $products,
             merchantType: $merchantType,
-            useHold:      $useHold,
+            useHold: $useHold,
         );
 
         return [
-            'payment_url'     => $result['paymentUrl'] ?? '',
-            'token'           => $result['token'] ?? '',
+            'payment_url' => $result['paymentUrl'] ?? '',
+            'token' => $result['token'] ?? '',
             'privat_order_id' => $privatOrderId,
         ];
     }
@@ -84,9 +84,9 @@ class PrivatPayPartsGateway implements Holdable, Installmentable, PaymentGateway
     public function status(PaymentInvoice $invoice): string
     {
         $invoice->loadMissing('order');
-        $client        = $this->makeClient($invoice->order->pay_method_id);
+        $client = $this->makeClient($invoice->order->pay_method_id);
         $privatOrderId = $invoice->gateway_response['privat_order_id'] ?? (string) $invoice->order_id;
-        $response      = $client->checkStatus($privatOrderId);
+        $response = $client->checkStatus($privatOrderId);
 
         return $this->mapStatus($response?->paymentState ?? '');
     }
@@ -148,10 +148,10 @@ class PrivatPayPartsGateway implements Holdable, Installmentable, PaymentGateway
      */
     public function return(Order $order): bool
     {
-        $invoice       = $order->paymentInvoices()->latest()->first();
+        $invoice = $order->paymentInvoices()->latest()->first();
         $privatOrderId = $this->resolvePrivatOrderId($order);
         $invoiceAmount = $invoice?->gateway_response['amount'] ?? null;
-        $amount        = (float) ($invoiceAmount ?? ($order->getTotalCost() ?: (float) $order->cost));
+        $amount = (float) ($invoiceAmount ?? ($order->getTotalCost() ?: (float) $order->cost));
 
         if ($amount <= 0) {
             return false;
@@ -170,9 +170,9 @@ class PrivatPayPartsGateway implements Holdable, Installmentable, PaymentGateway
             $total = $amount + $commission;
 
             return [
-                'months'  => $months,
+                'months' => $months,
                 'monthly' => round($total / $months, 2),
-                'total'   => $total,
+                'total' => $total,
             ];
         }, self::AVAILABLE_MONTHS);
     }
@@ -197,6 +197,11 @@ class PrivatPayPartsGateway implements Holdable, Installmentable, PaymentGateway
         return (string) $order->id;
     }
 
+    private function sanitizeProductName(string $name): string
+    {
+        return str_replace(["'", '"', '&#39;', '&'], '', htmlspecialchars_decode($name));
+    }
+
     private function makeClient(int $payMethodId): PrivatPayPartsClient
     {
         return $this->makeClientFromCreds($this->credentials->resolve($payMethodId));
@@ -206,7 +211,7 @@ class PrivatPayPartsGateway implements Holdable, Installmentable, PaymentGateway
     private function makeClientFromCreds(array $creds): PrivatPayPartsClient
     {
         return new PrivatPayPartsClient(
-            storeId:  $creds['merchant_id'] ?? '',
+            storeId: $creds['merchant_id'] ?? '',
             password: $creds['password'] ?? '',
         );
     }
@@ -214,13 +219,13 @@ class PrivatPayPartsGateway implements Holdable, Installmentable, PaymentGateway
     private function mapStatus(string $state): string
     {
         return match ($state) {
-            'SUCCESS'                                                  => 'paid',
-            'LOCKED', 'WAIT_CONFIRM'                                   => 'hold',
-            'PROCESSING', 'CLIENT_WAIT'                                => 'processing',
-            'RETURNED'                                                 => 'refunded',
+            'SUCCESS' => 'paid',
+            'LOCKED', 'WAIT_CONFIRM' => 'hold',
+            'PROCESSING', 'CLIENT_WAIT' => 'processing',
+            'RETURNED' => 'refunded',
             'FAIL', 'TIMEOUT', 'OTP_LIMIT', 'CLIENT_CANCEL',
-            'MERCHANT_CANCEL', 'LOOKUP_TIMEOUT', 'PRECHECK_FAIL'      => 'failed',
-            default                                                    => 'pending',
+            'MERCHANT_CANCEL', 'LOOKUP_TIMEOUT', 'PRECHECK_FAIL' => 'failed',
+            default => 'pending',
         };
     }
 }

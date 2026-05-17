@@ -61,13 +61,17 @@ class CartService
         return Cart::instance($this->instance)->count();
     }
 
-    public function total(int $decimals = 2, string $decimalPoint = '.', string $thousandSep = ''): string
+    public function total(?int $decimals = null, string $decimalPoint = '.', string $thousandSep = ''): string
     {
+        $decimals ??= (int) config('cart.format.decimals', 2);
+
         return Cart::instance($this->instance)->total($decimals, $decimalPoint, $thousandSep);
     }
 
-    public function subtotal(int $decimals = 2, string $decimalPoint = '.', string $thousandSep = ''): string
+    public function subtotal(?int $decimals = null, string $decimalPoint = '.', string $thousandSep = ''): string
     {
+        $decimals ??= (int) config('cart.format.decimals', 2);
+
         return Cart::instance($this->instance)->subtotal($decimals, $decimalPoint, $thousandSep);
     }
 
@@ -117,7 +121,7 @@ class CartService
     /**
      * Кількість доступного для замовлення товару з урахуванням вже доданого до кошика.
      *
-     * @param string $action 'add'|'update'
+     * @param  string  $action  'add'|'update'
      */
     public function availableForOrder(Product $product, int $qty, string $action = 'add'): int
     {
@@ -168,7 +172,7 @@ class CartService
 
             if ($item->qty > $product->getQuantity()) {
                 $this->update($rowId, [
-                    'qty'     => $product->getQuantity(),
+                    'qty' => $product->getQuantity(),
                     'options' => array_merge($item->options->toArray(), ['qtyOld' => $item->qty]),
                 ]);
                 $changed = true;

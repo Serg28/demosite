@@ -8,10 +8,10 @@ use App\DTO\Checkout\TaxBreakdown;
 use App\Models\DiscountCard;
 use App\Models\PayMethod;
 use App\Models\PromoCode;
-use App\PipelineSteps\Checkout\ApplyDiscountsStep;
-use App\PipelineSteps\Checkout\CalculateTotalsStep;
-use App\Services\Payment\Strategies\FlatCommissionStrategy;
+use App\PipelineSteps\Checkout\ApplyDiscounts;
+use App\PipelineSteps\Checkout\CalculateTotals;
 use App\Services\Payment\GatewayRegistry;
+use App\Services\Payment\Strategies\FlatCommissionStrategy;
 use App\Services\Payment\Strategies\MonoPartsCommissionStrategy;
 use Tests\TestCase;
 
@@ -54,7 +54,7 @@ class CheckoutPipelineTest extends TestCase
         $context->taxes = new TaxBreakdown(productTax: 0.0, paymentCommission: 20.0);
         $context->giftCertificateTotal = 0.0;
 
-        $step = new CalculateTotalsStep;
+        $step = new CalculateTotals;
         $result = $step->handle($context, fn ($ctx) => $ctx);
 
         $this->assertEquals(970.0, $result->total);
@@ -71,7 +71,7 @@ class CheckoutPipelineTest extends TestCase
         $context->taxes = new TaxBreakdown(productTax: 0.0, paymentCommission: 0.0);
         $context->giftCertificateTotal = 500.0;
 
-        $step = new CalculateTotalsStep;
+        $step = new CalculateTotals;
         $result = $step->handle($context, fn ($ctx) => $ctx);
 
         $this->assertEquals(500.0, $result->total);
@@ -94,7 +94,7 @@ class CheckoutPipelineTest extends TestCase
 
     public function test_discount_card_percent(): void
     {
-        $card = new DiscountCard(['number' => 'DC-001', 'discount_percent' => 5.0]);
+        $card = new DiscountCard(['code' => 'DC-001', 'type' => 'percent', 'value' => 5.0]);
         $this->assertEquals(100.0, $card->getAmount(2000.0));
         $this->assertEquals('discount_card', $card->getType());
     }
@@ -103,7 +103,7 @@ class CheckoutPipelineTest extends TestCase
     {
         $context = new CheckoutContext;
         $context->subtotal = 500.0;
-        $step = new ApplyDiscountsStep;
+        $step = new ApplyDiscounts;
         $result = $step->handle($context, fn ($ctx) => $ctx);
         $this->assertEquals(0.0, $result->discountTotal);
     }

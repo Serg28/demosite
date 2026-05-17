@@ -4,16 +4,17 @@ namespace App\Services\Payment;
 
 use App\Contracts\CommissionStrategy;
 use App\Models\PayMethod;
+use App\Services\Payment\Strategies\FlatCommissionStrategy;
 
 class CommissionCalculator
 {
     public function calculate(PayMethod $payMethod, float $amount): float
     {
-        $strategy = $this->resolveStrategy($payMethod->slug);
-
-        return $strategy->calculate($amount, [
+        $raw = $this->resolveStrategy($payMethod->slug)->calculate($amount, [
             'pay_method' => $payMethod,
         ]);
+
+        return round($raw, config('cart.format.decimals', 2));
     }
 
     private function resolveStrategy(string $slug): CommissionStrategy

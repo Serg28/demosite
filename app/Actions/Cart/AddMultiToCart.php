@@ -7,7 +7,7 @@ use App\Models\Product;
 use App\Services\Cart\CartService;
 use Illuminate\Support\Collection;
 
-class AddMultiToCartAction
+class AddMultiToCart
 {
     public function __construct(private readonly CartService $cartService) {}
 
@@ -26,6 +26,7 @@ class AddMultiToCartAction
 
             if (! $product) {
                 $failedCount++;
+
                 continue;
             }
 
@@ -37,6 +38,7 @@ class AddMultiToCartAction
 
             if ($context->isFailed()) {
                 $failedCount++;
+
                 continue;
             }
 

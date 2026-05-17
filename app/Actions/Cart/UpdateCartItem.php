@@ -8,7 +8,7 @@ use App\Models\Product;
 use App\Services\Cart\CartService;
 use Linecore\Shoppingcart\Exceptions\InvalidRowIDException;
 
-class UpdateCartItemAction
+class UpdateCartItem
 {
     public function __construct(private readonly CartService $cartService) {}
 

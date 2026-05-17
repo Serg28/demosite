@@ -1,5 +1,16 @@
 <?php
 
+use App\PipelineSteps\Checkout\ApplyDiscounts;
+use App\PipelineSteps\Checkout\CalculateCommission;
+use App\PipelineSteps\Checkout\CalculateDelivery;
+use App\PipelineSteps\Checkout\CalculateTotals;
+use App\PipelineSteps\Checkout\ClearCart;
+use App\PipelineSteps\Checkout\CreateOrder;
+use App\PipelineSteps\Checkout\ProcessPayment;
+use App\PipelineSteps\Checkout\SendNotifications;
+use App\PipelineSteps\Checkout\ValidateCart;
+use App\PipelineSteps\Checkout\ValidateGiftCertificates;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -8,16 +19,16 @@ return [
     | Порядок важливий. Кожен крок реалізує handle(CheckoutContext, Closure).
     */
     'pipeline' => [
-        \App\PipelineSteps\Checkout\ValidateCartStep::class,
-        \App\PipelineSteps\Checkout\ApplyDiscountsStep::class,
-        \App\PipelineSteps\Checkout\ValidateGiftCertificatesStep::class,
-        \App\PipelineSteps\Checkout\CalculateDeliveryStep::class,
-        \App\PipelineSteps\Checkout\CalculateCommissionStep::class,
-        \App\PipelineSteps\Checkout\CalculateTotalsStep::class,
-        \App\PipelineSteps\Checkout\CreateOrderStep::class,
-        \App\PipelineSteps\Checkout\ProcessPaymentStep::class,
-        \App\PipelineSteps\Checkout\ClearCartStep::class,
-        \App\PipelineSteps\Checkout\SendNotificationsStep::class,
+        ValidateCart::class,
+        ApplyDiscounts::class,
+        ValidateGiftCertificates::class,
+        CalculateDelivery::class,
+        CalculateCommission::class,
+        CalculateTotals::class,
+        CreateOrder::class,
+        ProcessPayment::class,
+        ClearCart::class,
+        SendNotifications::class,
     ],
 
     /*
@@ -45,7 +56,7 @@ return [
     | true  = можна комбінувати, false = взаємовиключають
     */
     'discount_combinations' => [
-        'promo_code'    => ['discount_card' => true],
+        'promo_code' => ['discount_card' => true],
         'discount_card' => ['promo_code' => true],
     ],
 
@@ -65,4 +76,51 @@ return [
     | keep_remaining — залишок залишається на сертифікаті
     */
     'gift_certificate_burn_strategy' => env('GIFT_CERTIFICATE_BURN_STRATEGY', 'burn_all'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Правила підформ доставки (ключ = slug доставки)
+    |--------------------------------------------------------------------------
+    | Визначає обов'язкові поля для кожного методу доставки.
+    | deliveryFormComplete та placeOrder() беруть правила звідси, не з коду.
+    | Нова доставка — просто додати запис, без змін у PHP.
+    */
+    'delivery_fields' => [
+        'np_branch'     => ['deliveryWarehouseId' => ['required', 'integer']],
+        'np_poshtamat'  => ['deliveryWarehouseId' => ['required', 'integer']],
+        'ukrposhta'     => ['deliveryWarehouseId' => ['required', 'integer']],
+        'meest'         => ['deliveryWarehouseId' => ['required', 'integer']],
+        'justin'        => ['deliveryWarehouseId' => ['required', 'integer']],
+        'rozetka'       => ['deliveryWarehouseId' => ['required', 'integer']],
+        'courier'       => ['address'             => ['required', 'string', 'max:300']],
+        'pickup'        => ['deliveryPickupPointId' => ['required', 'integer']],
+        // Доставки без підформи (pickup_self, тощо) — просто не додавати запис
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Правила підформ оплати (ключ = gateway slug)
+    |--------------------------------------------------------------------------
+    | Визначає поля для кожного платіжного шлюзу.
+    | paymentStepValid та placeOrder() беруть правила звідси, не з коду.
+    | Новий gateway — просто додати запис.
+    */
+    'payment_fields' => [
+        'monopayparts'   => ['payPartsCount' => ['required', 'integer', 'min:2', 'max:12']],
+        'privatpayparts' => ['payPartsCount' => ['required', 'integer', 'min:2', 'max:10']],
+        'paylink'        => [
+            'b2bCompany' => ['required', 'string', 'max:200'],
+            'b2bEdrpou'  => ['required', 'digits:8'],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Максимальна кількість місяців розстрочки (для UI-селекту)
+    |--------------------------------------------------------------------------
+    */
+    'payment_parts_months' => [
+        'monopayparts'   => 12,
+        'privatpayparts' => 10,
+    ],
 ];

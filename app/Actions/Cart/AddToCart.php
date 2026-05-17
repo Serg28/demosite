@@ -7,7 +7,7 @@ use App\Events\Cart\CartItemAdded;
 use App\Models\Product;
 use App\Services\Cart\CartService;
 
-class AddToCartAction
+class AddToCart
 {
     public function __construct(private readonly CartService $cartService) {}
 

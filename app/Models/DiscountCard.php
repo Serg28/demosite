@@ -15,8 +15,8 @@ class DiscountCard extends Model implements DiscountSource
     protected function casts(): array
     {
         return [
-            'discount_percent' => 'float',
-            'is_active'        => 'boolean',
+            'value' => 'float',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -32,12 +32,16 @@ class DiscountCard extends Model implements DiscountSource
 
     public function getAmount(float $subtotal): float
     {
-        return round($subtotal * $this->discount_percent / 100, 2);
+        if ($this->type === 'percent') {
+            return round($subtotal * $this->value / 100, 2);
+        }
+
+        return min($this->value, $subtotal);
     }
 
     public function getLabel(): string
     {
-        return __t('Дисконтна картка :number', ['number' => $this->number]);
+        return __t('Дисконтна картка :code', ['code' => $this->code]);
     }
 
     public function isCompatibleWith(DiscountSource $other): bool

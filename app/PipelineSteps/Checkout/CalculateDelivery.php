@@ -6,7 +6,7 @@ use App\DTO\Checkout\CheckoutContext;
 use App\Services\Delivery\DeliveryService;
 use Closure;
 
-final class CalculateDeliveryStep
+final class CalculateDelivery
 {
     public function __construct(private readonly DeliveryService $deliveryService) {}
 

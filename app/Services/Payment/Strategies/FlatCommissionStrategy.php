@@ -17,6 +17,6 @@ class FlatCommissionStrategy implements CommissionStrategy
             return 0.0;
         }
 
-        return round($amount * $percent / 100, 2);
+        return $amount * $percent / 100;
     }
 }

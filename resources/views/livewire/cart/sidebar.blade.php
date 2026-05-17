@@ -61,7 +61,7 @@
                     <span>@money($total) {{ setting('currency') }}</span>
                 </div>
 
-                <a href="#checkout"
+                <a href="{{ route('checkout.index') }}"
                    class="block w-full text-center bg-brand hover:bg-brand/90 text-white font-semibold py-3 rounded-xl transition-colors">
                     {{ __t('Оформити замовлення') }}
                 </a>

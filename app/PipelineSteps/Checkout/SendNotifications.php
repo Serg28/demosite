@@ -6,7 +6,7 @@ use App\DTO\Checkout\CheckoutContext;
 use App\Jobs\SendOrderNotification;
 use Closure;
 
-final class SendNotificationsStep
+final class SendNotifications
 {
     public function handle(CheckoutContext $context, Closure $next): CheckoutContext
     {

@@ -7,7 +7,7 @@ use App\DTO\Checkout\CheckoutResult;
 use App\Pipelines\CheckoutPipeline;
 use Throwable;
 
-class PlaceOrderAction
+class PlaceOrder
 {
     public function __construct(private readonly CheckoutPipeline $pipeline) {}
 
