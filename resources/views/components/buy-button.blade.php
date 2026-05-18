@@ -1,6 +1,7 @@
 @props([
     'product',
     'count'        => 1,
+    'alpineCount'  => null,  // Alpine вираз для реактивної кількості (напр. 'qty')
     'showCartIcon' => true,
     'class'        => '',
 ])
@@ -11,7 +12,7 @@
             data-js-add-to-cart
             data-id="{{ $product->id }}"
             data-sum="{{ $product->getPrice() }}"
-            data-count="{{ $count }}"
+            {!! $alpineCount ? ':data-count="' . $alpineCount . '"' : 'data-count="' . $count . '"' !!}
             data-options=""
             @if(setting('checkbox_google_analytics_four')) data-ga4-addtocart @endif>
         <span data-js-spinner class="hidden">

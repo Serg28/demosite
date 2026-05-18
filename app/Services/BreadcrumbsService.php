@@ -91,6 +91,33 @@ class BreadcrumbsService
 
     /**
      * Прості хлібні крихти для статичних сторінок (доставка, про нас тощо).
+    /**
+     * Хлібні крихти для картки товару: Головна > Категорія > Товар.
+     *
+     * @return list<BreadcrumbItem>
+     */
+    public function forProduct(\App\Models\Product $product): array
+    {
+        $items = [new BreadcrumbItem(__t('Головна'), geturl('/'))];
+
+        if ($product->category_id) {
+            $category = cache()->remember(
+                "breadcrumbs.category.{$product->category_id}",
+                3600,
+                fn () => \App\Models\Category::find($product->category_id, ['id', 'title', 'slug'])
+            );
+
+            if ($category) {
+                $items[] = new BreadcrumbItem($category->t('title'), $category->getUrl());
+            }
+        }
+
+        $items[] = new BreadcrumbItem($product->t('title'));
+
+        return $items;
+    }
+
+    /**
      * $pages: ['url' => 'Заголовок', ...]
      *
      * @param  array<string, string>  $pages

@@ -3,6 +3,7 @@
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PaymentWebhookController;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
@@ -25,8 +26,8 @@ Route::get('/catalog/{category}/{filters?}', [CatalogController::class, 'show'])
     ->where(['category' => '[^/]+', 'filters' => '.*'])
     ->name('catalog.show');
 
-// Товар: /product/{slug} (Phase 5 — ProductController буде додано)
-// Route::get('/product/{product:slug}', [ProductController::class, 'show'])->name('product.show');
+// Товар: /product/{slug} (Phase 5.1)
+Route::get('/product/{product:slug}', [ProductController::class, 'show'])->name('product.show');
 // Fallback одноуровневий /{slug} — для клієнтів без сегментів (СТАВИТИ ОСТАННІМ)
 // Route::get('/{slug}', [CatalogController::class, 'routeSlug'])->where('slug', '[^/]+')->name('slug.route');
 

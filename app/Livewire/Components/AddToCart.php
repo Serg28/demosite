@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Components;
 
-use Livewire\Component;
 use Livewire\Attributes\Validate;
+use Livewire\Component;
 
 class AddToCart extends Component
 {

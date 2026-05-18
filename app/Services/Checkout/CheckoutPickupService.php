@@ -17,12 +17,6 @@ class CheckoutPickupService
             ->active()
             ->where('delivery_id', $deliveryId)
             ->when($cityId > 0, fn ($q) => $q->where('city_id', $cityId))
-            ->get()
-            ->map(fn (DeliveryPickupPoint $p) => [
-                'id'      => $p->id,
-                'title'   => $p->t('title'),
-                'address' => $p->address,
-            ])
-            ->values();
+            ->get();
     }
 }

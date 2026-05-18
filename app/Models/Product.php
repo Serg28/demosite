@@ -103,6 +103,16 @@ class Product extends Model
         return $this->hasMany(Comment::class);
     }
 
+    public function interestingProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Product::class,
+            'products_interesting_products',
+            'product_id',
+            'similar_id'
+        );
+    }
+
     public function characteristics(): BelongsToMany
     {
         return $this->belongsToMany(
