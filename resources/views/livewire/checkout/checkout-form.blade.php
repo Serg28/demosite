@@ -451,9 +451,9 @@
                 <button wire:click="placeOrder"
                         wire:loading.attr="disabled"
                         wire:target="placeOrder"
-                        :disabled="! ($wire.contactsStepValid && $wire.deliveryStepValid && $wire.paymentStepValid)"
+                        :disabled="! ($wire.contactsStepValid && $wire.deliveryStepValid && $wire.paymentStepValid) || $wire.cartHasBlockingItems || $wire.cartCount === 0"
                         class="btn btn-p w-full mt-5 text-base"
-                        :class="! ($wire.contactsStepValid && $wire.deliveryStepValid && $wire.paymentStepValid) ? 'opacity-50 cursor-not-allowed' : ''">
+                        :class="(! ($wire.contactsStepValid && $wire.deliveryStepValid && $wire.paymentStepValid) || $wire.cartHasBlockingItems || $wire.cartCount === 0) ? 'opacity-50 cursor-not-allowed' : ''">
                     <span wire:loading.remove wire:target="placeOrder">{{ __t('Оформити замовлення') }}</span>
                     <span wire:loading wire:target="placeOrder">{{ __t('Обробляємо...') }}</span>
                 </button>
@@ -466,6 +466,82 @@
         </div>
 
     </div>
+
+    {{-- ── Full-page preloader (placeOrder) ────────────────────────────────── --}}
+    <div wire:loading wire:target="placeOrder"
+         class="fixed inset-0 z-50 bg-white/80 flex items-center justify-center">
+        <svg class="animate-spin w-12 h-12 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+    </div>
+
+    {{-- ── Cart Guard Modal (out of stock) ──────────────────────────────────── --}}
+    <div x-data="cartGuardModal()"
+         x-on:cart-guard-blocking.window="open($event.detail.items)"
+         x-cloak>
+        <template x-if="isOpen">
+            <div class="relative z-50" role="dialog" aria-modal="true">
+                <div class="fixed inset-0 bg-black/50" @click="close()"></div>
+                <div class="fixed inset-0 flex items-center justify-center p-4">
+                    <div class="relative w-full max-w-md bg-white rounded-xl shadow-2xl p-6"
+                         @click.stop
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100">
+                        <button @click="close()" class="absolute top-4 right-4 text-ink-light hover:text-ink" aria-label="{{ __t('Закрити') }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                        <h3 class="text-lg font-semibold mb-4">{{ __t('Товари недоступні') }}</h3>
+                        <ul class="space-y-2 mb-5">
+                            <template x-for="item in items" :key="item.rowId">
+                                <li class="flex items-center justify-between gap-3 text-sm">
+                                    <span x-text="item.name" class="flex-1 truncate"></span>
+                                    <button @click="removeItem(item.rowId)"
+                                            class="text-red-500 hover:text-red-700 text-xs shrink-0 underline">
+                                        {{ __t('Видалити') }}
+                                    </button>
+                                </li>
+                            </template>
+                        </ul>
+                        <button @click="close()" class="btn btn-o w-full">{{ __t('Закрити') }}</button>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    @script
+    <script>
+        Alpine.data('cartGuardModal', () => ({
+            isOpen: false,
+            items: [],
+            open(items) {
+                this.items = items;
+                this.isOpen = true;
+            },
+            close() {
+                this.isOpen = false;
+            },
+            removeItem(rowId) {
+                this.$wire.removeCartItem(rowId);
+                this.items = this.items.filter(i => i.rowId !== rowId);
+                if (this.items.length === 0) {
+                    this.isOpen = false;
+                }
+            },
+        }));
+
+        $watch('$wire.cartGuardResult', (result) => {
+            if (result && result.price_changed && result.price_changed.length > 0) {
+                const names = result.price_changed.map(i => i.name).join(', ');
+                $dispatch('notify', { type: 'warning', message: '{{ __t('Ціни змінились') }}: ' + names });
+            }
+        });
+    </script>
+    @endscript
 
     @once
     <script>

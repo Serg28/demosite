@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Checkout;
 
-use App\Models\DeliveryPickupPoint;
+use App\Services\Checkout\CheckoutPickupService;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -58,24 +58,14 @@ class DeliverySelector extends Component
             return collect();
         }
 
-        return DeliveryPickupPoint::query()
-            ->where('delivery_id', $this->deliveryId)
-            ->where('is_active', 1)
-            ->orderBy('priority')
-            ->get();
+        return app(CheckoutPickupService::class)
+            ->forDelivery($this->deliveryId, $this->cityId);
     }
 
     #[Computed]
     public function warehouseLabel(): string
     {
-        return match ($this->deliverySlug) {
-            'np_poshtamat' => 'Поштомат',
-            'ukrposhta' => 'Поштове відділення',
-            'justin' => 'Відділення Justin',
-            'meest' => 'Відділення Meest',
-            'rozetka' => 'Пункт видачі Rozetka',
-            default => 'Відділення',
-        };
+        return config("checkout.warehouse_labels.{$this->deliverySlug}", 'Відділення');
     }
 
     public function selectWarehouse(int $warehouseId, string $title): void

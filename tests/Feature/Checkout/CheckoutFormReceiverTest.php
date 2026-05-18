@@ -50,6 +50,8 @@ class CheckoutFormReceiverTest extends TestCase
         ]);
 
         $this->delivery->payments()->attach($this->payMethod->id);
+
+        Cart::add('1', 'Test Product', 1, 100.00);
     }
 
     protected function tearDown(): void

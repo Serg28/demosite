@@ -49,8 +49,6 @@ class PromoCodes extends Resource
             ManyToMany::make('Обмеження по товарах')
                 ->options(
                     (new Options('products'))
-                        ->keyField('title')
-                        ->isJson()
                         ->orderBy('id', 'desc')
                 )
                 ->className('col-md-12')

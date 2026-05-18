@@ -7,6 +7,7 @@ use App\Models\GiftCertificate;
 use App\Services\GiftCertificateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Linecore\Shoppingcart\Facades\Cart;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -21,6 +22,13 @@ class GiftCertificateServiceTest extends TestCase
         parent::setUp();
         Cache::flush();
         $this->service = app(GiftCertificateService::class);
+        Cart::add('1', 'Test Product', 1, 100.00);
+    }
+
+    protected function tearDown(): void
+    {
+        Cart::destroy();
+        parent::tearDown();
     }
 
     // ─── findValid ───────────────────────────────────────────────────────────

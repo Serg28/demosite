@@ -4,6 +4,7 @@ namespace Tests\Feature\Checkout;
 
 use App\Models\City;
 use App\Models\Delivery;
+use App\Models\DeliveryPickupPoint;
 use App\Models\DeliveryWarehouse;
 use App\Models\PayMethod;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -231,5 +232,121 @@ class CheckoutApiTest extends TestCase
         $this->getJson("/api/v1/checkout/warehouses?delivery_slug=unknown&city_id={$city->id}&q=тест")
             ->assertOk()
             ->assertJsonCount(0);
+    }
+
+    // ─── Pickup Points ───────────────────────────────────────────────────────
+
+    private function makePickupDelivery(): Delivery
+    {
+        return Delivery::create([
+            'title'             => json_encode(['ua' => 'Самовивіз', 'ru' => 'Самовывоз']),
+            'slug'              => 'pickup',
+            'price'             => 0,
+            'free_cost'         => 0,
+            'is_for_all_cities' => true,
+            'is_active'         => true,
+            'priority'          => 10,
+        ]);
+    }
+
+    public function test_pickup_points_returns_active_points_for_delivery(): void
+    {
+        $delivery = $this->makePickupDelivery();
+        $city = City::create(['title' => json_encode(['ua' => 'Київ', 'ru' => 'Киев']), 'is_active' => true]);
+
+        DeliveryPickupPoint::create([
+            'delivery_id' => $delivery->id,
+            'city_id'     => $city->id,
+            'title'       => json_encode(['ua' => 'Пункт №1', 'ru' => 'Пункт №1']),
+            'address'     => 'вул. Хрещатик, 1',
+            'priority'    => 10,
+            'is_active'   => true,
+        ]);
+
+        $this->getJson("/api/v1/checkout/pickup-points?delivery_id={$delivery->id}&city_id={$city->id}")
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonStructure([['id', 'title', 'address']]);
+    }
+
+    public function test_pickup_points_filters_by_city(): void
+    {
+        $delivery = $this->makePickupDelivery();
+        $city1 = City::create(['title' => json_encode(['ua' => 'Київ', 'ru' => 'Киев']), 'is_active' => true]);
+        $city2 = City::create(['title' => json_encode(['ua' => 'Львів', 'ru' => 'Львов']), 'is_active' => true]);
+
+        DeliveryPickupPoint::create([
+            'delivery_id' => $delivery->id,
+            'city_id'     => $city1->id,
+            'title'       => json_encode(['ua' => 'Київ Пункт', 'ru' => 'Киев Пункт']),
+            'address'     => 'вул. Хрещатик, 1',
+            'priority'    => 10,
+            'is_active'   => true,
+        ]);
+        DeliveryPickupPoint::create([
+            'delivery_id' => $delivery->id,
+            'city_id'     => $city2->id,
+            'title'       => json_encode(['ua' => 'Львів Пункт', 'ru' => 'Львов Пункт']),
+            'address'     => 'пл. Ринок, 1',
+            'priority'    => 10,
+            'is_active'   => true,
+        ]);
+
+        $this->getJson("/api/v1/checkout/pickup-points?delivery_id={$delivery->id}&city_id={$city1->id}")
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonFragment(['address' => 'вул. Хрещатик, 1']);
+    }
+
+    public function test_pickup_points_skips_inactive(): void
+    {
+        $delivery = $this->makePickupDelivery();
+        $city = City::create(['title' => json_encode(['ua' => 'Київ', 'ru' => 'Киев']), 'is_active' => true]);
+
+        DeliveryPickupPoint::create([
+            'delivery_id' => $delivery->id,
+            'city_id'     => $city->id,
+            'title'       => json_encode(['ua' => 'Неактивний', 'ru' => 'Неактивный']),
+            'address'     => 'вул. Тестова, 1',
+            'priority'    => 10,
+            'is_active'   => false,
+        ]);
+
+        $this->getJson("/api/v1/checkout/pickup-points?delivery_id={$delivery->id}&city_id={$city->id}")
+            ->assertOk()
+            ->assertJsonCount(0);
+    }
+
+    public function test_pickup_points_returns_empty_without_delivery_id(): void
+    {
+        $this->getJson('/api/v1/checkout/pickup-points')->assertOk()->assertJsonCount(0);
+    }
+
+    public function test_pickup_points_returns_all_cities_when_city_not_specified(): void
+    {
+        $delivery = $this->makePickupDelivery();
+        $city1 = City::create(['title' => json_encode(['ua' => 'Київ', 'ru' => 'Киев']), 'is_active' => true]);
+        $city2 = City::create(['title' => json_encode(['ua' => 'Львів', 'ru' => 'Львов']), 'is_active' => true]);
+
+        DeliveryPickupPoint::create([
+            'delivery_id' => $delivery->id,
+            'city_id'     => $city1->id,
+            'title'       => json_encode(['ua' => 'Пункт 1', 'ru' => 'Пункт 1']),
+            'address'     => 'Адреса 1',
+            'priority'    => 10,
+            'is_active'   => true,
+        ]);
+        DeliveryPickupPoint::create([
+            'delivery_id' => $delivery->id,
+            'city_id'     => $city2->id,
+            'title'       => json_encode(['ua' => 'Пункт 2', 'ru' => 'Пункт 2']),
+            'address'     => 'Адреса 2',
+            'priority'    => 10,
+            'is_active'   => true,
+        ]);
+
+        $this->getJson("/api/v1/checkout/pickup-points?delivery_id={$delivery->id}")
+            ->assertOk()
+            ->assertJsonCount(2);
     }
 }

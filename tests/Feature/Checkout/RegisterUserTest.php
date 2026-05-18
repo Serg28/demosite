@@ -6,6 +6,7 @@ use App\Actions\Checkout\RegisterUser;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -83,6 +84,28 @@ class RegisterUserTest extends TestCase
 
         $this->assertNull($order->fresh()->user_id);
         Mail::assertNothingQueued();
+    }
+
+    public function test_new_user_password_is_not_double_hashed(): void
+    {
+        Mail::fake();
+
+        $order = Order::factory()->create([
+            'email'       => 'newhash@example.com',
+            'register_me' => true,
+            'user_id'     => null,
+        ]);
+
+        app(RegisterUser::class)->handle($order);
+
+        $user = User::where('email', 'newhash@example.com')->first();
+        $this->assertNotNull($user);
+        // A double-hashed bcrypt string starts with '$2y$' again when hashed — check the raw column is valid single bcrypt
+        $this->assertTrue(Hash::isHashed($user->getRawOriginal('password')));
+        // Ensure it is NOT a double hash: a bcrypt of a bcrypt will not start with the typical bcrypt cost for a random string
+        $rawHash = $user->getRawOriginal('password');
+        $this->assertStringStartsWith('$2y$', $rawHash);
+        $this->assertSame(60, strlen($rawHash));
     }
 
     public function test_links_authenticated_user_without_creating(): void

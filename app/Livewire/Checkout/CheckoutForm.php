@@ -13,10 +13,13 @@ use App\Models\Delivery;
 use App\Models\DiscountCard;
 use App\Models\PayMethod;
 use App\Models\PromoCode;
+use App\Services\Checkout\CartGuard;
 use App\Services\Delivery\DeliveryService;
 use App\Services\GiftCertificateService;
 use App\Services\Payment\CommissionCalculator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Linecore\Shoppingcart\Facades\Cart;
 use Livewire\Attributes\Computed;
@@ -135,8 +138,23 @@ class CheckoutForm extends Component
 
     public bool $paymentStepValid = false;
 
+    // ── Cart Guard & Idempotency ─────────────────────────────────────────────
+
+    public string $idempotencyKey = '';
+
+    public bool $cartHasBlockingItems = false;
+
+    /** @var array{out_of_stock: list<array{rowId: string, id: int, name: string}>, price_changed: list<array{rowId: string, id: int, name: string, oldPrice: float, newPrice: float}>} */
+    public array $cartGuardResult = ['out_of_stock' => [], 'price_changed' => []];
+
     public function mount(): void
     {
+        if (Cart::count() === 0) {
+            $this->redirect(route('home'), navigate: false);
+
+            return;
+        }
+
         if (auth()->check()) {
             $user = auth()->user();
             $parts = explode(' ', $user->name ?? '', 2);
@@ -145,6 +163,8 @@ class CheckoutForm extends Component
             $this->email = $user->email ?? '';
         }
 
+        $this->idempotencyKey = Str::uuid()->toString();
+        $this->runCartGuard();
         $this->recalcStepValidity();
     }
 
@@ -611,28 +631,69 @@ class CheckoutForm extends Component
         }
 
         unset($this->cartItems, $this->cartCount, $this->subtotal, $this->total);
+
+        if ($this->cartCount === 0) {
+            $this->redirect(route('home'), navigate: false);
+
+            return;
+        }
+
+        $this->runCartGuard();
     }
 
     public function removeCartItem(string $rowId): void
     {
         Cart::remove($rowId);
         unset($this->cartItems, $this->cartCount, $this->subtotal, $this->total);
+
+        if ($this->cartCount === 0) {
+            $this->redirect(route('home'), navigate: false);
+
+            return;
+        }
+
+        $this->runCartGuard();
     }
 
     // ── Оформлення ──────────────────────────────────────────────────────────
 
     public function placeOrder(): void
     {
+        if (config('checkout.idempotency.enabled', true)) {
+            $cacheKey = 'checkout:idem:' . $this->idempotencyKey;
+            if (Cache::has($cacheKey)) {
+                return;
+            }
+            Cache::put($cacheKey, true, config('checkout.idempotency.ttl', 30));
+        }
+
+        if ($this->cartCount === 0) {
+            $this->notifyError(__t('Кошик порожній'));
+
+            return;
+        }
+
         $request = new CheckoutRequest;
         $this->validate(
             array_merge($request->rules(), $this->deliverySubRules(), $this->paymentSubRules()),
             $request->messages(),
         );
 
-        if ($this->cartCount === 0) {
-            $this->notifyError(__t('Кошик порожній'));
+        if (config('checkout.cart_guard.enabled', true) && config('checkout.cart_guard.block_on_out_of_stock', true)) {
+            $this->runCartGuard();
 
-            return;
+            if ($this->cartHasBlockingItems) {
+                $this->dispatch('cart-guard-blocking', items: $this->cartGuardResult['out_of_stock']);
+
+                return;
+            }
+        }
+
+        if (config('checkout.cart_guard.enabled', true) && config('checkout.cart_guard.warn_on_price_change', true)) {
+            if (count($this->cartGuardResult['price_changed']) > 0) {
+                $names = collect($this->cartGuardResult['price_changed'])->pluck('name')->join(', ');
+                $this->dispatch('cart-price-changed', message: __t('Ціни змінились') . ': ' . $names);
+            }
         }
 
         $context = new CheckoutContext;
@@ -695,6 +756,17 @@ class CheckoutForm extends Component
         }
 
         $this->redirect(route('checkout.success', $result->order), navigate: false);
+    }
+
+    private function runCartGuard(): void
+    {
+        if (! config('checkout.cart_guard.enabled', true)) {
+            return;
+        }
+
+        $this->cartGuardResult = app(CartGuard::class)->check($this->cartItems);
+        $this->cartHasBlockingItems = config('checkout.cart_guard.block_on_out_of_stock', true)
+            && count($this->cartGuardResult['out_of_stock']) > 0;
     }
 
     private function formatAmount(float $amount): string

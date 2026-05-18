@@ -59,8 +59,6 @@ final class CreateOrder
 
             $context->order = $order;
 
-            app(RegisterUser::class)->handle($order);
-
             foreach ($context->appliedDiscounts as $discount) {
                 if (! ($discount instanceof PromoCode)) {
                     continue;
@@ -73,6 +71,8 @@ final class CreateOrder
                 $discount->increment('used_count');
             }
         });
+
+        app(RegisterUser::class)->handle($context->order);
 
         return $next($context);
     }

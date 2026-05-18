@@ -116,11 +116,30 @@ class CheckoutPipelineTest extends TestCase
         $this->assertEquals(25.0, $commission);
     }
 
+    public function test_flat_commission_strategy_rounds_per_config(): void
+    {
+        $payMethod = new PayMethod(['commission_percent' => 2.5]);
+        $strategy = new FlatCommissionStrategy;
+        // 99.99 * 2.5 / 100 = 2.49975 → rounded per config('cart.format.decimals')
+        $commission = $strategy->calculate(99.99, ['pay_method' => $payMethod]);
+        $expected = round(99.99 * 2.5 / 100, config('cart.format.decimals', 2));
+        $this->assertEquals($expected, $commission);
+    }
+
+    public function test_flat_commission_strategy_zero_percent(): void
+    {
+        $payMethod = new PayMethod(['commission_percent' => 0]);
+        $strategy = new FlatCommissionStrategy;
+        $this->assertEquals(0.0, $strategy->calculate(500.0, ['pay_method' => $payMethod]));
+    }
+
     public function test_mono_parts_commission_strategy(): void
     {
         $strategy = new MonoPartsCommissionStrategy;
         $commission = $strategy->calculate(1000.0, ['months' => 6]);
-        $this->assertEquals(34.90, $commission);
+        // 1000 * 3.49% = 34.9, rounded per config('cart.format.decimals')
+        $expected = round(1000.0 * 3.49 / 100, config('cart.format.decimals', 2));
+        $this->assertEquals($expected, $commission);
     }
 
     public function test_gateway_registry_throws_for_unknown(): void

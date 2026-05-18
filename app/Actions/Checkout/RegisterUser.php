@@ -43,7 +43,7 @@ class RegisterUser
                 'name'       => trim("{$order->first_name} {$order->last_name}"),
                 'first_name' => $order->first_name,
                 'last_name'  => $order->last_name,
-                'password'   => bcrypt(Str::random(16)),
+                'password'   => Str::random(32), // plain → 'hashed' cast on User model applies bcrypt
             ]
         );
 

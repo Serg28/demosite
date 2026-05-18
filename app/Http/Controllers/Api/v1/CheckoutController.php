@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Checkout\CheckoutCityService;
 use App\Services\Checkout\CheckoutDeliveryService;
 use App\Services\Checkout\CheckoutPaymentService;
+use App\Services\Checkout\CheckoutPickupService;
 use App\Services\Checkout\CheckoutWarehouseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class CheckoutController extends Controller
         private readonly CheckoutWarehouseService $warehouseService,
         private readonly CheckoutDeliveryService $deliveryService,
         private readonly CheckoutPaymentService $paymentService,
+        private readonly CheckoutPickupService $pickupService,
     ) {}
 
     public function searchCities(Request $request): JsonResponse
@@ -60,6 +62,16 @@ class CheckoutController extends Controller
 
         return response()->json(
             $this->paymentService->forDelivery($deliveryId)
+        );
+    }
+
+    public function pickupPoints(Request $request): JsonResponse
+    {
+        $deliveryId = (int) $request->input('delivery_id', 0);
+        $cityId     = (int) $request->input('city_id', 0);
+
+        return response()->json(
+            $this->pickupService->forDelivery($deliveryId, $cityId ?: null)
         );
     }
 }

@@ -1,36 +1,45 @@
 # Архітектура Checkout
 
-> Узгоджено: 2026-05-09 | Статус: **реалізовано (сесія 16)** | Детально: `checkout-phase42-status.md`
+> Оновлено: 2026-05-18 | Статус: **Phase 4.11 реалізовано** | Деталі фаз → окремі docs нижче
+
+## Документи по фазах
+
+| Фаза | Файл |
+|------|------|
+| 4.3 Форма | `checkout-form.md` |
+| 4.5 Знижки | `checkout-discounts.md` |
+| 4.6 Webhooks | `checkout-webhooks.md` |
+| 4.7–4.9 UI + валідація | `checkout-ui-forms.md` |
+| 4.10 Реєстрація + авто-картка | `checkout-registration.md` |
+| 4.11 CartGuard + ідемпотентність | `checkout-cart-guard.md` |
 
 ## Структура файлів (строго по ARCHITECTURE_PLAN.md)
 
 ```
 app/
 ├── Actions/Checkout/
-│   ├── PlaceOrderAction.php          # запускає Pipeline
-│   ├── ApplyPromoCodeAction.php
-│   └── CancelOrderAction.php
-│
-├── Actions/Payment/
-│   ├── ProcessPaymentAction.php
-│   ├── RetryPaymentAction.php
-│   └── HandlePaymentWebhookAction.php
+│   ├── PlaceOrder.php                # запускає Pipeline
+│   ├── ApplyPromoCode.php
+│   ├── ApplyDiscountCard.php
+│   ├── AutoDetectDiscountCard.php    # пошук картки по телефону (з кешем)
+│   ├── RegisterUser.php              # реєстрація гостя після замовлення
+│   └── CancelOrder.php
 │
 ├── Pipelines/
 │   ├── CheckoutPipeline.php          # оркестратор (config-driven)
 │   └── OrderStatusPipeline.php
 │
 ├── PipelineSteps/Checkout/           # 10 кроків
-│   ├── ValidateCartStep.php
-│   ├── ApplyDiscountsStep.php        # промокоди + дисконтні карти
-│   ├── ValidateGiftCertificatesStep.php # резерв у Cache
-│   ├── CalculateDeliveryStep.php
-│   ├── CalculateCommissionStep.php   # комісія платіжної системи
-│   ├── CalculateTotalsStep.php       # фінальний розрахунок з TaxBreakdown
-│   ├── CreateOrderStep.php
-│   ├── ProcessPaymentStep.php        # gateway + certificate
-│   ├── ClearCartStep.php
-│   └── SendNotificationsStep.php
+│   ├── ValidateCart.php
+│   ├── ApplyDiscounts.php            # промокоди + дисконтні карти
+│   ├── ValidateGiftCertificates.php  # резерв у Cache
+│   ├── CalculateDelivery.php
+│   ├── CalculateCommission.php       # комісія платіжної системи
+│   ├── CalculateTotals.php           # фінальний розрахунок з TaxBreakdown
+│   ├── CreateOrder.php               # Order + RegisterUser після транзакції
+│   ├── ProcessPayment.php            # gateway + certificate
+│   ├── ClearCart.php
+│   └── SendNotifications.php
 │
 ├── Gateways/                         # ПЛОСКО — один клас = один файл
 │   ├── LiqPayGateway.php
@@ -86,9 +95,13 @@ app/
 │   ├── PrivatPPCommissionStrategy.php
 │   └── FlatCommissionStrategy.php
 │
-├── Services/Delivery/
-│   ├── DeliveryService.php
-│   └── ShippingCalculator.php        # (перенос з smartmag — окремий етап)
+├── Services/Checkout/
+│   ├── CartGuard.php                 # check(Collection): out_of_stock/price_changed (Phase 4.11)
+│   ├── CheckoutCityService.php
+│   ├── CheckoutDeliveryService.php
+│   ├── CheckoutPaymentService.php
+│   ├── CheckoutPickupService.php
+│   └── CheckoutWarehouseService.php
 │
 ├── Services/
 │   └── GiftCertificateService.php    # validation, reservation, finalization
@@ -233,16 +246,16 @@ GiftCertificateService::refund(Order $order): void                  // is_used=f
 ## Порядок Pipeline кроків і розрахунків
 
 ```
-1. ValidateCartStep        → cart не порожній, товари доступні
-2. ApplyDiscountsStep      → promo + discount card (перевірка сумісності)
-3. ValidateGiftCerts...    → перевірка кодів + резерв у Cache
-4. CalculateDeliveryStep   → ціна доставки за типом
-5. CalculateCommissionStep → комісія гейтвею (від суми після знижок)
-6. CalculateTotalsStep     → TaxBreakdown + final total + paymentAmount
-7. CreateOrderStep         → Order + OrderProducts + pivot таблиці
-8. ProcessPaymentStep      → gateway.init() + cert.finalize()
-9. ClearCartStep           → Cart::destroy() + UnfinishedBasket::delete()
-10. SendNotificationsStep  → email/SMS в queue
+1. ValidateCart        → cart не порожній, товари доступні
+2. ApplyDiscounts      → promo + discount card (перевірка сумісності)
+3. ValidateGiftCertificates → перевірка кодів + резерв у Cache
+4. CalculateDelivery   → ціна доставки за типом
+5. CalculateCommission → комісія гейтвею (від суми після знижок)
+6. CalculateTotals     → TaxBreakdown + final total + paymentAmount
+7. CreateOrder         → Order + OrderProducts + pivot + RegisterUser (поза транзакцією)
+8. ProcessPayment      → gateway.init() + cert.finalize()
+9. ClearCart           → Cart::destroy() + UnfinishedBasket::delete()
+10. SendNotifications  → email/SMS в queue
 ```
 
 ---

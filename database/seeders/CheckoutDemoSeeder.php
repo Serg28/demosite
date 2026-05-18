@@ -61,6 +61,15 @@ class CheckoutDemoSeeder extends Seeder
                 'is_active'         => true,
             ],
             [
+                'title'             => json_encode(['ua' => 'Нова Пошта (адресна)', 'ru' => 'Новая Почта (адресная)', 'en' => 'Nova Post (address)']),
+                'slug'              => 'np_address',
+                'price'             => 120.00,
+                'free_cost'         => 3000.00,
+                'is_for_all_cities' => true,
+                'priority'          => 25,
+                'is_active'         => true,
+            ],
+            [
                 'title'             => json_encode(['ua' => 'Meest', 'ru' => 'Meest', 'en' => 'Meest']),
                 'slug'              => 'meest',
                 'price'             => 0.00,

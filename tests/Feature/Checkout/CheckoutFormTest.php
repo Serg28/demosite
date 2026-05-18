@@ -199,16 +199,21 @@ class CheckoutFormTest extends TestCase
 
     public function test_checkout_form_notifies_error_when_cart_empty(): void
     {
-        // np_branch вимагає deliveryWarehouseId — встановлюємо довільний int,
-        // щоб пройти валідацію і досягти перевірки порожнього кошика
-        Livewire::test(CheckoutForm::class)
+        // mount() тепер редіректить при порожньому кошику (Phase 4.11).
+        // Тут тестуємо серверний захист у placeOrder() після знищення кошика між mount і submit.
+        Cart::add('1', 'Test Product', 1, 100.00);
+
+        $component = Livewire::test(CheckoutForm::class)
             ->set('firstName', 'Іван')
             ->set('phone', '+380979408386')
             ->set('cityId', $this->city->id)
             ->set('deliveryId', $this->delivery->id)
             ->set('deliveryWarehouseId', 1)
-            ->set('payMethodId', $this->payMethod->id)
-            ->call('placeOrder')
+            ->set('payMethodId', $this->payMethod->id);
+
+        Cart::destroy();
+
+        $component->call('placeOrder')
             ->assertDispatched('notify');
     }
 
@@ -335,6 +340,30 @@ class CheckoutFormTest extends TestCase
         ])
             ->call('selectWarehouse', 1, 'Відділення #1')
             ->assertDispatched('delivery-details-updated');
+    }
+
+    public function test_delivery_selector_warehouse_label_reads_from_config(): void
+    {
+        $cases = [
+            'np_poshtamat' => 'Поштомат',
+            'ukrposhta'    => 'Поштове відділення',
+            'np_branch'    => 'Відділення',
+            'unknown_slug' => 'Відділення',
+        ];
+
+        foreach ($cases as $slug => $expectedLabel) {
+            $component = Livewire::test(DeliverySelector::class, [
+                'deliveryId'   => $this->delivery->id,
+                'deliverySlug' => $slug,
+                'cityId'       => $this->city->id,
+            ]);
+
+            $this->assertEquals(
+                $expectedLabel,
+                $component->instance()->warehouseLabel,
+                "warehouseLabel для slug '{$slug}' має бути '{$expectedLabel}'"
+            );
+        }
     }
 
     public function test_pay_parts_calculator_returns_empty_for_unknown_gateway(): void

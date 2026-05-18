@@ -25,6 +25,6 @@ class PrivatPPCommissionStrategy implements CommissionStrategy
         $rates = $params['rates'] ?? self::DEFAULT_RATES;
         $rate = $rates[$months] ?? $rates[array_key_first($rates)] ?? 1.49;
 
-        return round($amount * $rate / 100, 2);
+        return round($amount * $rate / 100, config('cart.format.decimals', 2));
     }
 }

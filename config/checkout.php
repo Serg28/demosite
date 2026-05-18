@@ -79,6 +79,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Підписи полів вибору відділення (ключ = slug доставки)
+    |--------------------------------------------------------------------------
+    | Відображається як label у autocomplete-пошуку відділення/поштомату.
+    | Нова доставка — просто додати запис, без змін у PHP.
+    */
+    'warehouse_labels' => [
+        'np_branch'    => 'Відділення',
+        'np_poshtamat' => 'Поштомат',
+        'ukrposhta'    => 'Поштове відділення',
+        'justin'       => 'Відділення Justin',
+        'meest'        => 'Відділення Meest',
+        'rozetka'      => 'Пункт видачі Rozetka',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Правила підформ доставки (ключ = slug доставки)
     |--------------------------------------------------------------------------
     | required — поля, що блокують перехід далі та валідуються у placeOrder().
@@ -92,7 +108,8 @@ return [
         'meest'        => ['required' => ['deliveryWarehouseId'], 'optional' => []],
         'justin'       => ['required' => ['deliveryWarehouseId'], 'optional' => []],
         'rozetka'      => ['required' => ['deliveryWarehouseId'], 'optional' => []],
-        'courier'      => ['required' => ['street', 'house'], 'optional' => ['apartment', 'building', 'floor']],
+        'courier'      => ['required' => ['street', 'house'], 'optional' => ['apartment', 'building', 'floor', 'isElevator', 'isLifting']],
+        'np_address'   => ['required' => ['street', 'house'], 'optional' => ['apartment', 'building', 'floor']],
         'pickup'       => ['required' => ['deliveryPickupPointId'], 'optional' => []],
         // Доставки без підформи — просто не додавати запис
     ],
@@ -122,5 +139,26 @@ return [
     'payment_parts_months' => [
         'monopayparts'   => 12,
         'privatpayparts' => 10,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cart Guard — перевірка наявності та ціни перед оформленням
+    |--------------------------------------------------------------------------
+    */
+    'cart_guard' => [
+        'enabled'               => true,
+        'block_on_out_of_stock' => true,
+        'warn_on_price_change'  => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ідемпотентність замовлення — захист від подвійного кліку
+    |--------------------------------------------------------------------------
+    */
+    'idempotency' => [
+        'enabled' => true,
+        'ttl'     => 30,
     ],
 ];
