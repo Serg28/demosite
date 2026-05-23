@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -15,45 +14,37 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'first_name',
         'last_name',
+        'patronymic',
+        'phone',
         'email',
         'password',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
         ];
     }
 
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function providers(): HasMany
+    {
+        return $this->hasMany(UserProvider::class);
     }
 
     public function reviews(): HasMany
@@ -66,9 +57,16 @@ class User extends Authenticatable
         return $this->hasMany(Payment::class);
     }
 
-    /**
-     * Get the user's initials
-     */
+    public function hasPassword(): bool
+    {
+        return ! empty($this->password);
+    }
+
+    public function hasTwoFactor(): bool
+    {
+        return ! empty($this->two_factor_confirmed_at);
+    }
+
     public function initials(): string
     {
         return Str::of($this->name)

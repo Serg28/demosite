@@ -311,7 +311,12 @@ class HandleComponents extends Mechanism
 
     protected function dehydrate($target, $context, $path)
     {
-        if (Utils::isAPrimitive($target)) return $target;
+        if (Utils::isAPrimitive($target)) {
+            // Normalize negative zero (-0.0) to 0 to prevent checksum mismatches
+            if ($target === -0.0) return 0;
+
+            return $target;
+        }
 
         $synth = $this->propertySynth($target, $context, $path);
 
@@ -633,9 +638,16 @@ class HandleComponents extends Mechanism
             // If a value is being set to "null", do the same...
             if ($value === '' || $value === null) {
                 unset($component->$property);
-            } else {
-                throw $e;
+
+                return;
             }
+
+            // This is almost certainly a bot/scanner probing typed properties
+            // with wrong-type values. Abort with 419 directly so it never
+            // reaches the top-level catch (which would report it as a real bug).
+            if (config('app.debug')) throw $e;
+
+            abort(419);
         }
     }
 

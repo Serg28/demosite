@@ -48,6 +48,11 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function orderStatus(): BelongsTo
+    {
+        return $this->belongsTo(OrderStatus::class);
+    }
+
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);

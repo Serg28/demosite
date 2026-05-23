@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\Shop\ProfileController as ShopProfileController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ProductController;
@@ -67,6 +68,15 @@ Route::middleware(['auth'])->group(function () {
             ),
         )
         ->name('two-factor.show');
+});
+
+// Профіль (Phase 5.2)
+Route::middleware(['auth'])->prefix('profile')->name('profile.')->group(function () {
+    Route::get('/', [ShopProfileController::class, 'index'])->name('index');
+    Route::get('/orders', [ShopProfileController::class, 'orders'])->name('orders');
+    Route::get('/orders/{id}', [ShopProfileController::class, 'ordersDetails'])->name('orders.details');
+    Route::get('/security', [ShopProfileController::class, 'security'])->name('security');
+    Route::get('/logout', [ShopProfileController::class, 'logout'])->name('logout');
 });
 
 require __DIR__.'/auth.php';

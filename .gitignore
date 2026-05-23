@@ -56,3 +56,5 @@ docker-compose._ymlrr
 .rr.yaml
 /vendor/
 auth.json
+/vendor
+vendor

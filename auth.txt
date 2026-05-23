@@ -1,0 +1,206 @@
+Но в профиле редактирование профиля должно соответствовать выбранному способу авторизации. Если двухфакторная - это нужно учесть. Если otp или почта - тоже. Так, как принято у конкурентов ecommerce 
+
+● Важливе зауваження — треба спочатку розібратися. Дивлюся auth spec і компоненти.
+
+  Read 2 files (ctrl+o to expand)
+
+● Розумію питання. Дивлюся на fortify конфіг і поточний стан auth.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Bash(docker exec laradock-php-fpm-1 bash -c "cd /var/www/demo.loc && php artisan db:table users 2>&1" | grep -E "password|two_factor|provider")
+  ⎿    password varchar, utf8mb4_unicode_ci .......................... varchar(255)
+       two_factor_secret text, nullable, utf8mb4_unicode_ci ............. NULL text
+       two_factor_recovery_codes text, nullable, utf8mb4_unicode_ci ..... NULL text
+       two_factor_confirmed_at timestamp, nullable ................. NULL timestamp
+
+  Searched for 1 pattern, listed 1 directory (ctrl+o to expand)
+
+● Ось ситуація по auth-стану в demo.loc:
+
+  - Поточний auth: Fortify (email+password), 2FA-колонки в users є в БД (secret, recovery codes, confirmed_at)
+  - OTP: конфіг є (config/otp.php), але UI — Phase 5.0
+  - Socialite: ще не реалізований
+  - config/fortify.php — відсутній (не публікувався)
+
+  Моя пропозиція для Phase 5.2:
+
+  ┌────────────────────────────────────────────────────────┬─────────────────────────────┬──────────────────────────────────────────────┐
+  │                          Блок                          │         Показувати          │                    Умова                     │
+  ├────────────────────────────────────────────────────────┼─────────────────────────────┼──────────────────────────────────────────────┤
+  │ EditData (ім'я, прізвище, по-батькові, телефон, email) │ завжди                      │ —                                            │
+  ├────────────────────────────────────────────────────────┼─────────────────────────────┼──────────────────────────────────────────────┤
+  │ EditPassword                                           │ тільки якщо є пароль        │ auth()->user()->password !== null            │
+  ├────────────────────────────────────────────────────────┼─────────────────────────────┼──────────────────────────────────────────────┤
+  │ 2FA toggle (увімк/вимк + QR-код)                       │ якщо Fortify 2FA активовано │ Features::canManageTwoFactorAuthentication() │
+       two_factor_confirmed_at timestamp, nullable ................. NULL timestamp
+
+  Searched for 1 pattern, listed 1 directory (ctrl+o to expand)
+
+● Ось ситуація по auth-стану в demo.loc:
+
+  - Поточний auth: Fortify (email+password), 2FA-колонки в users є в БД (secret, recovery codes, confirmed_at)
+  - OTP: конфіг є (config/otp.php), але UI — Phase 5.0
+  - Socialite: ще не реалізований
+  - config/fortify.php — відсутній (не публікувався)
+
+  Моя пропозиція для Phase 5.2:
+
+  ┌────────────────────────────────────────────────────────┬─────────────────────────────┬──────────────────────────────────────────────┐
+  │                          Блок                          │         Показувати          │                    Умова                     │
+  ├────────────────────────────────────────────────────────┼─────────────────────────────┼──────────────────────────────────────────────┤
+  │ EditData (ім'я, прізвище, по-батькові, телефон, email) │ завжди                      │ —                                            │
+  ├────────────────────────────────────────────────────────┼─────────────────────────────┼──────────────────────────────────────────────┤
+  │ EditPassword                                           │ тільки якщо є пароль        │ auth()->user()->password !== null            │
+  ├────────────────────────────────────────────────────────┼─────────────────────────────┼──────────────────────────────────────────────┤
+  │ 2FA toggle (увімк/вимк + QR-код)                       │ якщо Fortify 2FA активовано │ Features::canManageTwoFactorAuthentication() │
+  └────────────────────────────────────────────────────────┴─────────────────────────────┴──────────────────────────────────────────────┘
+
+  Тоді при появі OTP в Phase 5.0 — блок пароля автоматично ховається для OTP-юзерів (у них password = null). При Socialite — аналогічно.
+
+  2FA в Phase 5.2 — рекомендую включити, бо:
+  - two_factor_* колонки вже є в БД
+  - Fortify backend готовий
+  - Це стандарт для ecommerce (Rozetka, Prom — мають)
+
+  Питання: чи включаємо 2FA-управління в Phase 5.2, чи відкладаємо в Phase 5.0?
+
+✻ Baked for 3m 3s
+
+❯ включаем 2FA в Phase 5.2 И socialite уже есть в текущем проекте, даже есть контроллеры, но сырые. Прошу максимально профессионально, под нашу архитектуру                                                                                                           
+
+● Спочатку розберуся зі станом Socialite.
+  
+● Bash(find /mnt/DataM2/Job/Sites/Linecore/linecore-demo/linecore-demo/app -name "*.php" | xargs grep -l "Socialite\|socialite" 2>/dev/null)
+  ⎿  /mnt/DataM2/Job/Sites/Linecore/linecore-demo/linecore-demo/app/Http/Controllers/AuthSocialiteController.php
+
+  Searched for 2 patterns, read 1 file (ctrl+o to expand)
+
+● Дивлюся Fortify і ще деталі.
+
+  Searched for 2 patterns (ctrl+o to expand)
+
+● Bash(find /mnt/DataM2/Job/Sites/Linecore/linecore-demo/linecore-demo/app -name "*.php" | xargs grep -l "TwoFactor\|two_factor" 2>/dev/null | grep -v vendor)
+  ⎿  No matches found
+  
+❯ код должен быть не размазан по проекту, а по новой архитектуре 
+
+  Searched for 5 patterns, read 1 file (ctrl+o to expand)
+
+● Bash(find /mnt/DataM2/Job/Sites/Linecore/linecore-demo/linecore-demo/app/Http/Middleware -name "*.php" | xargs grep -l "login.home\|LoginHome\|login_home" 2>/dev/nul…)
+  ⎿  Error: Exit code 123
+
+❯ Учитывай будущую 100% поддержку API 
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Bash(find /mnt/DataM2/Job/Sites/Linecore/linecore-demo/linecore-demo/app/Http/Middleware -name "AuthenticateLogin*.php" | xargs head -30 2>/dev/null)
+  ⎿  ==> /mnt/DataM2/Job/Sites/Linecore/linecore-demo/linecore-demo/app/Http/Middleware/AuthenticateLoginToHome.php <==
+     <?php
+     … +60 lines (ctrl+o to expand)
+
+  Searched for 1 pattern, read 2 files (ctrl+o to expand)
+
+● Тепер у мене повна картина. Потрібна ваша відповідь перед тим, як починати.
+
+  Ситуація (факти):
+
+  1. Auth в demo.loc — виключно Sentinel (і CMS, і shop). Auth::user() = null завжди. Fortify в проекті відсутній.
+  2. app('user') → Sentinel::check() — весь існуючий код на цьому.
+  3. 2FA-колонки (two_factor_*) є в users — від старих Fortify-міграцій, але реалізації немає.
+  4. Sanctum встановлений, але без Auth::user() API-токени не працюватимуть.
+  5. Socialite — AuthSocialiteController існує, але використовує Sentinel::login() + два критичних TODO (open redirect, немає provider_id tracking).
+  6. OTP — fouladgar/laravel-otp встановлений (phone/email коди).
+
+  ---
+  Проблема:
+  Щоб профіль, 2FA і API були по-справжньому нової архітектурі — потрібен auth bridge: при Sentinel-логіні також викликати Auth::login(). Без цього:
+  - auth()->user() = null → Livewire, Sanctum, 2FA не працюють
+  - API токени через Sanctum неможливі
+  
+  Якщо робити половинчасто (залишити Sentinel-only) — профіль буде ненадійно написаний і через сесію не матиме 100% API підтримки.
+
+  ---
+  Пропоную наступний scope:
+  
+  Крок 0 — Auth Bridge (мінімально інвазивний)
+
+  - AuthController::login() / registration() → додати Auth::login($user) після Sentinel
+  - AuthenticateLoginToHome → перевіряти Auth::check() (не Sentinel)
+  - AppServiceProvider → app('user') = auth()->user() (scoped, Octane-safe)
+  - AuthSocialiteController → рефактор: Auth::login() + UserProvider модель + open redirect fix
+
+  2FA — питання: TOTP чи Email OTP?
+
+  ┌───────────────────────────────┬───────────────────────────────────────────────┬──────────────────────────┐
+  │            Варіант            │                  Бібліотека                   │            UX            │
+  ├───────────────────────────────┼───────────────────────────────────────────────┼──────────────────────────┤
+  │ TOTP (Google/Authy app)       │ потрібен pragmarx/google2fa — нова залежність │ як у bank apps           │
+  ├───────────────────────────────┼───────────────────────────────────────────────┼──────────────────────────┤
+  │ Email/SMS OTP (6-значний код) │ fouladgar/laravel-otp — вже є                 │ як у Rozetka/Nova Poshta │
+  └───────────────────────────────┴───────────────────────────────────────────────┴──────────────────────────┘
+
+  Обидва варіанти → профіль матиме секцію "Безпека" з увімкненням/вимкненням 2FA.
+
+  ---
+  Питання:
+  
+  1. Підтверджуєте auth bridge (Sentinel + Auth::login bridge) в Phase 5.2?
+  2. 2FA: TOTP (потрібен pragmarx/google2fa) чи Email OTP (вже є)?
+
+✻ Churned for 4m 42s
+
+❯ коротко скажи:                                                                                                                                                                                                                                                      
+  1) Это решит все проблемы и код будет чистым профеиональным расширяемым?                                                                                                                                                                                            
+  2) Какой вариант лучший? Мне нужна возможность использовь разные SMS-провайдеры и добавлять новые                                                                                                                                                                   
+  
+● 1) Так. Bridge — мінімальна хірургія (3 файли), не ламає нічого. Після нього: auth()->user() = Sentinel user → Livewire, Sanctum, 2FA — всі на стандартному стеку. Код стає розширюваним.
+  
+  ---
+  2) OTP (Email/SMS код), не TOTP.
+  
+  Для множинних SMS-провайдерів — власний SmsContract + SmsManager з драйверами:
+
+  app/Contracts/SmsProvider.php          ← interface send(phone, message): void
+  app/Services/Sms/SmsManager.php        ← Driver manager, config-driven
+  app/Services/Sms/Drivers/TurboSms.php
+  app/Services/Sms/Drivers/Vodafone.php  ← додаєш новий — один файл
+  app/Services/Sms/Drivers/NovaPoshta.php
+
+  config/sms.php → driver: env('SMS_DRIVER', 'turbosms') → мінятися в .env.
+
+  fouladgar/laravel-otp — залишаємо тільки для генерації/верифікації OTP коду. SMS-відправку замінюємо на свій SmsManager.
+
+  TOTP (Google Authenticator) — окремо, в Phase 5.0, якщо буде потреба.
+
+  ---
+  Починаємо?
+
+✻ Worked for 19s
+
+❯ Этим досигнем всех целей?                                                                                                                                                                                                                                           
+
+● Так, повністю.
+  
+  ┌──────────────────────────────────────────────┬────────────────────────────────────────────┐
+  │                     Ціль                     │                  Рішення                   │
+  ├──────────────────────────────────────────────┼────────────────────────────────────────────┤
+  │ Профіль (EditData, EditPassword, Замовлення) │ Livewire Forms + ProfileController         │
+  ├──────────────────────────────────────────────┼────────────────────────────────────────────┤
+  │ 2FA (SMS/Email OTP)                          │ fouladgar/otp + SmsManager                 │
+  ├──────────────────────────────────────────────┼────────────────────────────────────────────┤
+  │ SMS провайдери — додавати новий = 1 файл     │ SmsContract + drivers                      │
+  ├──────────────────────────────────────────────┼────────────────────────────────────────────┤
+  │ Socialite чисто, під архітектуру             │ Auth::login() + UserProvider модель        │
+  ├──────────────────────────────────────────────┼────────────────────────────────────────────┤
+  │ auth()->user() скрізь                        │ Auth Bridge (3 файли)                      │
+  ├──────────────────────────────────────────────┼────────────────────────────────────────────┤
+  │ API (Sanctum токени)                         │ Sanctum вже є, працює через auth()->user() │
+  ├──────────────────────────────────────────────┼────────────────────────────────────────────┤
+  │ Нова архітектура (Actions/Services)          │ так, все через шари                        │
+  ├──────────────────────────────────────────────┼────────────────────────────────────────────┤
+  │ Octane-safe                                  │ scoped() не singleton()                    │
+  └──────────────────────────────────────────────┴────────────────────────────────────────────┘
+
+  Починаємо реалізацію?
+

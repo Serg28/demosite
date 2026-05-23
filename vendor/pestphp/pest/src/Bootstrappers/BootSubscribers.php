@@ -20,11 +20,22 @@ final readonly class BootSubscribers implements Bootstrapper
      *
      * @var array<int, class-string<Subscriber>>
      */
-    private const SUBSCRIBERS = [
+    private const array SUBSCRIBERS = [
         Subscribers\EnsureConfigurationIsAvailable::class,
         Subscribers\EnsureIgnorableTestCasesAreIgnored::class,
         Subscribers\EnsureKernelDumpIsFlushed::class,
         Subscribers\EnsureTeamCityEnabled::class,
+        Subscribers\EnsureTiaIsRunningPestTestsOnly::class,
+        Subscribers\EnsureTiaStarts::class,
+        Subscribers\EnsureTiaEnds::class,
+        Subscribers\EnsureTiaResultsAreCollected::class,
+        Subscribers\EnsureTiaResultIsRecordedOnPassed::class,
+        Subscribers\EnsureTiaResultIsRecordedOnFailed::class,
+        Subscribers\EnsureTiaResultIsRecordedOnErrored::class,
+        Subscribers\EnsureTiaResultIsRecordedOnSkipped::class,
+        Subscribers\EnsureTiaResultIsRecordedOnIncomplete::class,
+        Subscribers\EnsureTiaResultIsRecordedOnRisky::class,
+        Subscribers\EnsureTiaAssertionsAreRecordedOnFinished::class,
     ];
 
     /**
