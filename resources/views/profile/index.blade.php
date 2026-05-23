@@ -5,7 +5,9 @@
                 @include('profile.partials.sidebar', ['action' => $action])
                 <div class="account__content">
                     <livewire:profile.user.edit-data />
-                    <livewire:profile.user.edit-password />
+                    @if(auth()->user()->hasPassword())
+                        <livewire:profile.user.edit-password />
+                    @endif
                 </div>
             </div>
         </div>

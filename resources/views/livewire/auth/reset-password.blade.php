@@ -1,115 +1,50 @@
-<?php
-
-use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rules;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Locked;
-use Livewire\Volt\Component;
-
-new #[Layout('components.layouts.auth')] class extends Component {
-    #[Locked]
-    public string $token = '';
-    public string $email = '';
-    public string $password = '';
-    public string $password_confirmation = '';
-
-    /**
-     * Mount the component.
-     */
-    public function mount(string $token): void
-    {
-        $this->token = $token;
-
-        $this->email = request()->string('email');
-    }
-
-    /**
-     * Reset the password for the given user.
-     */
-    public function resetPassword(): void
-    {
-        $this->validate([
-            'token' => ['required'],
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
-        ]);
-
-        // Here we will attempt to reset the user's password. If it is successful we
-        // will update the password on an actual user model and persist it to the
-        // database. Otherwise we will parse the error and return the response.
-        $status = Password::reset(
-            $this->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user) {
-                $user->forceFill([
-                    'password' => Hash::make($this->password),
-                    'remember_token' => Str::random(60),
-                ])->save();
-
-                event(new PasswordReset($user));
-            }
-        );
-
-        // If the password was successfully reset, we will redirect the user back to
-        // the application's home authenticated view. If there is an error we can
-        // redirect them back to where they came from with their error message.
-        if ($status !== Password::PasswordReset) {
-            $this->addError('email', __($status));
-
-            return;
-        }
-
-        Session::flash('status', __($status));
-
-        $this->redirectRoute('login', navigate: true);
-    }
-}; ?>
-
 <div class="flex flex-col gap-6">
-    <x-auth-header :title="__('Reset password')" :description="__('Please enter your new password below')" />
+    <div class="text-center">
+        <h1 class="text-2xl font-bold text-gray-900">{{ __t('Скидання пароля') }}</h1>
+        <p class="mt-2 text-sm text-gray-600">{{ __t('Введіть новий пароль') }}</p>
+    </div>
 
-    <!-- Session Status -->
-    <x-auth-session-status class="text-center" :status="session('status')" />
-
-    <form method="POST" wire:submit="resetPassword" class="flex flex-col gap-6">
-        <!-- Email Address -->
-        <flux:input
-            wire:model="email"
-            :label="__('Email')"
-            type="email"
-            required
-            autocomplete="email"
-        />
-
-        <!-- Password -->
-        <flux:input
-            wire:model="password"
-            :label="__('Password')"
-            type="password"
-            required
-            autocomplete="new-password"
-            :placeholder="__('Password')"
-            viewable
-        />
-
-        <!-- Confirm Password -->
-        <flux:input
-            wire:model="password_confirmation"
-            :label="__('Confirm password')"
-            type="password"
-            required
-            autocomplete="new-password"
-            :placeholder="__('Confirm password')"
-            viewable
-        />
-
-        <div class="flex items-center justify-end">
-            <flux:button type="submit" variant="primary" class="w-full" data-test="reset-password-button">
-                {{ __('Reset password') }}
-            </flux:button>
+    @if (session('status'))
+        <div class="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+            {{ session('status') }}
         </div>
+    @endif
+
+    <form wire:submit="resetPassword" class="flex flex-col gap-4">
+        <div>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                {{ __t('Email') }}
+            </label>
+            <input wire:model="email" id="email" type="email" required autocomplete="email"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') border-red-500 @enderror">
+            @error('email')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                {{ __t('Новий пароль') }}
+            </label>
+            <input wire:model="password" id="password" type="password" required autocomplete="new-password"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 @error('password') border-red-500 @enderror">
+            @error('password')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
+            <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">
+                {{ __t('Підтвердження пароля') }}
+            </label>
+            <input wire:model="password_confirmation" id="password_confirmation" type="password" required autocomplete="new-password"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <button type="submit" data-test="reset-password-button"
+            class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition"
+            wire:loading.attr="disabled">
+            {{ __t('Змінити пароль') }}
+        </button>
     </form>
 </div>

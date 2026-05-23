@@ -139,6 +139,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'sms' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/sms/sms.log'),
+            'level' => 'debug',
+            'days' => 30,
+            'replace_placeholders' => true,
+        ],
+
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],

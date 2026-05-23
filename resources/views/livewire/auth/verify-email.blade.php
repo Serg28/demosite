@@ -1,64 +1,29 @@
-<?php
+<div class="flex flex-col gap-6">
+    <div class="text-center">
+        <h1 class="text-2xl font-bold text-gray-900">{{ __t('Підтвердження email') }}</h1>
+        <p class="mt-2 text-sm text-gray-600">
+            {{ __t('Перевірте пошту та клікніть на посилання для підтвердження.') }}
+        </p>
+    </div>
 
-use App\Livewire\Actions\Logout;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
-use Illuminate\View\View;
-use Livewire\Attributes\Layout;
-use Livewire\Volt\Component;
-
-new #[Layout('components.layouts.auth')] class extends Component {
-    /**
-     * Send an email verification notification to the user.
-     */
-    public function sendVerification(): void
-    {
-        Auth::user()->sendEmailVerificationNotification();
-
-        Session::flash('status', 'verification-link-sent');
-    }
-
-    /**
-     * Log the current user out of the application.
-     */
-    public function logout(Logout $logout): void
-    {
-        $logout();
-
-        $this->redirect('/', navigate: true);
-    }
-
-    /**
-     * Handle the component's rendering hook.
-     */
-    public function rendering(View $view): void
-    {
-        if (Auth::user()->hasVerifiedEmail()) {
-            $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
-
-            return;
-        }
-    }
-}; ?>
-
-<div class="mt-4 flex flex-col gap-6">
-    <flux:text class="text-center">
-        {{ __('Please verify your email address by clicking on the link we just emailed to you.') }}
-    </flux:text>
-
-    @if (session('status') == 'verification-link-sent')
-        <flux:text class="text-center font-medium !dark:text-green-400 !text-green-600">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
-        </flux:text>
+    @if (session('status') === 'verification-link-sent')
+        <div class="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+            {{ __t('Нове посилання для підтвердження надіслано.') }}
+        </div>
     @endif
 
-    <div class="flex flex-col items-center justify-between space-y-3">
-        <flux:button wire:click="sendVerification" variant="primary" class="w-full">
-            {{ __('Resend verification email') }}
-        </flux:button>
+    <div class="flex flex-col gap-3">
+        <button wire:click="sendVerification"
+            class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition">
+            {{ __t('Надіслати ще раз') }}
+        </button>
 
-        <flux:link class="text-sm cursor-pointer" wire:click="logout" data-test="logout-button">
-            {{ __('Log out') }}
-        </flux:link>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" data-test="logout-button"
+                class="w-full py-2 px-4 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                {{ __t('Вийти') }}
+            </button>
+        </form>
     </div>
 </div>
