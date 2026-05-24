@@ -79,4 +79,12 @@ Route::middleware(['auth'])->prefix('profile')->name('profile.')->group(function
     Route::get('/logout', [ShopProfileController::class, 'logout'])->name('logout');
 });
 
-require __DIR__.'/auth.php';
+Route::prefix('account')->group(function () {
+    // Авторизований → одразу в профіль
+    Route::get('/', fn () => auth()->check()
+        ? redirect()->route('profile.index')
+        : redirect()->route('login')
+    );
+
+    require __DIR__.'/auth.php';
+});

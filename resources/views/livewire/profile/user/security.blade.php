@@ -1,74 +1,77 @@
-<div class="account__section">
-    <h2 class="account__heading">{{ __t('Безпека') }}</h2>
+<div class="card p-6">
+    <h2 class="font-bold text-xl mb-1">{{ __t('Безпека') }}</h2>
 
     @if(session()->has('security_success'))
-        <div class="alert alert--success">{{ session('security_success') }}</div>
+        <div class="mb-4 px-4 py-3 rounded-lg bg-green-50 text-green-700 text-sm">{{ session('security_success') }}</div>
     @endif
     @if(session()->has('security_error'))
-        <div class="alert alert--error">{{ session('security_error') }}</div>
+        <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm">{{ session('security_error') }}</div>
     @endif
 
-    {{-- Двофакторна автентифікація --}}
-    <div class="security-block mt-6">
-        <h3 class="security-block__title">{{ __t('Двофакторна автентифікація') }}</h3>
-        <p class="security-block__desc">
-            {{ __t('Захистіть акаунт додатковим кодом підтвердження при вході') }}
-        </p>
-
-        <div class="mt-4">
-            @if($twoFactorEnabled)
-                <div class="alert alert--success mb-3">{{ __t('2FA увімкнена') }}</div>
-                @if(! $showDisableConfirm)
-                    <button type="button" class="btn btn--ghost" wire:click="confirmDisable">
-                        {{ __t('Вимкнути 2FA') }}
-                    </button>
-                @else
-                    <p class="text-sm text-gray-600 mb-3">
-                        {{ __t('Для керування 2FA перейдіть до налаштувань безпеки') }}
-                    </p>
-                    <a href="{{ route('two-factor.show') }}" class="btn btn--primary">
-                        {{ __t('Керувати 2FA') }}
-                    </a>
-                    <button type="button" class="btn btn--ghost ml-2" wire:click="cancelDisable">
-                        {{ __t('Скасувати') }}
-                    </button>
-                @endif
-            @else
-                <a href="{{ route('two-factor.show') }}" class="btn btn--primary">
-                    {{ __t('Увімкнути 2FA') }}
-                </a>
-            @endif
-        </div>
-    </div>
-
-    {{-- Підключені акаунти --}}
-    @if($providers->isNotEmpty())
-        <div class="security-block mt-8">
-            <h3 class="security-block__title">{{ __t('Підключені акаунти') }}</h3>
-            <p class="security-block__desc">{{ __t('Соціальні мережі для входу') }}</p>
-
-            <div class="providers-list mt-4">
-                @foreach($providers as $provider)
-                    <div class="provider-row" wire:key="provider-{{ $provider->id }}">
-                        @if($provider->avatar)
-                            <img src="{{ $provider->avatar }}" alt="{{ $provider->name }}"
-                                 class="provider-avatar" width="40" height="40">
+    <div class="space-y-0 mt-4">
+        {{-- Двофакторна аутентифікація --}}
+        @if(config('auth_features.two_factor'))
+            <div class="flex items-center justify-between py-4 border-b border-gray-100">
+                <div class="min-w-0 flex-1 mr-4">
+                    <p class="font-medium text-sm">{{ __t('Двофакторна аутентифікація') }}</p>
+                    <p class="text-xs text-ink-muted mt-0.5">{{ __t('Захистіть акаунт додатковим кодом підтвердження при вході') }}</p>
+                </div>
+                <div class="flex-shrink-0 flex items-center gap-2">
+                    @if($twoFactorEnabled)
+                        @if(! $showDisableConfirm)
+                            <button type="button" class="btn btn-o btn-sm" wire:click="confirmDisable">
+                                {{ __t('Вимкнути 2FA') }}
+                            </button>
+                        @else
+                            <a href="{{ route('two-factor.show') }}" class="btn btn-p btn-sm">
+                                {{ __t('Керувати 2FA') }}
+                            </a>
+                            <button type="button" class="btn btn-o btn-sm" wire:click="cancelDisable">
+                                {{ __t('Скасувати') }}
+                            </button>
                         @endif
-                        <div class="provider-info">
-                            <span class="fw-600">{{ ucfirst($provider->provider) }}</span>
-                            @if($provider->name)
-                                <span class="text-gray-500 ml-2">{{ $provider->name }}</span>
-                            @endif
-                        </div>
-                        <button type="button" class="btn btn--ghost btn--sm ml-auto"
-                                wire:click="disconnectProvider({{ $provider->id }})"
-                                wire:confirm="{{ __t('Відключити цей акаунт?') }}"
-                                wire:loading.attr="disabled">
-                            {{ __t('Відключити') }}
-                        </button>
-                    </div>
-                @endforeach
+                    @else
+                        <a href="{{ route('two-factor.show') }}" class="btn btn-p btn-sm">
+                            {{ __t('Увімкнути 2FA') }}
+                        </a>
+                    @endif
+                </div>
             </div>
-        </div>
-    @endif
+        @endif
+
+        {{-- Підключені акаунти --}}
+        @if($providers->isNotEmpty())
+            <div class="py-4">
+                <p class="font-medium text-sm mb-0.5">{{ __t('Підключені акаунти') }}</p>
+                <p class="text-xs text-ink-muted mb-3">{{ __t('Соціальні мережі для входу') }}</p>
+
+                <div class="space-y-2">
+                    @foreach($providers as $provider)
+                        <div class="flex items-center gap-3 py-2" wire:key="provider-{{ $provider->id }}">
+                            @if($provider->avatar)
+                                <img src="{{ $provider->avatar }}" alt="{{ $provider->name }}"
+                                     class="w-8 h-8 rounded-full" width="32" height="32">
+                            @endif
+                            <div class="flex-1 min-w-0">
+                                <span class="font-semibold text-sm">{{ ucfirst($provider->provider) }}</span>
+                                @if($provider->name)
+                                    <span class="text-ink-muted text-xs ml-2">{{ $provider->name }}</span>
+                                @endif
+                            </div>
+                            <button type="button" class="btn btn-o btn-sm"
+                                    wire:click="disconnectProvider({{ $provider->id }})"
+                                    wire:confirm="{{ __t('Відключити цей акаунт?') }}"
+                                    wire:loading.attr="disabled">
+                                {{ __t('Відключити') }}
+                            </button>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        @if(! config('auth_features.two_factor') && $providers->isEmpty())
+            <p class="text-ink-muted text-sm py-4">{{ __t('Немає налаштувань безпеки') }}</p>
+        @endif
+    </div>
 </div>

@@ -14,7 +14,7 @@ class AuthRegisterTest extends TestCase
 
     public function test_register_page_contains_livewire_component(): void
     {
-        $this->get('/register')
+        $this->get(route('register'))
             ->assertOk()
             ->assertSeeLivewire(Register::class);
     }

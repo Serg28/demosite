@@ -17,7 +17,7 @@ class AuthOtpTest extends TestCase
 
     public function test_otp_page_loads(): void
     {
-        $this->get('/otp')
+        $this->get(route('auth.otp'))
             ->assertOk()
             ->assertSeeLivewire(OtpLogin::class);
     }

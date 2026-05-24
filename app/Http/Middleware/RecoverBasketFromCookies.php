@@ -22,11 +22,10 @@ class RecoverBasketFromCookies
 
     public function handle(Request $request, Closure $next): mixed
     {
-        $path        = ltrim($request->getRequestUri(), '/');
         $adminPrefix = config('cms.cms.admin_prefix', 'admin');
 
         if (
-            $this->shouldIgnore($path)
+            $this->shouldIgnore($request)
             || $request->is('api/*')
             || $request->is($adminPrefix)
             || $request->is($adminPrefix.'/*')
@@ -57,7 +56,7 @@ class RecoverBasketFromCookies
 
                 $this->cart->add(
                     $productModel->id,
-                    $productModel->title,
+                    $productModel->t('title'),
                     $product->count,
                     $productModel->price,
                     0,
@@ -76,14 +75,15 @@ class RecoverBasketFromCookies
         return $next($request);
     }
 
-    protected function shouldIgnore(string $path): bool
+    protected function shouldIgnore(Request $request): bool
     {
-        foreach (['/login', 'livewire/update', '.jpg', '.jpeg', '.png', '.gif', '.css', '.js', '.woff', '.woff2', '.ttf', '.svg', '.ico'] as $pattern) {
-            if (stripos($path, $pattern) !== false) {
-                return true;
-            }
-        }
-
-        return false;
+        return $request->is(
+            'account/login',
+            'account/register',
+            'account/forgot-password',
+            'account/reset-password/*',
+            'account/otp',
+            'livewire/update',
+        );
     }
 }

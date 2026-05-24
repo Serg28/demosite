@@ -2,6 +2,7 @@
 
 @php
     $unitPrice = (float) $item->price;
+    $itemName  = is_array($item->name) ? ($item->name[app()->getLocale()] ?? reset($item->name)) : (string) $item->name;
 @endphp
 
 <div wire:key="cart-item-{{ $item->rowId }}"
@@ -27,7 +28,7 @@
 
     {{-- Інфо --}}
     <div class="flex-1 min-w-0">
-        <p class="text-sm font-medium text-ink truncate">{{ $item->name }}</p>
+        <p class="text-sm font-medium text-ink truncate">{{ $itemName }}</p>
         <p class="text-xs text-gray-500 mt-0.5">@money($unitPrice) {{ setting('currency') }}</p>
 
         {{-- Оптова ціна: наступний рівень --}}

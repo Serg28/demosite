@@ -38,7 +38,7 @@ class AppUserBindingTest extends TestCase
 
     public function test_auth_routes_require_authentication(): void
     {
-        $this->get('/profile')->assertRedirect('/login');
-        $this->get('/profile/orders')->assertRedirect('/login');
+        $this->get('/profile')->assertRedirect(route('login'));
+        $this->get('/profile/orders')->assertRedirect(route('login'));
     }
 }

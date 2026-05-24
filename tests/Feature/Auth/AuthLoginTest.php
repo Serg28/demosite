@@ -15,7 +15,7 @@ class AuthLoginTest extends TestCase
 
     public function test_login_page_contains_livewire_component(): void
     {
-        $this->get('/login')
+        $this->get(route('login'))
             ->assertOk()
             ->assertSeeLivewire(Login::class);
     }
@@ -66,6 +66,6 @@ class AuthLoginTest extends TestCase
     public function test_guest_is_redirected_to_login(): void
     {
         $this->get('/profile')
-            ->assertRedirect('/login');
+            ->assertRedirect(route('login'));
     }
 }
