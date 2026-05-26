@@ -29,13 +29,16 @@
                         <livewire:cart.count />
 
                         @auth
-                            <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:text-blue-600">
+                            <a href="{{ route('profile.index') }}" class="text-sm text-gray-600 hover:text-blue-600">
                                 {{ auth()->user()->name }}
                             </a>
-                        @elseif(Route::has('login'))
-                            <a href="{{ route('login') }}" class="text-sm text-gray-600 hover:text-blue-600">
+                        @else
+                            <button type="button"
+                                    data-js-modal
+                                    data-component="auth.popup"
+                                    class="text-sm text-gray-600 hover:text-blue-600">
                                 {{ __t('Увійти') }}
-                            </a>
+                            </button>
                         @endauth
                     </div>
                 </div>

@@ -75,7 +75,12 @@ Route::middleware(['auth'])->prefix('profile')->name('profile.')->group(function
     Route::get('/', [ShopProfileController::class, 'index'])->name('index');
     Route::get('/orders', [ShopProfileController::class, 'orders'])->name('orders');
     Route::get('/orders/{id}', [ShopProfileController::class, 'ordersDetails'])->name('orders.details');
+    Route::post('/orders/{id}/repeat', [ShopProfileController::class, 'repeatOrder'])->name('orders.repeat');
+    Route::post('/orders/{id}/pay', [ShopProfileController::class, 'payOrder'])->name('orders.pay');
     Route::get('/security', [ShopProfileController::class, 'security'])->name('security');
+    Route::get('/addresses', [ShopProfileController::class, 'addresses'])->name('addresses');
+    Route::get('/recipients', [ShopProfileController::class, 'recipients'])->name('recipients');
+    Route::get('/discounts', [ShopProfileController::class, 'discounts'])->name('discounts');
     Route::get('/logout', [ShopProfileController::class, 'logout'])->name('logout');
 });
 

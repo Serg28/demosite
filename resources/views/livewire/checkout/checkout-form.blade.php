@@ -32,19 +32,8 @@
                                autocomplete="family-name">
                         @error('lastName')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
-                    <x-phone-input wire-model="phone" :label="__t('Телефон') . ' *'" />
-                    <div x-data="emailField()">
-                        <label class="text-sm font-medium mb-1.5 block">Email</label>
-                        <input wire:model.blur="email" type="text" inputmode="email"
-                               class="field @error('email') border-red-400 @enderror"
-                               :class="clientError ? 'border-red-400' : ''"
-                               x-model="value"
-                               @input.debounce.500ms="validate()"
-                               @blur="clientError = ''"
-                               placeholder="example@mail.com" autocomplete="email">
-                        <p x-show="clientError" x-text="clientError" class="text-red-500 text-xs mt-1"></p>
-                        @error('email')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                    </div>
+                    <x-phone-input wire:model="phone" :label="__t('Телефон') . ' *'" />
+                    <x-email-input wire:model="email" label="Email" />
                 </div>
 
                 <div class="mt-4">
@@ -109,18 +98,9 @@
                                        class="field @error('receiverPatronymic') border-red-400 @enderror">
                                 @error('receiverPatronymic')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
-                            <x-phone-input wire-model="receiverPhone" :label="__t('Телефон') . ' *'" />
-                            <div class="sm:col-span-2" x-data="emailField()">
-                                <label class="text-sm font-medium mb-1.5 block">Email</label>
-                                <input wire:model.blur="receiverEmail" type="text" inputmode="email"
-                                       class="field @error('receiverEmail') border-red-400 @enderror"
-                                       :class="clientError ? 'border-red-400' : ''"
-                                       x-model="value"
-                                       @input.debounce.500ms="validate()"
-                                       @blur="clientError = ''"
-                                       placeholder="example@mail.com" autocomplete="email">
-                                <p x-show="clientError" x-text="clientError" class="text-red-500 text-xs mt-1"></p>
-                                @error('receiverEmail')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                            <x-phone-input wire:model="receiverPhone" :label="__t('Телефон') . ' *'" />
+                            <div class="sm:col-span-2">
+                                <x-email-input wire:model="receiverEmail" label="Email" />
                             </div>
                         </div>
                     </div>
@@ -543,21 +523,4 @@
     </script>
     @endscript
 
-    @once
-    <script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('emailField', () => ({
-            value: '',
-            clientError: '',
-            emailRegex: /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/,
-            validate() {
-                if (!this.value) { this.clientError = ''; return; }
-                this.clientError = this.emailRegex.test(this.value)
-                    ? ''
-                    : '{{ __t('Невірний формат email') }}';
-            },
-        }));
-    });
-    </script>
-    @endonce
 </div>

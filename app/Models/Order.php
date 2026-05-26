@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Observers\OrderObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
+#[ObservedBy([OrderObserver::class])]
 class Order extends Model
 {
     use HasFactory;
@@ -86,5 +90,36 @@ class Order extends Model
     public function getTotalCost(): float
     {
         return $this->products->sum(fn ($item) => $item->amount ?: ($item->price * $item->count));
+    }
+
+    /**
+     * Статуси, при яких клієнт може скасувати замовлення.
+     * 1 = Новий, 20 = Очікує підтвердження
+     */
+    public function canBeCancelled(): bool
+    {
+        return in_array($this->order_status_id, [1, 20]);
+    }
+
+    /**
+     * Чи можна повторно оплатити (онлайн-оплата, ще не оплачено).
+     */
+    public function canBeRepaid(): bool
+    {
+        return $this->order_status_id === 1
+            && $this->payMethod?->isOnline() === true;
+    }
+
+    /**
+     * Активний (pending/initiated) інвойс для повторної оплати.
+     */
+    public function pendingInvoice(): ?PaymentInvoice
+    {
+        $invoices = $this->relationLoaded('paymentInvoices')
+            ? $this->paymentInvoices
+            : $this->paymentInvoices()->whereIn('status', ['pending', 'initiated'])->latest()->get();
+
+        /** @var Collection $invoices */
+        return $invoices->whereIn('status', ['pending', 'initiated'])->sortByDesc('id')->first();
     }
 }

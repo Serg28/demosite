@@ -6,6 +6,7 @@ use App\Mail\RegisteredFromCheckoutMail;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
@@ -43,7 +44,7 @@ class RegisterUser
                 'name'       => trim("{$order->first_name} {$order->last_name}"),
                 'first_name' => $order->first_name,
                 'last_name'  => $order->last_name,
-                'password'   => Str::random(32), // plain → 'hashed' cast on User model applies bcrypt
+                'password'   => Hash::make(Str::random(32)),
             ]
         );
 

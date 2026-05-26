@@ -54,7 +54,8 @@
     50 => 'App\\Providers\\EventServiceProvider',
     51 => 'App\\Providers\\FortifyServiceProvider',
     52 => 'App\\Providers\\PaymentServiceProvider',
-    53 => 'App\\Providers\\VoltServiceProvider',
+    53 => 'App\\Providers\\ViewServiceProvider',
+    54 => 'App\\Providers\\VoltServiceProvider',
   ),
   'eager' => 
   array (
@@ -96,7 +97,8 @@
     35 => 'App\\Providers\\EventServiceProvider',
     36 => 'App\\Providers\\FortifyServiceProvider',
     37 => 'App\\Providers\\PaymentServiceProvider',
-    38 => 'App\\Providers\\VoltServiceProvider',
+    38 => 'App\\Providers\\ViewServiceProvider',
+    39 => 'App\\Providers\\VoltServiceProvider',
   ),
   'deferred' => 
   array (

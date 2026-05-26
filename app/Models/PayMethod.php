@@ -48,4 +48,12 @@ class PayMethod extends Model
     {
         return $query->where('is_active', 1)->orderBy('priority');
     }
+
+    /**
+     * Чи є метод оплатою онлайн (не готівка).
+     */
+    public function isOnline(): bool
+    {
+        return !in_array($this->gateway, config('payment.offline_gateways', []));
+    }
 }

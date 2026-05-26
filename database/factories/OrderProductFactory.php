@@ -13,10 +13,13 @@ class OrderProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'order_id' => \App\Models\Order::factory(),
+            'order_id'   => \App\Models\Order::factory(),
             'product_id' => \App\Models\Product::factory(),
-            'quantity' => $this->faker->numberBetween(1, 10),
-            'price' => $this->faker->numberBetween(500, 50000) / 100,
+            'title'      => $this->faker->words(3, true),
+            'count'      => $this->faker->numberBetween(1, 10),
+            'price'      => $this->faker->numberBetween(500, 50000) / 100,
+            'base_price' => $this->faker->numberBetween(500, 50000) / 100,
+            'amount'     => $this->faker->numberBetween(500, 50000) / 100,
         ];
     }
 }

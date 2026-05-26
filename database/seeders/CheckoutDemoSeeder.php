@@ -168,7 +168,7 @@ class CheckoutDemoSeeder extends Seeder
             [
                 'title'              => json_encode(['ua' => '💳 Оплата карткою онлайн', 'ru' => '💳 Оплата картой онлайн', 'en' => 'Card payment online']),
                 'description'        => json_encode(['ua' => 'Visa, Mastercard, LiqPay', 'ru' => 'Visa, Mastercard, LiqPay', 'en' => 'Visa, Mastercard, LiqPay']),
-                'slug'               => 'online',
+                'slug'               => 'liqpay',
                 'gateway'            => 'liqpay',
                 'commission_percent' => 0,
                 'commission_rates'   => null,
@@ -180,8 +180,8 @@ class CheckoutDemoSeeder extends Seeder
             [
                 'title'              => json_encode(['ua' => '🏦 Частинами Mono', 'ru' => '🏦 Частями Mono', 'en' => 'Mono installments']),
                 'description'        => json_encode(['ua' => 'До 12 міс, 0%', 'ru' => 'До 12 мес, 0%', 'en' => 'Up to 12 months, 0%']),
-                'slug'               => 'monoparts',
-                'gateway'            => 'monoparts',
+                'slug'               => 'monopayparts',
+                'gateway'            => 'monopayparts',
                 'commission_percent' => 0,
                 'commission_rates'   => null,
                 'priority'           => 20,
@@ -192,8 +192,8 @@ class CheckoutDemoSeeder extends Seeder
             [
                 'title'              => json_encode(['ua' => '🏦 Частинами Приват', 'ru' => '🏦 Частями Приват', 'en' => 'Privat installments']),
                 'description'        => json_encode(['ua' => 'До 10 міс, 0%', 'ru' => 'До 10 мес, 0%', 'en' => 'Up to 10 months, 0%']),
-                'slug'               => 'privatparts',
-                'gateway'            => 'privatparts',
+                'slug'               => 'privatpayparts',
+                'gateway'            => 'privatpayparts',
                 'commission_percent' => 0,
                 'commission_rates'   => null,
                 'priority'           => 30,
@@ -204,8 +204,8 @@ class CheckoutDemoSeeder extends Seeder
             [
                 'title'              => json_encode(['ua' => '📦 Накладений платіж', 'ru' => '📦 Наложенный платёж', 'en' => 'Cash on delivery']),
                 'description'        => json_encode(['ua' => 'Оплата при отриманні', 'ru' => 'Оплата при получении', 'en' => 'Pay on delivery']),
-                'slug'               => 'cod',
-                'gateway'            => 'cod',
+                'slug'               => 'liqpay_cod',
+                'gateway'            => 'liqpay_cod',
                 'commission_percent' => 2,
                 'commission_rates'   => null,
                 'priority'           => 40,

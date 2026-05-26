@@ -1,8 +1,11 @@
 @php
     /** @var \App\Models\User $user */
-    $user        = auth()->user();
-    $displayName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->name ?? '');
-    $ordersCount = $user->orders()->count();
+    $user           = auth()->user();
+    $displayName    = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->name ?? '');
+    $ordersCount    = $user->orders()->count();
+    $addressesCount = $user->addresses()->count();
+    $recipientsCount = $user->recipients()->count();
+    $discountBest   = $user->discountCards()->where('is_active', true)->where('type', 'percent')->max('value') ?? 0;
 @endphp
 
 <aside class="w-full md:w-72 flex-shrink-0">
@@ -27,7 +30,7 @@
                 <p class="text-[10px] text-ink-muted leading-tight">{{ __t('бонусів') }}</p>
             </div>
             <div>
-                <p class="text-lg font-bold leading-tight text-brand">0%</p>
+                <p class="text-lg font-bold leading-tight text-brand">{{ $discountBest > 0 ? $discountBest . '%' : '0%' }}</p>
                 <p class="text-[10px] text-ink-muted leading-tight">{{ __t('знижка') }}</p>
             </div>
         </div>
@@ -50,6 +53,27 @@
                     'label' => __t('Мої замовлення'),
                     'badge' => $ordersCount,
                     'icon'  => '<svg class="w-5 h-5" viewBox="0 0 22 25" fill="none"><rect x="1.738" y="1.202" width="19.5" height="22.5" rx="4.25" stroke="currentColor" stroke-width="1.5"/><path d="M6.988 9.452H15.11M6.988 14.247H15.11" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                ],
+                [
+                    'route' => 'profile.addresses',
+                    'key'   => 'addresses',
+                    'label' => __t('Адреси доставки'),
+                    'badge' => $addressesCount ?: null,
+                    'icon'  => '<svg class="w-5 h-5" viewBox="0 0 18 22" fill="none"><path d="M9 1C5.686 1 3 3.686 3 7c0 4.5 6 13 6 13s6-8.5 6-13c0-3.314-2.686-6-6-6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="7" r="2" stroke="currentColor" stroke-width="1.5"/></svg>',
+                ],
+                [
+                    'route' => 'profile.recipients',
+                    'key'   => 'recipients',
+                    'label' => __t('Отримувачі'),
+                    'badge' => $recipientsCount ?: null,
+                    'icon'  => '<svg class="w-5 h-5" viewBox="0 0 22 18" fill="none"><path d="M1 17c1-4 4.5-6.5 8-6.5s7 2.5 8 6.5M15.5 3.5c0 2.5-2 4.5-4.5 4.5S6.5 6 6.5 3.5 8.5-1 11-1s4.5 2 4.5 4.5z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round"/><path d="M19 13c.9-1.2 1.5-2.7 1.5-4.3C20.5 5.5 18 3 15 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+                ],
+                [
+                    'route' => 'profile.discounts',
+                    'key'   => 'discounts',
+                    'label' => __t('Знижки та бонуси'),
+                    'badge' => $discountBest > 0 ? $discountBest . '%' : null,
+                    'icon'  => '<svg class="w-5 h-5" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9.5" stroke="currentColor" stroke-width="1.5"/><path d="M7 15l8-8M8 8.5a.5.5 0 11-1 0 .5.5 0 011 0zM15 13.5a.5.5 0 11-1 0 .5.5 0 011 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
                 ],
                 [
                     'route' => 'profile.security',

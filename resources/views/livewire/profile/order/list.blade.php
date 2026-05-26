@@ -34,6 +34,11 @@
                             @else
                                 <span class="badge">{{ $order->status }}</span>
                             @endif
+                            @if($order->canBeRepaid())
+                                <span class="badge bg-yellow-100 text-yellow-700 border border-yellow-300">
+                                    💳 {{ __t('Не оплачено') }}
+                                </span>
+                            @endif
                         </div>
                         <a href="{{ route('profile.orders.details', $order->id) }}"
                            class="text-sm text-brand font-semibold hover:underline">

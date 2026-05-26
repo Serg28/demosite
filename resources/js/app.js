@@ -9,6 +9,12 @@ import './base/analytic';
 // Toast notifications (Alpine.js, замінює Web Component)
 import './components/notification';
 
+// Phone input formatter (Alpine component, Ukrainian format)
+import './components/phone-input';
+
+// Email input with client-side validation (Alpine component)
+import './components/email-input';
+
 // Tooltip Web Component
 import './components/tooltip';
 

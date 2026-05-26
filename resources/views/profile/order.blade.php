@@ -10,6 +10,23 @@
                 <span class="text-ink font-medium">#{{ $order->id }}</span>
             </nav>
         </div>
+        {{-- Flash-повідомлення --}}
+        @if(session('success'))
+            <div class="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+                {{ session('success') }}
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {{ session('error') }}
+            </div>
+        @endif
+        @if(session('warning'))
+            <div class="mb-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm">
+                {{ session('warning') }}
+            </div>
+        @endif
+
         <div class="flex gap-6 flex-wrap md:flex-nowrap">
             @include('profile.partials.sidebar', ['action' => 'orders'])
             <div class="flex-1 min-w-0">
@@ -29,6 +46,38 @@
                             @else
                                 <span class="badge">{{ $order->status }}</span>
                             @endif
+
+                            {{-- Кнопка "Оплатити" --}}
+                            @if($order->canBeRepaid())
+                                <form method="POST" action="{{ route('profile.orders.pay', $order->id) }}">
+                                    @csrf
+                                    <button type="submit" class="btn btn-p btn-sm">
+                                        💳 {{ __t('Оплатити') }}
+                                    </button>
+                                </form>
+                            @endif
+
+                            {{-- Кнопка "Повторити" --}}
+                            <form method="POST" action="{{ route('profile.orders.repeat', $order->id) }}">
+                                @csrf
+                                <button type="submit" class="btn btn-o btn-sm">
+                                    🔄 {{ __t('Повторити') }}
+                                </button>
+                            </form>
+
+                            {{-- Кнопка "Скасувати" --}}
+                            @if($order->canBeCancelled())
+                                <button
+                                    type="button"
+                                    data-js-modal
+                                    data-component="profile.order.cancel-order"
+                                    data-id="{{ $order->id }}"
+                                    class="btn btn-o btn-sm border-red-300 text-red-600 hover:bg-red-50"
+                                >
+                                    ✕ {{ __t('Скасувати') }}
+                                </button>
+                            @endif
+
                             <a href="{{ route('profile.orders') }}" class="btn btn-o btn-sm">
                                 ← {{ __t('До замовлень') }}
                             </a>
