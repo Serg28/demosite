@@ -78,7 +78,7 @@ class CatalogFilterUrlTest extends TestCase
     {
         $this->get('/catalog/'.$this->category->slug)
             ->assertStatus(200)
-            ->assertViewHas('initialFilters', ['characteristics' => [], 'min_price' => null, 'max_price' => null]);
+            ->assertViewHas('initialFilters', ['characteristics' => [], 'min_price' => null, 'max_price' => null, 'in_stock' => false]);
     }
 
     public function test_controller_resolves_single_option_slug_from_path(): void
@@ -89,6 +89,7 @@ class CatalogFilterUrlTest extends TestCase
                 'characteristics' => [$this->colorChar->id => [$this->redOption->id]],
                 'min_price' => null,
                 'max_price' => null,
+                'in_stock'  => false,
             ]);
     }
 
@@ -100,6 +101,7 @@ class CatalogFilterUrlTest extends TestCase
                 'characteristics' => [$this->colorChar->id => [$this->redOption->id, $this->blueOption->id]],
                 'min_price' => null,
                 'max_price' => null,
+                'in_stock'  => false,
             ]);
     }
 
@@ -111,6 +113,7 @@ class CatalogFilterUrlTest extends TestCase
                 'characteristics' => [],
                 'min_price' => 100,
                 'max_price' => 500,
+                'in_stock'  => false,
             ]);
     }
 
@@ -118,7 +121,14 @@ class CatalogFilterUrlTest extends TestCase
     {
         $this->get('/catalog/'.$this->category->slug.'/unknown-param=value/')
             ->assertStatus(200)
-            ->assertViewHas('initialFilters', ['characteristics' => [], 'min_price' => null, 'max_price' => null]);
+            ->assertViewHas('initialFilters', ['characteristics' => [], 'min_price' => null, 'max_price' => null, 'in_stock' => false]);
+    }
+
+    public function test_controller_resolves_in_stock_from_path(): void
+    {
+        $this->get('/catalog/'.$this->category->slug.'/in_stock=1/')
+            ->assertStatus(200)
+            ->assertViewHas('initialFilters', ['characteristics' => [], 'min_price' => null, 'max_price' => null, 'in_stock' => true]);
     }
 
     public function test_controller_passes_base_path_to_view(): void

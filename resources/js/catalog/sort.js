@@ -1,20 +1,16 @@
 /**
  * Catalog sort interceptor.
  *
- * Intercepts clicks on [data-js-sort] elements, reads current window.location.pathname
- * (which includes SEO filter segments like /color=red/price=100-500/),
- * updates only the ?sort= query param, and dispatches Livewire sort-changed event.
+ * Handles both:
+ * - [data-js-sort] link clicks (legacy button approach)
+ * - [data-js-sort-select] select change events (current design)
  *
- * This avoids the staleness problem of server-generated sort URLs
- * which are computed at mount time and become outdated after JS filter navigation.
+ * Reads current window.location.pathname (which includes SEO filter segments
+ * like /color=red/price=100-500/), updates only the ?sort= query param,
+ * and dispatches Livewire sort-changed event.
  */
-document.addEventListener('click', (e) => {
-    const link = e.target.closest('[data-js-sort]');
-    if (!link) { return; }
 
-    e.preventDefault();
-
-    const sortKey = link.dataset.jsSort; // '' = default sort, 'priceup' etc = named sort
+function applySortKey(sortKey) {
     const current = new URL(window.location.href);
 
     if (sortKey) {
@@ -30,4 +26,20 @@ document.addEventListener('click', (e) => {
     if (typeof Livewire !== 'undefined') {
         Livewire.dispatch('sort-changed', { sortKey });
     }
+}
+
+// Select-based sort (current design)
+document.addEventListener('change', (e) => {
+    const select = e.target.closest('[data-js-sort-select]');
+    if (!select) { return; }
+    applySortKey(select.value);
+});
+
+// Link-based sort (legacy, keep for backward compatibility)
+document.addEventListener('click', (e) => {
+    const link = e.target.closest('[data-js-sort]');
+    if (!link) { return; }
+
+    e.preventDefault();
+    applySortKey(link.dataset.jsSort);
 });

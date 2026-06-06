@@ -14,6 +14,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('emailInput', (prop, errorMsg) => ({
         value: '',
         clientError: '',
+        _timer: null,
         emailRegex: /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/,
 
         init() {
@@ -33,6 +34,18 @@ document.addEventListener('alpine:init', () => {
 
         _getPropValue() {
             return prop.split('.').reduce((node, key) => node?.[key], this.$wire) || '';
+        },
+
+        onInput(e) {
+            // Strip non-ASCII / non-email characters immediately (Cyrillic, emoji, etc.)
+            const filtered = e.target.value.replace(/[^\x20-\x7E]/g, '');
+            if (e.target.value !== filtered) {
+                e.target.value = filtered;
+                this.value     = filtered;
+            }
+            // Debounced validation
+            clearTimeout(this._timer);
+            this._timer = setTimeout(() => this.validate(), 500);
         },
 
         validate() {

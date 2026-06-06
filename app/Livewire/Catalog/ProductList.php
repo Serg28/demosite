@@ -98,6 +98,8 @@ class ProductList extends Component
 
     public function render(): View
     {
+        $this->dispatch('catalog-count-updated', count: $this->products->total());
+
         return view('livewire.catalog.product-list');
     }
 }

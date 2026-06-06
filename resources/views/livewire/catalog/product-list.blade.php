@@ -21,9 +21,12 @@
              class="transition-opacity duration-200">
             @if($paginator->isNotEmpty())
                 <div id="js-product-grid"
+                     x-data
+                     :class="$store.catalog.view === 'list'
+                         ? 'space-y-3'
+                         : 'grid grid-cols-2 gap-4 lg:grid-cols-3'"
                      data-js-product-grid
                      data-item_list_name="{{ $this->category->t('title') }}"
-                     class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                      data-catalog-url="{{ $this->category->getUrl() }}"
                      data-api-url="{{ route('api.v1.catalog.products-html', $this->category) }}">
                     @foreach($paginator as $product)

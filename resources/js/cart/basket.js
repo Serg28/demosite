@@ -1,10 +1,12 @@
 const CART_CONFIG = {
     mode:           'sidebar',
     addUrl:         '/cart/add/',
+    addAllUrl:      '/cart/add-all',
     sidebarEvent:   'open-cart-drawer',
     selectors: {
-        addToCart: '[data-js-add-to-cart]',
-        spinner:   '[data-js-spinner]',
+        addToCart:    '[data-js-add-to-cart]',
+        addAllToCart: '[data-js-add-all-to-cart]',
+        spinner:      '[data-js-spinner]',
     },
 };
 
@@ -19,10 +21,15 @@ class CartHandler {
             e.preventDefault();
             this._add(el);
         });
+        this._offAll = this._delegate(document, 'click', CART_CONFIG.selectors.addAllToCart, (e, el) => {
+            e.preventDefault();
+            this._addAll(el);
+        });
     }
 
     _destroy() {
         if (this._off) { this._off(); this._off = null; }
+        if (this._offAll) { this._offAll(); this._offAll = null; }
     }
 
     async _add(el) {
@@ -64,6 +71,44 @@ class CartHandler {
         } finally {
             el.disabled = false;
             if (spinner) { spinner.classList.add('hidden'); }
+        }
+    }
+
+    /**
+     * Масове додавання товарів до кошика.
+     * Елемент: <button data-js-add-all-to-cart data-items='[{"id":1,"count":1}]'>
+     */
+    async _addAll(el) {
+        const items = el.dataset.items ? JSON.parse(el.dataset.items) : [];
+        if (!items.length) { return; }
+
+        el.disabled = true;
+
+        try {
+            const res = await fetch(CART_CONFIG.addAllUrl, {
+                method:  'POST',
+                headers: {
+                    'Content-Type':     'application/json',
+                    'X-CSRF-TOKEN':     document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ items }),
+            });
+
+            const data = await res.json();
+
+            if (data.status) {
+                CartAnalytics.track('add_to_cart', data.products);
+                Livewire.dispatch('cart-changed', { count: data.count, action: 'add', products: data.products });
+
+                if (CART_CONFIG.mode === 'sidebar') {
+                    Livewire.dispatch(CART_CONFIG.sidebarEvent);
+                }
+            }
+        } catch (err) {
+            console.error('[CartHandler] addAll failed', err);
+        } finally {
+            el.disabled = false;
         }
     }
 

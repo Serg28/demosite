@@ -102,7 +102,7 @@ class BreadcrumbsService
 
         if ($product->category_id) {
             $category = cache()->remember(
-                "breadcrumbs.category.{$product->category_id}",
+                "breadcrumbs.product_category.{$product->category_id}",
                 3600,
                 fn () => \App\Models\Category::find($product->category_id, ['id', 'title', 'slug'])
             );
@@ -112,7 +112,27 @@ class BreadcrumbsService
             }
         }
 
-        $items[] = new BreadcrumbItem($product->t('title'));
+        $items[] = new BreadcrumbItem($product->getSeoBreadcrumbTitle());
+
+        return $items;
+    }
+
+    /**
+     * Хлібні крихти для сторінок особистого кабінету.
+     * Головна > Кабінет > [Назва сторінки]
+     *
+     * @return list<BreadcrumbItem>
+     */
+    public function forProfile(string $pageTitle = ''): array
+    {
+        $items = [
+            new BreadcrumbItem(__t('Головна'), geturl('/')),
+            new BreadcrumbItem(__t('Кабінет'), route('profile.index')),
+        ];
+
+        if ($pageTitle !== '') {
+            $items[] = new BreadcrumbItem($pageTitle);
+        }
 
         return $items;
     }

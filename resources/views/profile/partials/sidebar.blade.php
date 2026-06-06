@@ -6,6 +6,8 @@
     $addressesCount = $user->addresses()->count();
     $recipientsCount = $user->recipients()->count();
     $discountBest   = $user->discountCards()->where('is_active', true)->where('type', 'percent')->max('value') ?? 0;
+    $favoritesCount = $user->wishlists()->count();
+    $compareCount   = app(\App\Services\CompareService::class)->count();
 @endphp
 
 <aside class="w-full md:w-72 flex-shrink-0">
@@ -76,6 +78,20 @@
                     'icon'  => '<svg class="w-5 h-5" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9.5" stroke="currentColor" stroke-width="1.5"/><path d="M7 15l8-8M8 8.5a.5.5 0 11-1 0 .5.5 0 011 0zM15 13.5a.5.5 0 11-1 0 .5.5 0 011 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
                 ],
                 [
+                    'route' => 'profile.favorites',
+                    'key'   => 'favorites',
+                    'label' => __t('Список бажань'),
+                    'badge' => $favoritesCount ?: null,
+                    'icon'  => '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                ],
+                [
+                    'route' => 'profile.compare',
+                    'key'   => 'compare',
+                    'label' => __t('Порівняння'),
+                    'badge' => $compareCount ?: null,
+                    'icon'  => '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h4M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M9 12h6M12 9l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                ],
+                [
                     'route' => 'profile.security',
                     'key'   => 'security',
                     'label' => __t('Безпека'),
@@ -89,7 +105,7 @@
             @php $isActive = ($action === $item['key']); @endphp
             <a href="{{ route($item['route']) }}"
                class="flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                      {{ $isActive ? 'bg-brand-light text-brand' : 'text-ink hover:bg-gray-50' }}">
+                      {{ $isActive ? 'bg-brand-light text-brand border-l-2 border-brand rounded-l-none' : 'text-ink hover:bg-gray-50' }}">
                 <span class="w-5 flex-shrink-0 flex items-center justify-center">
                     {!! $item['icon'] !!}
                 </span>

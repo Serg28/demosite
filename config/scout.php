@@ -159,6 +159,7 @@ return [
                         ['name' => 'category_id', 'type' => 'int32',  'optional' => true],
                         ['name' => 'slug',        'type' => 'string'],
                         ['name' => 'is_active',   'type' => 'bool'],
+                        ['name' => 'in_stock',    'type' => 'bool'],
                         ['name' => 'priority',    'type' => 'int32'],
                         ['name' => 'created_at',  'type' => 'int64'],
                     ],

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Contracts\SmsProvider;
 use App\Models\User;
+use App\Services\CompareService;
 use App\Services\CurrencyService;
 use App\Services\Sms\SmsManager;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Octane-safe: scoped = reset per request (не singleton!)
         $this->app->scoped('user', static fn (): ?User => Auth::user());
+        $this->app->scoped(CompareService::class);
     }
 
     public function boot(): void

@@ -93,6 +93,21 @@ class User extends CmsUser implements Authenticatable, CanResetPassword
         return $this->hasMany(Payment::class);
     }
 
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    /**
+     * ID товарів у списку бажань користувача.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    public function favoriteProductIds(): \Illuminate\Support\Collection
+    {
+        return $this->wishlists()->pluck('product_id');
+    }
+
     /**
      * Накопичувальна знижка користувача на всі товари (%).
      * Оновлюється OrderObserver при виконанні замовлень.

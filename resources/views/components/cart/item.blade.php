@@ -14,7 +14,7 @@
     <div class="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-surface">
         @if($product?->picture)
             <img src="{{ $product->picture }}"
-                 alt="{{ $item->name }}"
+                 alt="{{ $itemName }}"
                  class="w-full h-full object-cover"
                  loading="lazy">
         @else

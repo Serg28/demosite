@@ -24,10 +24,11 @@ class CatalogController extends Controller
         $initialPage = max(1, (int) $request->get('page', 1));
 
         $count = app(TypeSenseService::class)->count(filters: [
-            'category_ids' => [$category->id],
+            'category_id'     => $category->id,
             'characteristics' => $initialFilters['characteristics'],
-            'min_price' => $initialFilters['min_price'],
-            'max_price' => $initialFilters['max_price'],
+            'min_price'       => $initialFilters['min_price'],
+            'max_price'       => $initialFilters['max_price'],
+            'in_stock'        => $initialFilters['in_stock'],
         ]);
 
         return view('catalog.index', compact('category', 'initialFilters', 'basePath', 'filters', 'count', 'sortBy', 'sortDir', 'initialPage'));

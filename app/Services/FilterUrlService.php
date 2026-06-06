@@ -8,21 +8,45 @@ use App\Models\Category;
  * FilterUrlService — parsing and building SEO filter path URLs.
  *
  * URL format: /catalog/{category}/{char-slug}={opt-slug1},{opt-slug2}/{char-slug2}={min}-{max}/
+ *
+ * ─── Adding a new boolean filter ──────────────────────────────────────────────
+ * 1. Add a new entry to BOOLEAN_FILTER_DEFINITIONS:
+ *       'is_new' => 'Новинки',
+ * 2. Handle the new slug in:
+ *    - TypeSenseService::search() / FacetService::getDisjunctiveCounts() — actual product filtering
+ *    - ProductList Livewire component — TypeSense query filter
+ * That's it — URL parsing, toggle URLs and chips are generated automatically.
+ * ──────────────────────────────────────────────────────────────────────────────
  */
 class FilterUrlService
 {
     /**
+     * Registered boolean filter slugs with their display labels.
+     * Each entry becomes a toggle in the filter sidebar (URL segment `slug=1`).
+     *
+     * @var array<string, string>
+     */
+    private const BOOLEAN_FILTER_DEFINITIONS = [
+        'in_stock' => 'Тільки в наявності',
+        // 'is_new' => 'Новинки',
+    ];
+
+    /**
      * Parse filter path segments into a structured filters array.
      *
-     * Input:  "color=red,blue/price=100-500"
-     * Output: ['characteristics' => [charId => [optId1, optId2]], 'min_price' => 100, 'max_price' => 500]
+     * Input:  "color=red,blue/price=100-500/in_stock=1"
+     * Output: ['characteristics' => [charId => [...]], 'min_price' => 100, 'max_price' => 500, 'in_stock' => true]
      *
      * @param  array<string, array{char_id: int, is_range_type: bool, options: array<string, int>}>  $slugMap
-     * @return array{characteristics: array<int, int[]>, min_price: int|null, max_price: int|null}
+     * @return array<string, mixed>
      */
     public function parseFilterPath(string $path, array $slugMap): array
     {
+        // Initialise all boolean keys to false
         $result = ['characteristics' => [], 'min_price' => null, 'max_price' => null];
+        foreach (array_keys(self::BOOLEAN_FILTER_DEFINITIONS) as $slug) {
+            $result[$slug] = false;
+        }
 
         foreach (array_filter(explode('/', trim($path, '/'))) as $segment) {
             if (! str_contains($segment, '=')) {
@@ -30,6 +54,13 @@ class FilterUrlService
             }
 
             [$key, $value] = explode('=', $segment, 2);
+
+            // Generic boolean filter handling
+            if (array_key_exists($key, self::BOOLEAN_FILTER_DEFINITIONS)) {
+                $result[$key] = $value === '1';
+
+                continue;
+            }
 
             if ($key === 'price') {
                 [$min, $max] = array_pad(explode('-', $value, 2), 2, null);
@@ -67,6 +98,32 @@ class FilterUrlService
         }
 
         return $result;
+    }
+
+    /**
+     * Build a toggle URL for a boolean filter (adds slug=1 if absent, removes if present).
+     *
+     * @param  string  $slug  e.g. "in_stock", "is_new"
+     */
+    public function buildToggleBooleanUrl(string $basePath, string $currentFiltersPath, string $slug): string
+    {
+        $segments = $this->parseSegments($currentFiltersPath);
+
+        if (isset($segments[$slug])) {
+            unset($segments[$slug]);
+        } else {
+            $segments[$slug] = '1';
+        }
+
+        return $this->buildPath($basePath, $segments);
+    }
+
+    /**
+     * Shorthand for in_stock toggle (backward-compatible wrapper).
+     */
+    public function buildToggleInStockUrl(string $basePath, string $currentFiltersPath): string
+    {
+        return $this->buildToggleBooleanUrl($basePath, $currentFiltersPath, 'in_stock');
     }
 
     /**
@@ -150,6 +207,17 @@ class FilterUrlService
         }
 
         return $map;
+    }
+
+    /**
+     * Returns boolean filter definitions: [slug => label].
+     * Used by Facets component and FacetService to build toggle UI and chips.
+     *
+     * @return array<string, string>
+     */
+    public static function getBooleanFilterDefinitions(): array
+    {
+        return self::BOOLEAN_FILTER_DEFINITIONS;
     }
 
     /** @return array<string, string> */

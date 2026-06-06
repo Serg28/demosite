@@ -20,7 +20,6 @@ class CatalogFilter {
         this._offClick = null;
         this._offChange = null;
         this._offPopstate = null;
-        this._morphHookCleanup = null;
     }
 
     init() {
@@ -97,17 +96,6 @@ class CatalogFilter {
             const slider = new CatalogRangeSlider(el);
             this._sliders.push(slider);
         });
-
-        // Register once — survives _destroy() since _sliders is always current via `this`
-        if (typeof Livewire !== 'undefined' && !this._morphHookCleanup) {
-            this._morphHookCleanup = Livewire.hook('morph.updated', ({ el }) => {
-                this._sliders.forEach((s) => {
-                    if (s.container === el || el.contains(s.container)) {
-                        s.redraw();
-                    }
-                });
-            });
-        }
     }
 
     /**
@@ -206,6 +194,22 @@ const catalogFilter = new CatalogFilter('.lw-catalog-facets');
 
 document.addEventListener('livewire:init', () => {
     catalogFilter.init();
+
+    // After each Livewire commit:
+    // 1. Sync checkbox .checked property with HTML attribute
+    //    (Alpine morph preserves DOM property, causing visual desync)
+    // 2. Redraw range sliders
+    //    (server updates data-current-min/max; sliders must re-read them)
+    Livewire.hook('commit', ({ succeed }) => {
+        succeed(() => {
+            queueMicrotask(() => {
+                document.querySelectorAll('.lw-catalog-facets input[type="checkbox"]').forEach((input) => {
+                    input.checked = input.hasAttribute('checked');
+                });
+                catalogFilter._sliders.forEach((s) => s.redraw());
+            });
+        });
+    });
 });
 
 // Re-init after wire:navigate page transitions

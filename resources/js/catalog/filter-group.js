@@ -1,12 +1,14 @@
 /**
  * Alpine.js component: filterGroup
  *
- * Registered component — no JS logic in HTML attributes.
+ * Manages show-more limit and text search for a facet group.
  * Configure via data attributes on the root element:
  *   data-limit="8"  — how many options to show initially
  *
+ * Each option label uses:
+ *   x-show="search ? $el.querySelector('a > span')?.textContent?.toLowerCase().includes(search.toLowerCase()) : (showAll || INDEX < limit)"
+ *
  * Works with wire:navigate (Alpine re-inits on navigation automatically).
- * Alpine state (search, showAll) is preserved across Livewire morphs via wire:key.
  */
 document.addEventListener('alpine:init', () => {
     Alpine.data('filterGroup', function () {
@@ -23,25 +25,6 @@ document.addEventListener('alpine:init', () => {
                 this.total         = parseInt(this.$el.dataset.total ?? 0, 10);
                 this.labelShow     = this.$el.dataset.labelShow ?? 'Показати всі';
                 this.labelCollapse = this.$el.dataset.labelCollapse ?? 'Згорнути';
-            },
-
-            /**
-             * Determines visibility of an option by index and label.
-             * Without JS (no Alpine): all options are visible (graceful degradation).
-             *
-             * @param {number} index - 0-based position in the sorted options list
-             * @param {string} label - display text of the option
-             */
-            isVisible(index, label) {
-                const matchesSearch = !this.search ||
-                    label.toLowerCase().includes(this.search.toLowerCase());
-
-                // When searching: show all matching (ignore limit/showAll)
-                if (this.search) {
-                    return matchesSearch;
-                }
-
-                return (this.showAll || index < this.limit) && matchesSearch;
             },
 
             get toggleLabel() {

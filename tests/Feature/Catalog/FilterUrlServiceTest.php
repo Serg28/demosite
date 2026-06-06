@@ -29,7 +29,52 @@ class FilterUrlServiceTest extends TestCase
     {
         $result = $this->service->parseFilterPath('', $this->slugMap);
 
-        $this->assertSame(['characteristics' => [], 'min_price' => null, 'max_price' => null], $result);
+        $this->assertSame(['characteristics' => [], 'min_price' => null, 'max_price' => null, 'in_stock' => false], $result);
+    }
+
+    public function test_parse_in_stock_segment(): void
+    {
+        $result = $this->service->parseFilterPath('in_stock=1', $this->slugMap);
+
+        $this->assertTrue($result['in_stock']);
+    }
+
+    public function test_parse_in_stock_with_other_filters(): void
+    {
+        $result = $this->service->parseFilterPath('color=red/in_stock=1', $this->slugMap);
+
+        $this->assertTrue($result['in_stock']);
+        $this->assertSame([5 => [10]], $result['characteristics']);
+    }
+
+    public function test_parse_in_stock_zero_is_false(): void
+    {
+        $result = $this->service->parseFilterPath('in_stock=0', $this->slugMap);
+
+        $this->assertFalse($result['in_stock']);
+    }
+
+    // ─── buildToggleInStockUrl ───────────────────────────────────────────────
+
+    public function test_toggle_instock_adds_segment_when_absent(): void
+    {
+        $url = $this->service->buildToggleInStockUrl('/catalog/phones', '');
+
+        $this->assertSame('/catalog/phones/in_stock=1/', $url);
+    }
+
+    public function test_toggle_instock_removes_segment_when_present(): void
+    {
+        $url = $this->service->buildToggleInStockUrl('/catalog/phones', 'in_stock=1/');
+
+        $this->assertSame('/catalog/phones/', $url);
+    }
+
+    public function test_toggle_instock_preserves_other_segments(): void
+    {
+        $url = $this->service->buildToggleInStockUrl('/catalog/phones', 'color=red/');
+
+        $this->assertSame('/catalog/phones/color=red/in_stock=1/', $url);
     }
 
     public function test_parse_single_option(): void

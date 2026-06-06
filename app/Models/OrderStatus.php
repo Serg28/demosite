@@ -2,13 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class OrderStatus extends Model
 {
     public $timestamps = false;
 
-    protected $fillable = ['title', 'color', 'priority'];
+    protected $fillable = ['title', 'color', 'priority', 'is_in_timeline'];
+
+    protected $casts = ['is_in_timeline' => 'boolean'];
+
+    public function scopeOrdered(Builder $query): Builder
+    {
+        return $query->orderBy('priority');
+    }
 
     public function t(string $field): string
     {

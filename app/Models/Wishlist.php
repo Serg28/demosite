@@ -11,6 +11,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Wishlist extends Model
 {
+    /** Composite PK: user_id + product_id, без auto-increment id. */
+    public $incrementing = false;
+
+    protected $primaryKey = null;
+
     public $timestamps = false;
 
     protected $fillable = ['user_id', 'product_id'];

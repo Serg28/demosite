@@ -27,6 +27,15 @@ class Facets extends Component
         $this->filtersPath = $initialFiltersPath;
     }
 
+    public function resetAllFilters(): void
+    {
+        $this->filtersPath = '';
+        $this->dispatch('filtersUpdated', filters: [], page: 1);
+
+        $baseUrl = rtrim($this->basePath, '/').'/';
+        $this->js("history.pushState({}, '', {$this->jsString($baseUrl)})");
+    }
+
     /**
      * Called by JS when browser URL changes (filter click or popstate).
      * $page is forwarded from popstate so filters + page are restored in one round-trip.
@@ -43,7 +52,12 @@ class Facets extends Component
         $this->dispatch('filtersUpdated', filters: $this->activeFilters, page: $page);
     }
 
-    /** @return array{characteristics: array<int, int[]>, min_price: int|null, max_price: int|null} */
+    private function jsString(string $value): string
+    {
+        return "'".addslashes($value)."'";
+    }
+
+    /** @return array<string, mixed> */
     #[Computed]
     public function activeFilters(): array
     {
@@ -57,11 +71,21 @@ class Facets extends Component
         return app(FilterUrlService::class)->buildSlugMap($this->category);
     }
 
-    /** @return array{price: array{min: int, max: int}, characteristics: array<int, array<string, mixed>>} */
+    /** @return array{price: array{min: int, max: int}, characteristics: array<int, array<string, mixed>>, boolean_filters: array<int, array<string, mixed>>} */
     #[Computed]
     public function facets(): array
     {
-        return app(FacetService::class)->getFacetsForCategory($this->category, $this->activeFilters);
+        $facets = app(FacetService::class)->getFacetsForCategory($this->category, $this->activeFilters);
+
+        // Enrich boolean_filters with toggle URLs (FacetService has no URL context)
+        $urlService = app(FilterUrlService::class);
+        $facets['boolean_filters'] = array_map(function (array $bf) use ($urlService): array {
+            $bf['toggle_url'] = $urlService->buildToggleBooleanUrl($this->basePath, $this->filtersPath, $bf['slug']);
+
+            return $bf;
+        }, $facets['boolean_filters'] ?? []);
+
+        return $facets;
     }
 
     /** @return array<int, array{char_title: string, opt_title: string, remove_url: string}> */
@@ -72,7 +96,18 @@ class Facets extends Component
         $tags = [];
 
         $active = $this->activeFilters;
-        $chars = $this->facets['characteristics'] ?? [];
+        $chars  = $this->facets['characteristics'] ?? [];
+
+        // Boolean filter chips — driven by FilterUrlService::getBooleanFilterDefinitions()
+        foreach (FilterUrlService::getBooleanFilterDefinitions() as $slug => $label) {
+            if ($active[$slug] ?? false) {
+                $tags[] = [
+                    'char_title' => '',
+                    'opt_title'  => __t($label),
+                    'remove_url' => $urlService->buildToggleBooleanUrl($this->basePath, $this->filtersPath, $slug),
+                ];
+            }
+        }
 
         foreach ($chars as $facet) {
             $activeOptIds = (array) ($active['characteristics'][$facet['characteristic_id']] ?? []);
@@ -82,7 +117,7 @@ class Facets extends Component
                 }
                 $tags[] = [
                     'char_title' => $facet['characteristic_title'],
-                    'opt_title' => $opt['title'],
+                    'opt_title'  => $opt['title'],
                     'remove_url' => $urlService->buildOptionUrl($this->basePath, $this->filtersPath, $facet['characteristic_slug'], $opt['slug']),
                 ];
             }
@@ -91,7 +126,7 @@ class Facets extends Component
         if ($active['min_price'] || $active['max_price']) {
             $tags[] = [
                 'char_title' => __t('Ціна'),
-                'opt_title' => ($active['min_price'] ?? '?').' – '.($active['max_price'] ?? '?'),
+                'opt_title'  => ($active['min_price'] ?? '?').' – '.($active['max_price'] ?? '?'),
                 'remove_url' => $urlService->buildRangeUrl($this->basePath, $this->filtersPath, 'price', null, null),
             ];
         }
@@ -101,6 +136,11 @@ class Facets extends Component
 
     public function render(): View
     {
+        $this->dispatch('active-filters-updated',
+            tags: $this->activeFilterTags,
+            resetUrl: rtrim($this->basePath, '/').'/',
+        );
+
         return view('livewire.catalog.facets');
     }
 }

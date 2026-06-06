@@ -26,6 +26,44 @@ class CartController extends Controller
         return response()->json($result->toArray(), $result->status ? 200 : 422);
     }
 
+    /**
+     * Масове додавання товарів до кошика (для "Все в кошик").
+     * Body: { items: [{id: int, count: int}] }
+     */
+    public function addBulk(
+        Request $request,
+        AddToCart $action,
+    ): JsonResponse {
+        $items = (array) $request->input('items', []);
+        $totalCount = 0;
+        $addedProducts = [];
+
+        foreach ($items as $item) {
+            $productId = (int) ($item['id'] ?? 0);
+            $qty       = max(1, (int) ($item['count'] ?? 1));
+
+            $product = Product::query()->find($productId);
+            if (! $product) {
+                continue;
+            }
+
+            $result = $action->handle($product, $qty);
+            if ($result->status) {
+                $totalCount = $result->count;
+                $addedProducts = array_merge($addedProducts, $result->products ?? []);
+            }
+        }
+
+        $request->session()->save();
+
+        return response()->json([
+            'status'   => true,
+            'count'    => $totalCount,
+            'action'   => 'add',
+            'products' => $addedProducts,
+        ]);
+    }
+
     public function update(
         string $rowId,
         Request $request,

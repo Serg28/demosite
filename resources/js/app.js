@@ -42,6 +42,15 @@ import './catalog/pagination';
 // Catalog: sort links — SPA intercept, preserves filter path
 import './catalog/sort';
 
+// Catalog: Alpine store + product list (grid/list toggle, load-more)
+import './catalog/product-list';
+
+// Favorites: toggle ♥ + batch status update
+import './base/like';
+
+// Compare: toggle ⇄ + batch status update
+import './base/compare';
+
 // Cart: add-to-cart handler + GA4 analytics
 import './cart/basket';
 

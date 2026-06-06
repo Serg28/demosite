@@ -17,6 +17,8 @@ class Manager extends Component
 
     public bool $showForm = false;
 
+    public ?int $editingId = null;
+
     // ── City selection (autocomplete → $wire.selectCity) ────────────────
     public ?int $cityId = null;
 
@@ -124,13 +126,52 @@ class Manager extends Component
 
     // ── CRUD ────────────────────────────────────────────────────────────
 
+    public function edit(int $id): void
+    {
+        $contact = UserContact::where('user_id', Auth::id())->addresses()->findOrFail($id);
+        $this->form->fillFromContact($contact);
+
+        $info = $contact->info ?? [];
+        $this->cityId         = $info['city_id']         ?? null;
+        $this->cityTitle      = $info['city_title']       ?? '';
+        $this->deliveryId     = $info['delivery_id']      ?? null;
+        $this->deliverySlug   = $info['delivery_slug']    ?? '';
+        $this->warehouseId    = $info['warehouse_id']     ?? null;
+        $this->warehouseTitle = $info['warehouse_title']  ?? '';
+        $this->street         = $info['street']           ?? '';
+        $this->house          = $info['house']            ?? '';
+        $this->apartment      = $info['apartment']        ?? '';
+
+        unset($this->deliveries, $this->isAddressDelivery, $this->warehouseLabel, $this->warehouseSearchUrl);
+
+        $this->editingId = $id;
+        $this->showForm  = true;
+    }
+
+    public function save(): void
+    {
+        if ($this->editingId) {
+            $this->updateAddress();
+        } else {
+            $this->add();
+        }
+    }
+
     public function add(): void
     {
         $this->validateLocation();
-        $this->form->validate();
         $this->form->save(Auth::user(), $this->buildLocationData());
         $this->resetForm();
         $this->dispatch('address-added');
+    }
+
+    public function updateAddress(): void
+    {
+        $this->validateLocation();
+        $contact = UserContact::where('user_id', Auth::id())->addresses()->findOrFail($this->editingId);
+        $this->form->update($contact, $this->buildLocationData());
+        $this->resetForm();
+        $this->dispatch('address-updated');
     }
 
     public function delete(int $id): void
@@ -217,6 +258,7 @@ class Manager extends Component
         $this->street         = '';
         $this->house          = '';
         $this->apartment      = '';
+        $this->editingId      = null;
         $this->showForm       = false;
 
         unset($this->deliveries, $this->isAddressDelivery, $this->warehouseLabel, $this->warehouseSearchUrl);

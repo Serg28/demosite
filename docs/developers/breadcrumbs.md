@@ -28,6 +28,8 @@ readonly class BreadcrumbItem {
 | `forFilteredCategory(Category, string $filterTitle)` | SEO filter page (Phase 3.7) |
 | `forCharacteristic(Characteristic, string $valueName)` | Сторінка значення характеристики |
 | `forBrand(string $brandName, ?string $brandsUrl)` | Сторінка бренду |
+| `forProduct(Product)` | Картка товару (Головна → Категорія → Товар) |
+| `forProfile(string $pageTitle)` | Сторінки особистого кабінету |
 | `simple(string $currentTitle, array $pages)` | Статичні сторінки (доставка, про нас) |
 
 ### ViewComposers
@@ -55,6 +57,57 @@ View::composer('catalog.index', BreadcrumbsCategoryComposer::class);
 ```php
 $items = app(BreadcrumbsService::class)->forCategory($category);
 ```
+
+### Патерн для контролерів — ОБОВ'ЯЗКОВО
+
+Кожен контролер, що рендерить view зі шаблоном, приймає `BreadcrumbsService` через DI і передає `$breadcrumbs` у view:
+
+```php
+use App\Services\BreadcrumbsService;
+
+// Профіль — прості сторінки
+public function addresses(BreadcrumbsService $breadcrumbs): View
+{
+    return view('profile.addresses', [
+        'breadcrumbs' => $breadcrumbs->forProfile(__t('Адреси доставки')),
+        'action'      => 'addresses',
+    ]);
+}
+
+// Профіль — головна (без $pageTitle)
+public function index(BreadcrumbsService $breadcrumbs): View
+{
+    return view('profile.index', [
+        'breadcrumbs' => $breadcrumbs->forProfile(),
+        'action'      => 'index',
+    ]);
+}
+
+// Замовлення — вкладена сторінка
+public function ordersDetails(int $orderId, BreadcrumbsService $breadcrumbs): View
+{
+    return view('profile.order', [
+        'breadcrumbs' => $breadcrumbs->simple(
+            __t('Замовлення #') . $orderId,
+            [
+                route('profile.index')  => __t('Кабінет'),
+                route('profile.orders') => __t('Мої замовлення'),
+            ]
+        ),
+    ]);
+}
+
+// Каталог — через ViewComposer (автоматично, не треба передавати вручну)
+// Товар — через BreadcrumbsProductComposer або вручну:
+public function show(Product $product, BreadcrumbsService $breadcrumbs): View
+{
+    return view('product.show', [
+        'breadcrumbs' => $breadcrumbs->forProduct($product),
+    ]);
+}
+```
+
+**Правило**: `$breadcrumbs` завжди передається у view. У шаблоні завжди `<x-breadcrumbs :items="$breadcrumbs ?? []" />`. Ніколи не хардкодити `<nav>` або HTML-посилання для крихт.
 
 ## SEO
 

@@ -27,15 +27,37 @@ class FacetService
     private const PRICE_CACHE_TTL = 60; // minutes
 
     /**
-     * @param  array{characteristics: array<int, int[]|array{type: string, min: int|null, max: int|null}>, min_price: int|null, max_price: int|null}  $filters
-     * @return array{price: array{min: int, max: int}, characteristics: array<int, array<string, mixed>>}
+     * @param  array<string, mixed>  $filters
+     * @return array{price: array{min: int, max: int}, characteristics: array<int, array<string, mixed>>, boolean_filters: array<int, array<string, mixed>>}
      */
     public function getFacetsForCategory(Category $category, array $filters = []): array
     {
         return [
             'price' => $this->getPriceFacet($category),
             'characteristics' => $this->getCharacteristicsFacets($category, $filters),
+            'boolean_filters' => $this->getBooleanFilterFacets($filters),
         ];
+    }
+
+    /**
+     * Build boolean filter facet data for each registered boolean filter.
+     * To add a new boolean toggle: add entry to FilterUrlService::BOOLEAN_FILTER_DEFINITIONS.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array<int, array{slug: string, label: string, is_active: bool}>
+     */
+    private function getBooleanFilterFacets(array $filters): array
+    {
+        $result = [];
+        foreach (FilterUrlService::getBooleanFilterDefinitions() as $slug => $label) {
+            $result[] = [
+                'slug' => $slug,
+                'label' => __t($label),
+                'is_active' => (bool) ($filters[$slug] ?? false),
+            ];
+        }
+
+        return $result;
     }
 
     /**
@@ -102,11 +124,12 @@ class FacetService
             ARRAY_FILTER_USE_KEY
         );
 
-        $cacheKey = $this->buildCountCacheKey($category->id, $char->id, $filtersWithoutThisChar, $filters['min_price'] ?? null, $filters['max_price'] ?? null);
+        $inStock = ! empty($filters['in_stock']);
+        $cacheKey = $this->buildCountCacheKey($category->id, $char->id, $filtersWithoutThisChar, $filters['min_price'] ?? null, $filters['max_price'] ?? null, $inStock);
 
         $counts = Cache::tags(['facets', "cat_{$category->id}", "char_{$char->id}"])
-            ->remember($cacheKey, now()->addMinutes(self::FACET_CACHE_TTL), function () use ($category, $char, $filtersWithoutThisChar, $filters) {
-                return $this->getDisjunctiveCounts($category->id, $char->id, $filtersWithoutThisChar, $filters['min_price'] ?? null, $filters['max_price'] ?? null);
+            ->remember($cacheKey, now()->addMinutes(self::FACET_CACHE_TTL), function () use ($category, $char, $filtersWithoutThisChar, $filters, $inStock) {
+                return $this->getDisjunctiveCounts($category->id, $char->id, $filtersWithoutThisChar, $filters['min_price'] ?? null, $filters['max_price'] ?? null, $inStock);
             });
 
         $activeOptIds = (array) ($activeCharFilters[$char->id] ?? []);
@@ -152,7 +175,7 @@ class FacetService
      * @param  array<int, int[]>  $otherCharFilters
      * @return array<int, int> [option_id => count]
      */
-    private function getDisjunctiveCounts(int $categoryId, int $charId, array $otherCharFilters, ?int $minPrice, ?int $maxPrice): array
+    private function getDisjunctiveCounts(int $categoryId, int $charId, array $otherCharFilters, ?int $minPrice, ?int $maxPrice, bool $inStock = false): array
     {
         $query = DB::table('product_characteristic_options as pco')
             ->join('products as p', 'p.id', '=', 'pco.product_id')
@@ -161,6 +184,10 @@ class FacetService
             ->whereIn('pco.characteristic_option_id', function ($q) use ($charId) {
                 $q->select('id')->from('characteristic_options')->where('characteristic_id', $charId);
             });
+
+        if ($inStock) {
+            $query->where('p.quantity', '>', 0);
+        }
 
         if ($minPrice !== null) {
             $query->where('p.price', '>=', $minPrice);
@@ -239,10 +266,10 @@ class FacetService
         return null;
     }
 
-    private function buildCountCacheKey(int $categoryId, int $charId, array $otherFilters, ?int $minPrice, ?int $maxPrice): string
+    private function buildCountCacheKey(int $categoryId, int $charId, array $otherFilters, ?int $minPrice, ?int $maxPrice, bool $inStock = false): string
     {
         ksort($otherFilters);
-        $hash = md5(json_encode([$otherFilters, $minPrice, $maxPrice]));
+        $hash = md5(json_encode([$otherFilters, $minPrice, $maxPrice, $inStock]));
 
         return "facet_counts:{$categoryId}:{$charId}:{$hash}";
     }

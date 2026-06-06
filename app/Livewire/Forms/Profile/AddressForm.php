@@ -17,6 +17,14 @@ class AddressForm extends Form
 
     public bool $is_primary = false;
 
+    protected function messages(): array
+    {
+        return [
+            'label.max' => __t('Мітка задовга'),
+            'phone.max' => __t('Номер телефону занадто довгий'),
+        ];
+    }
+
     /**
      * @param  array{
      *     delivery_id: int|null,
@@ -30,6 +38,13 @@ class AddressForm extends Form
      *     apartment: string,
      * }  $locationData
      */
+    public function fillFromContact(UserContact $contact): void
+    {
+        $this->label      = $contact->label  ?? '';
+        $this->phone      = $contact->phone  ?? '';
+        $this->is_primary = (bool) $contact->is_primary;
+    }
+
     public function save(User $user, array $locationData): UserContact
     {
         $this->validate();
@@ -40,6 +55,24 @@ class AddressForm extends Form
 
         return $user->contacts()->create([
             'type'       => 'address',
+            'label'      => $this->label ?: null,
+            'phone'      => $this->phone ?: null,
+            'is_primary' => $this->is_primary,
+            'info'       => $locationData,
+        ]);
+    }
+
+    public function update(UserContact $contact, array $locationData): void
+    {
+        $this->validate();
+
+        if ($this->is_primary) {
+            $contact->user->addresses()
+                ->where('id', '!=', $contact->id)
+                ->update(['is_primary' => false]);
+        }
+
+        $contact->update([
             'label'      => $this->label ?: null,
             'phone'      => $this->phone ?: null,
             'is_primary' => $this->is_primary,

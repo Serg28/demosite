@@ -45,9 +45,13 @@
 
     {{-- Discount cards --}}
     @if($this->discountCards->isEmpty())
-        <div class="card p-10 text-center text-ink-muted">
-            <div class="text-4xl mb-3">🎁</div>
-            <p>{{ __t('Дисконтних карток поки немає') }}</p>
+        <div class="card p-12 text-center">
+            <div class="text-5xl mb-3">🎁</div>
+            <p class="font-medium text-ink-muted mb-1">{{ __t('Дисконтних карток поки немає') }}</p>
+            <p class="text-sm text-ink-muted mb-4">{{ __t('Робіть покупки та отримуйте знижки') }}</p>
+            <a href="{{ route('catalog.show', 'all') }}" class="btn btn-p btn-sm">
+                {{ __t('До каталогу') }}
+            </a>
         </div>
     @else
         <div class="card p-5">

@@ -11,10 +11,12 @@
         @endif
     </div>
 
-    {{-- Add form --}}
+    {{-- Add / Edit form --}}
     @if($showForm)
         <div class="card p-5 mb-4">
-            <h3 class="font-bold text-base mb-1">{{ __t('Новий отримувач') }}</h3>
+            <h3 class="font-bold text-base mb-1">
+                {{ $editingId ? __t('Редагувати отримувача') : __t('Новий отримувач') }}
+            </h3>
             <p class="text-sm text-ink-muted mb-4">{{ __t('Контакт буде доступний при оформленні замовлення') }}</p>
             <div class="space-y-3">
                 <div>
@@ -41,7 +43,7 @@
                     {{ __t('Зробити основним') }}
                 </label>
                 <div class="flex gap-2 pt-1">
-                    <button wire:click="add" class="btn btn-p flex-1">{{ __t('Зберегти') }}</button>
+                    <button wire:click="save" class="btn btn-p flex-1">{{ __t('Зберегти') }}</button>
                     <button wire:click="cancelForm" class="btn btn-o flex-1">{{ __t('Скасувати') }}</button>
                 </div>
             </div>
@@ -81,6 +83,10 @@
                             @endif
                         </div>
                         <div class="flex flex-col items-end gap-2 flex-shrink-0">
+                            <button wire:click="edit({{ $recipient->id }})"
+                                    class="text-xs text-brand hover:underline whitespace-nowrap">
+                                {{ __t('Редагувати') }}
+                            </button>
                             <button wire:click="delete({{ $recipient->id }})"
                                     wire:confirm="{{ __t('Видалити отримувача?') }}"
                                     class="text-gray-400 hover:text-red-500 text-xl leading-none transition-colors">

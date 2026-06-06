@@ -1,7 +1,8 @@
-@props(['label' => '', 'required' => false])
+@props(['label' => '', 'required' => false, 'error' => null])
 
 @php
-    $wireModel = $attributes->get('wire:model', '');
+    $wireModel  = $attributes->get('wire:model', '');
+    $fieldError = $error ?? ($wireModel ? $errors->first($wireModel) : '');
 @endphp
 
 <div x-data="phoneInput('{{ $wireModel }}')">
@@ -15,10 +16,10 @@
            @focus="onFocus()"
            @input="onInput($event)"
            @blur="onBlur()"
-           class="field @error($wireModel) border-red-400 @enderror"
+           class="field {{ $fieldError ? 'border-red-400' : '' }}"
            placeholder="+38 (0__) ___-__-__"
            autocomplete="tel">
-    @error($wireModel)
-        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-    @enderror
+    @if($fieldError)
+        <p class="text-red-500 text-xs mt-1">{{ $fieldError }}</p>
+    @endif
 </div>

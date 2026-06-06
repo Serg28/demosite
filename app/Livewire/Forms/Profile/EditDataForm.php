@@ -8,20 +8,33 @@ use Livewire\Form;
 
 class EditDataForm extends Form
 {
-    #[Validate('required|min:2|max:60', message: ['required' => "Обов'язкове поле", 'min' => 'Не менше 2 символів', 'max' => 'Не більше 60 символів'])]
+    #[Validate('required|min:2|max:60')]
     public string $last_name = '';
 
-    #[Validate('required|min:2|max:60', message: ['required' => "Обов'язкове поле", 'min' => 'Не менше 2 символів', 'max' => 'Не більше 60 символів'])]
+    #[Validate('required|min:2|max:60')]
     public string $first_name = '';
 
-    #[Validate('nullable|max:60', message: ['max' => 'Не більше 60 символів'])]
+    #[Validate('nullable|max:60')]
     public string $patronymic = '';
 
-    #[Validate('nullable|min:10|max:20', message: ['min' => 'Не менше 10 символів', 'max' => 'Не більше 20 символів'])]
+    #[Validate('nullable|min:10|max:20')]
     public string $phone = '';
 
-    #[Validate('required|email|max:255', message: ['required' => "Обов'язкове поле", 'email' => 'Невірний формат email'])]
+    #[Validate('required|email|max:255')]
     public string $email = '';
+
+    protected function messages(): array
+    {
+        return [
+            'last_name.required'  => __t('Вкажіть прізвище'),
+            'last_name.min'       => __t('Прізвище занадто коротке'),
+            'first_name.required' => __t("Вкажіть ім'я"),
+            'first_name.min'      => __t("Ім'я занадто коротке"),
+            'phone.min'           => __t('Номер телефону занадто короткий'),
+            'email.required'      => __t('Вкажіть email'),
+            'email.email'         => __t('Невірний формат email'),
+        ];
+    }
 
     public function fillFromUser(User $user): void
     {
@@ -34,6 +47,8 @@ class EditDataForm extends Form
 
     public function save(User $user): void
     {
+        $this->validate();
+
         $user->update($this->only('last_name', 'first_name', 'patronymic', 'phone', 'email'));
     }
 }

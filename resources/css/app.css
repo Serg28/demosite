@@ -134,6 +134,50 @@ select:focus[data-flux-control] {
         padding: 2px 7px;
         line-height: 1.4;
     }
+
+    /* Status pill — для статусів замовлення */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+    .status-pill::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: currentColor;
+        flex-shrink: 0;
+    }
+
+    /* Order status timeline dots */
+    .timeline-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 2px #E5E7EB;
+        flex-shrink: 0;
+        background: #fff;
+    }
+    .timeline-dot.done {
+        box-shadow: 0 0 0 2px var(--color-brand, #2563EB);
+        background: var(--color-brand, #2563EB);
+    }
+    .timeline-dot.active {
+        box-shadow: 0 0 0 2px var(--color-brand, #2563EB);
+        background: #fff;
+        animation: timeline-pulse 2s infinite;
+    }
+    @keyframes timeline-pulse {
+        0%, 100% { box-shadow: 0 0 0 2px var(--color-brand, #2563EB), 0 0 0 6px rgba(37,99,235,.15); }
+        50%       { box-shadow: 0 0 0 2px var(--color-brand, #2563EB), 0 0 0 10px rgba(37,99,235,0); }
+    }
     .bdg-new { background: #ECFDF5; color: #059669; }
     .bdg-sale { background: #FEF2F2; color: #DC2626; }
     .bdg-hit { background: #EFF6FF; color: #2563EB; }
@@ -154,4 +198,14 @@ select:focus[data-flux-control] {
     .nostock { color: #DC2626; font-weight: 500; }
     .star-y { color: #F59E0B; }
     .star-e { color: #D1D5DB; }
+}
+
+/* Active states for like/compare — в @layer utilities щоб перекривати Tailwind utility-класи */
+@layer utilities {
+    /* Like button — при активному стані: серце заповнене червоним, завжди видиме */
+    .like-button.active { opacity: 1 !important; color: #EF4444 !important; }
+    .like-button.active svg path { stroke: #EF4444 !important; fill: #EF4444 !important; }
+
+    /* Compare button — при активному стані: brand-колір border та іконки */
+    .compare-button.active { border-color: #2563EB !important; color: #2563EB !important; }
 }

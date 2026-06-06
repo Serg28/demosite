@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Shop;
 use App\Actions\Order\InitiateOrderPayment;
 use App\Actions\Order\RepeatOrder;
 use App\Http\Controllers\Controller;
+use App\Models\OrderStatus;
+use App\Services\BreadcrumbsService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -14,31 +16,46 @@ use Throwable;
 
 class ProfileController extends Controller
 {
-    public function index(): View
+    public function index(BreadcrumbsService $breadcrumbs): View
     {
         return view('profile.index', [
-            'pageName' => 'Персональні дані',
-            'action'   => 'index',
+            'pageName'    => __t('Особистий кабінет'),
+            'action'      => 'index',
+            'breadcrumbs' => $breadcrumbs->forProfile(),
         ]);
     }
 
-    public function orders(): View
+    public function orders(BreadcrumbsService $breadcrumbs): View
     {
         return view('profile.orders', [
-            'pageName' => 'Замовлення',
-            'action'   => 'orders',
+            'pageName'    => __t('Мої замовлення'),
+            'action'      => 'orders',
+            'breadcrumbs' => $breadcrumbs->forProfile(__t('Мої замовлення')),
         ]);
     }
 
-    public function ordersDetails(int $id): View
+    public function ordersDetails(int $id, BreadcrumbsService $breadcrumbs): View
     {
         $order = Auth::user()->orders()
-            ->with(['products', 'orderStatus', 'payMethod', 'delivery', 'paymentInvoices'])
+            ->with(['products.product', 'orderStatus', 'payMethod', 'delivery', 'paymentInvoices'])
             ->findOrFail($id);
 
+        $timelineStatuses = OrderStatus::ordered()->where('is_in_timeline', true)->get();
+        $currentPriority  = $order->orderStatus?->priority ?? 0;
+
         return view('profile.order', [
-            'order'    => $order,
-            'pageName' => 'Замовлення',
+            'order'            => $order,
+            'timelineStatuses' => $timelineStatuses,
+            'currentPriority'  => $currentPriority,
+            'orderStatus'      => $order->orderStatus,
+            'pageName'          => __t('Замовлення') . ' #' . $id,
+            'breadcrumbs'       => $breadcrumbs->simple(
+                __t('Замовлення') . ' #' . $id,
+                [
+                    route('profile.index')  => __t('Кабінет'),
+                    route('profile.orders') => __t('Мої замовлення'),
+                ]
+            ),
         ]);
     }
 
@@ -84,35 +101,57 @@ class ProfileController extends Controller
         }
     }
 
-    public function security(): View
+    public function security(BreadcrumbsService $breadcrumbs): View
     {
         return view('profile.security', [
-            'pageName' => 'Безпека',
-            'action'   => 'security',
+            'pageName'    => __t('Безпека'),
+            'action'      => 'security',
+            'breadcrumbs' => $breadcrumbs->forProfile(__t('Безпека')),
         ]);
     }
 
-    public function addresses(): View
+    public function addresses(BreadcrumbsService $breadcrumbs): View
     {
         return view('profile.addresses', [
-            'pageName' => 'Адреси доставки',
-            'action'   => 'addresses',
+            'pageName'    => __t('Адреси доставки'),
+            'action'      => 'addresses',
+            'breadcrumbs' => $breadcrumbs->forProfile(__t('Адреси доставки')),
         ]);
     }
 
-    public function recipients(): View
+    public function recipients(BreadcrumbsService $breadcrumbs): View
     {
         return view('profile.recipients', [
-            'pageName' => 'Отримувачі',
-            'action'   => 'recipients',
+            'pageName'    => __t('Отримувачі'),
+            'action'      => 'recipients',
+            'breadcrumbs' => $breadcrumbs->forProfile(__t('Отримувачі')),
         ]);
     }
 
-    public function discounts(): View
+    public function discounts(BreadcrumbsService $breadcrumbs): View
     {
         return view('profile.discounts', [
-            'pageName' => 'Знижки та бонуси',
-            'action'   => 'discounts',
+            'pageName'    => __t('Знижки та бонуси'),
+            'action'      => 'discounts',
+            'breadcrumbs' => $breadcrumbs->forProfile(__t('Знижки та бонуси')),
+        ]);
+    }
+
+    public function favorites(BreadcrumbsService $breadcrumbs): View
+    {
+        return view('profile.favorites', [
+            'pageName'    => __t('Список бажань'),
+            'action'      => 'favorites',
+            'breadcrumbs' => $breadcrumbs->forProfile(__t('Список бажань')),
+        ]);
+    }
+
+    public function compare(BreadcrumbsService $breadcrumbs): View
+    {
+        return view('profile.compare', [
+            'pageName'    => __t('Порівняння'),
+            'action'      => 'compare',
+            'breadcrumbs' => $breadcrumbs->forProfile(__t('Порівняння')),
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasSeo;
 use App\Models\Traits\HasTranslations;
 use App\Models\Traits\SlugUrlFieldTrait;
 use App\Traits\AnaliticProductTrait;
@@ -15,7 +16,7 @@ use Laravel\Scout\Searchable;
 
 class Product extends Model
 {
-    use AnaliticProductTrait, HasFactory, HasTranslations, Searchable, SlugUrlFieldTrait;
+    use AnaliticProductTrait, HasFactory, HasSeo, HasTranslations, Searchable, SlugUrlFieldTrait;
 
     /** @var string[] */
     protected array $cardFields = [
@@ -116,11 +117,11 @@ class Product extends Model
     public function characteristics(): BelongsToMany
     {
         return $this->belongsToMany(
-            Characteristic::class,
+            CharacteristicOption::class,
             'product_characteristic_options',
             'product_id',
             'characteristic_option_id'
-        )->withPivot('characteristic_option_id');
+        );
     }
 
     /**
@@ -137,6 +138,7 @@ class Product extends Model
             'category_id' => (int) ($this->category_id ?? 0),
             'slug' => (string) ($this->slug ?? ''),
             'is_active' => (bool) $this->is_active,
+            'in_stock' => $this->getQuantity() > 0,
             'priority' => (int) ($this->priority ?? 0),
             'created_at' => $this->created_at?->timestamp ?? 0,
         ];

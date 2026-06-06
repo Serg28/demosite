@@ -75,10 +75,17 @@ class ModalManager extends Component
      */
     protected function resolveMaxWidth(string $component): string
     {
-        $class = app('livewire')->getClass($component);
+        try {
+            // Livewire 4: Finder::resolveClassComponentClassName() шукає клас по аліасу.
+            $class = app(\Livewire\Finder\Finder::class)->resolveClassComponentClassName(
+                str_replace('.', '\\', ucwords($component, '.'))
+            );
 
-        if ($class && method_exists($class, 'modalMaxWidth')) {
-            return $class::modalMaxWidth();
+            if ($class && method_exists($class, 'modalMaxWidth')) {
+                return $class::modalMaxWidth();
+            }
+        } catch (\Throwable) {
+            // ignore — повертаємо дефолт
         }
 
         return 'max-w-lg';

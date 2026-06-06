@@ -3,10 +3,11 @@
 @endphp
 
 <x-layouts.shop
-    :title="$product->t('title') . ' — ' . config('app.name')"
-    :description="$product->t('short_description') ?? ''"
+    :title="$product->getSeoTitle() . ' — ' . config('app.name')"
+    :description="$product->getSeoDescription()"
+    :page="$product"
 >
-    <div class="max-w-screen-2xl mx-auto px-4 sm:px-8 py-6">
+    <div class="max-w-[1264px] mx-auto px-4 sm:px-8 py-6">
 
         {{-- Breadcrumbs --}}
         <x-breadcrumbs :items="$breadcrumbs" />
@@ -45,7 +46,7 @@
             <div class="flex-1 min-w-0">
 
                 {{-- Назва --}}
-                <h1 class="text-2xl md:text-3xl font-bold leading-snug mb-3">{{ $product->t('title') }}</h1>
+                <h1 class="text-2xl md:text-3xl font-bold leading-snug mb-3">{{ $product->getSeoH1() }}</h1>
 
                 {{-- Статус + Код --}}
                 <div class="flex items-center gap-4 text-sm mb-4">
@@ -105,8 +106,28 @@
                     {{-- Додаткові дії --}}
                     <div class="flex gap-2">
                         <button class="btn btn-o flex-1 text-sm h-11">📞 {{ __t('Купити в 1 клік') }}</button>
-                        <button class="w-11 h-11 border border-gray-200 rounded-lg flex items-center justify-center hover:border-red-300 hover:bg-red-50 text-gray-400 transition">♥</button>
-                        <button class="w-11 h-11 border border-gray-200 rounded-lg flex items-center justify-center hover:border-brand text-gray-400 transition">≊</button>
+
+                        {{-- Вибране --}}
+                        <button type="button"
+                                data-js-like
+                                data-id="{{ $product->id }}"
+                                class="like-button w-11 h-11 border border-gray-200 rounded-lg flex items-center justify-center hover:border-red-300 hover:bg-red-50 text-gray-400 hover:text-red-400 transition"
+                                title="{{ __t('Додати до вибраного') }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                        </button>
+
+                        {{-- Порівняння --}}
+                        <button type="button"
+                                data-js-compare
+                                data-id="{{ $product->id }}"
+                                class="compare-button w-11 h-11 border border-gray-200 rounded-lg flex items-center justify-center hover:border-brand hover:bg-brand-light text-gray-400 hover:text-brand transition"
+                                title="{{ __t('Додати до порівняння') }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h4M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M9 12h6"/>
+                            </svg>
+                        </button>
                     </div>
 
                 </div>

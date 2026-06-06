@@ -46,7 +46,7 @@ class Lists extends Component
         $searchTerm = $this->search;
 
         $query = Auth::user()->orders()
-            ->with(['products', 'orderStatus', 'payMethod'])
+            ->with(['products.product', 'orderStatus', 'payMethod', 'delivery'])
             ->orderByDesc('id');
 
         if (! empty($searchTerm)) {

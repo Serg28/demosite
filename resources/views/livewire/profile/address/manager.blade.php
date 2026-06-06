@@ -8,10 +8,12 @@
         @endif
     </div>
 
-    {{-- ── Add form ──────────────────────────────────────────────────── --}}
+    {{-- ── Add / Edit form ────────────────────────────────────────────── --}}
     @if($showForm)
         <div class="card p-5 mb-4">
-            <h3 class="font-bold text-base mb-4">{{ __t('Нова адреса') }}</h3>
+            <h3 class="font-bold text-base mb-4">
+                {{ $editingId ? __t('Редагувати адресу') : __t('Нова адреса') }}
+            </h3>
             <div class="space-y-4">
 
                 {{-- Label --}}
@@ -116,7 +118,7 @@
                 </label>
 
                 <div class="flex gap-2 pt-1">
-                    <button wire:click="add" class="btn btn-p flex-1">{{ __t('Зберегти') }}</button>
+                    <button wire:click="save" class="btn btn-p flex-1">{{ __t('Зберегти') }}</button>
                     <button wire:click="cancelForm" class="btn btn-o flex-1">{{ __t('Скасувати') }}</button>
                 </div>
             </div>
@@ -125,8 +127,13 @@
 
     {{-- ── List ──────────────────────────────────────────────────────── --}}
     @if($this->addresses->isEmpty())
-        <div class="card p-10 text-center text-ink-muted">
-            <p>{{ __t('Адрес поки немає') }}</p>
+        <div class="card p-12 text-center">
+            <div class="text-5xl mb-3">📍</div>
+            <p class="font-medium text-ink-muted mb-1">{{ __t('Адрес поки немає') }}</p>
+            <p class="text-sm text-ink-muted mb-4">{{ __t('Додайте адресу для швидкого оформлення замовлення') }}</p>
+            <button wire:click="$set('showForm', true)" class="btn btn-p btn-sm">
+                + {{ __t('Додати адресу') }}
+            </button>
         </div>
     @else
         <div class="grid sm:grid-cols-2 gap-3">
@@ -143,6 +150,10 @@
                             @endif
                         </div>
                         <div class="flex items-center gap-2">
+                            <button wire:click="edit({{ $address->id }})"
+                                    class="text-xs text-brand hover:underline whitespace-nowrap">
+                                {{ __t('Редагувати') }}
+                            </button>
                             @if(!$address->is_primary)
                                 <button wire:click="setPrimary({{ $address->id }})"
                                         class="text-xs text-brand hover:underline whitespace-nowrap">

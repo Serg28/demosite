@@ -1,4 +1,19 @@
 /**
+ * Alpine store для режиму відображення каталогу (grid / list).
+ * Зберігає вибір у localStorage.
+ */
+document.addEventListener('alpine:init', () => {
+    Alpine.store('catalog', {
+        view: localStorage.getItem('catalog_view') || 'grid',
+
+        setView(mode) {
+            this.view = mode;
+            localStorage.setItem('catalog_view', mode);
+        },
+    });
+});
+
+/**
  * Alpine.js data component for catalog product list.
  * Config is read from element's data-config attribute (HTML-encoded JSON)
  * to avoid breaking x-data when filters contain double quotes.

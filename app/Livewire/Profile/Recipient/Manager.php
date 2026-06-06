@@ -15,19 +15,47 @@ class Manager extends Component
 
     public bool $showForm = false;
 
+    public ?int $editingId = null;
+
     #[Computed]
     public function recipients(): \Illuminate\Database\Eloquent\Collection
     {
         return Auth::user()->recipients()->orderByDesc('is_primary')->orderByDesc('id')->get();
     }
 
+    public function edit(int $id): void
+    {
+        $contact = UserContact::where('user_id', Auth::id())->recipients()->findOrFail($id);
+        $this->form->fillFromContact($contact);
+        $this->editingId = $id;
+        $this->showForm  = true;
+    }
+
+    public function save(): void
+    {
+        if ($this->editingId) {
+            $this->update();
+        } else {
+            $this->add();
+        }
+    }
+
     public function add(): void
     {
-        $this->form->validate();
         $this->form->save(Auth::user());
         $this->form->reset();
         $this->showForm = false;
         $this->dispatch('recipient-added');
+    }
+
+    public function update(): void
+    {
+        $contact = UserContact::where('user_id', Auth::id())->recipients()->findOrFail($this->editingId);
+        $this->form->update($contact);
+        $this->form->reset();
+        $this->editingId = null;
+        $this->showForm  = false;
+        $this->dispatch('recipient-updated');
     }
 
     public function delete(int $id): void
@@ -54,7 +82,8 @@ class Manager extends Component
     public function cancelForm(): void
     {
         $this->form->reset();
-        $this->showForm = false;
+        $this->editingId = null;
+        $this->showForm  = false;
     }
 
     public function render(): View

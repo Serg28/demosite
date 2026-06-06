@@ -45,10 +45,28 @@ class TypeSenseService
     public function count(string $query = '', array $filters = []): int
     {
         try {
-            return $this->buildScoutQuery($query, $filters)->count();
+            $result = $this->buildScoutQuery($query, $filters)
+                ->paginate(1, 'page', 1);
+
+            return $result->total();
         } catch (\Exception $e) {
-            return 0;
+            return $this->eloquentCount($filters);
         }
+    }
+
+    private function eloquentCount(array $filters): int
+    {
+        $query = Product::query()->where('is_active', true);
+
+        if (! empty($filters['category_id'])) {
+            $query->where('category_id', $filters['category_id']);
+        }
+
+        if (! empty($filters['in_stock'])) {
+            $query->where('quantity', '>', 0);
+        }
+
+        return $query->count();
     }
 
     public function indexAllProducts(): void
@@ -82,6 +100,10 @@ class TypeSenseService
 
         if (! empty($filters['max_price'])) {
             $builder->where('price', '<=', (float) $filters['max_price']);
+        }
+
+        if (! empty($filters['in_stock'])) {
+            $builder->where('in_stock', true);
         }
 
         // Characteristic filters: AND between groups, OR within same group
@@ -163,6 +185,10 @@ class TypeSenseService
 
         if (! empty($filters['max_price'])) {
             $query->where('price', '<=', $filters['max_price']);
+        }
+
+        if (! empty($filters['in_stock'])) {
+            $query->where('quantity', '>', 0);
         }
 
         $characteristics = array_filter($filters['characteristics'] ?? [], fn ($ids) => ! empty($ids));

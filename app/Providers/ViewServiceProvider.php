@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\ViewComposers\BreadcrumbsCategoryComposer;
+use App\Http\ViewComposers\NavCategoriesComposer;
 use App\Http\ViewComposers\SeoComposer;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -17,5 +18,6 @@ class ViewServiceProvider extends ServiceProvider
     {
         View::composer(['partials.seo', 'partials.seo_catalog'], SeoComposer::class);
         View::composer('catalog.index', BreadcrumbsCategoryComposer::class);
+        View::composer('components.layouts.shop', NavCategoriesComposer::class);
     }
 }
