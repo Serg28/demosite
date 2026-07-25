@@ -100,6 +100,7 @@ class CartHandler {
             if (data.status) {
                 CartAnalytics.track('add_to_cart', data.products);
                 Livewire.dispatch('cart-changed', { count: data.count, action: 'add', products: data.products });
+                Livewire.dispatch('closeModal');
 
                 if (CART_CONFIG.mode === 'sidebar') {
                     Livewire.dispatch(CART_CONFIG.sidebarEvent);

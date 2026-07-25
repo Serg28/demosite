@@ -10,7 +10,12 @@ use Linecore\Shoppingcart\Facades\Cart;
 
 class CartService
 {
-    public function __construct(private readonly string $instance = 'default') {}
+    private string $instance;
+
+    public function __construct(string $instance = '')
+    {
+        $this->instance = $instance ?: config('cart.checkout_instance', 'default');
+    }
 
     /** Фабричний метод для конкретного instance */
     public static function for(string $instance): static

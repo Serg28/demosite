@@ -193,9 +193,15 @@ class Product extends Model
         return (float) ($this->weight ?? 0);
     }
 
+    /**
+     * Кількість товару в наявності.
+     * null-кількість = облік не ведеться → завжди доступний.
+     */
     public function getQuantity(): int
     {
-        return $this->quantity ?? 9999;
+        $qty = $this->getRawOriginal('quantity');
+
+        return $qty === null ? 9999 : max(0, (int) $qty);
     }
 
     public function isActiveForOrder(): bool

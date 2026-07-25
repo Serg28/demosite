@@ -7,18 +7,13 @@
             role="dialog"
             aria-modal="true"
         >
-            {{-- Backdrop --}}
+            {{-- Backdrop + centering wrapper: @click.self закриває лише при кліку на backdrop, не зупиняє propagation всередині --}}
             <div
-                class="fixed inset-0 bg-black/50 transition-opacity"
-                wire:click="close"
-                aria-hidden="true"
-            ></div>
-
-            {{-- Modal panel --}}
-            <div class="fixed inset-0 flex items-center justify-center p-4">
+                class="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
+                @click.self="$wire.close()"
+            >
                 <div
                     class="relative w-full bg-white rounded-xl shadow-2xl {{ $maxWidth }}"
-                    @click.stop
                     x-transition:enter="transition ease-out duration-200"
                     x-transition:enter-start="opacity-0 scale-95"
                     x-transition:enter-end="opacity-100 scale-100"
@@ -42,5 +37,6 @@
                 </div>
             </div>
         </div>
+
     @endif
 </div>

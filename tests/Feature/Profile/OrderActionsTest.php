@@ -94,7 +94,65 @@ class OrderActionsTest extends TestCase
             ->assertRedirect();
     }
 
-    // ─────────────────────────── RepeatOrder ───────────────────────────
+    // ─────────────────────────── RepeatOrder (Livewire modal) ───────────────────────────
+
+    public function test_repeat_order_modal_mounts_with_products(): void
+    {
+        $user    = User::factory()->create();
+        $product = Product::factory()->create(['price' => 500]);
+        $order   = Order::factory()->create(['user_id' => $user->id]);
+
+        OrderProduct::factory()->create([
+            'order_id'   => $order->id,
+            'product_id' => $product->id,
+            'title'      => 'Test Product',
+            'price'      => 500,
+            'count'      => 2,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(\App\Livewire\Profile\Order\RepeatOrder::class, ['id' => $order->id])
+            ->assertSet('orderId', $order->id)
+            ->assertCount('items', 1)
+            ->assertSee('Test Product')
+            ->assertSee('data-js-add-all-to-cart', false);
+    }
+
+    public function test_repeat_order_modal_shows_empty_state_when_no_products(): void
+    {
+        $user  = User::factory()->create();
+        $order = Order::factory()->create(['user_id' => $user->id]);
+
+        Livewire::actingAs($user)
+            ->test(\App\Livewire\Profile\Order\RepeatOrder::class, ['id' => $order->id])
+            ->assertCount('items', 0);
+    }
+
+    public function test_repeat_order_modal_items_contain_correct_data(): void
+    {
+        $user    = User::factory()->create();
+        $product = Product::factory()->create(['price' => 500]);
+        $order   = Order::factory()->create(['user_id' => $user->id]);
+
+        OrderProduct::factory()->create([
+            'order_id'   => $order->id,
+            'product_id' => $product->id,
+            'title'      => 'Test Product',
+            'price'      => 299,
+            'count'      => 3,
+        ]);
+
+        $component = Livewire::actingAs($user)
+            ->test(\App\Livewire\Profile\Order\RepeatOrder::class, ['id' => $order->id]);
+
+        $items = $component->get('items');
+        $this->assertCount(1, $items);
+        $this->assertSame($product->id, $items[0]['id']);
+        $this->assertSame(3, $items[0]['count']);
+        $this->assertSame(299.0, $items[0]['price']);
+    }
+
+    // ─────────────────────────── RepeatOrder (route) ───────────────────────────
 
     public function test_user_can_repeat_order(): void
     {

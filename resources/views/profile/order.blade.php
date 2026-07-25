@@ -44,10 +44,13 @@
                                 </button>
                             </form>
                         @endif
-                        <form method="POST" action="{{ route('profile.orders.repeat', $order->id) }}">
-                            @csrf
-                            <button type="submit" class="btn btn-o btn-sm">↻ {{ __t('Повторити') }}</button>
-                        </form>
+                        <button type="button"
+                                data-js-modal
+                                data-component="profile.order.repeat-order"
+                                data-id="{{ $order->id }}"
+                                class="btn btn-o btn-sm">
+                            ↻ {{ __t('Повторити') }}
+                        </button>
                         @if($order->canBeCancelled())
                             <button type="button"
                                     data-js-modal
