@@ -61,7 +61,7 @@ Need to...
 - **Validate user input?** → Form Request
 - **Simple state field?** → Enum
 - **Complex state transitions?** → State Machine
-- **External API?** → Service with Saloon
+- **External API?** → Service with `Http::`-facade `*Client` (see [laravel-services](../laravel-services/SKILL.md))
 - **Background processing?** → Job (delegates to Action)
 
 Read decision flowcharts in **[decisions.md](references/decisions.md)** for detailed guidance.

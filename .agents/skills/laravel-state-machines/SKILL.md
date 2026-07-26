@@ -1,55 +1,69 @@
 ---
 name: laravel-state-machines
-description: State machines using Spatie Model States for complex state transitions. Use when implementing or modifying state machines, transitions, or transition validation.
+description: State machines using laravel-eloquent-state-machines (asantibanez) with built-in transition history/audit trail. Use when implementing or modifying state machines, transitions, or transition validation.
 ---
 
 # Laravel State Machines
 
-State machines with Spatie Model States for complex state transitions and validation.
+State machines with `asantibanez/laravel-eloquent-state-machines` — array-defined transitions per field, validation/side-effect hooks, optional built-in audit trail.
 
 ## Core Concept
 
 **[state-management.md](references/state-management.md)** - State machine patterns:
-- Spatie Model States setup
-- State classes with behavior
-- Transition classes with validation
-- State-specific methods
+- `HasStateMachines` trait + `$stateMachines` map
+- `StateMachine` class: `transitions()`, `defaultState()`, `recordHistory()`
+- Validation (`validatorForTransition`) and hooks (`beforeTransitionHooks`/`afterTransitionHooks`)
+- Transition history / audit trail
 - When to use state machines vs simple enums
-- Testing state transitions
 
 ## Pattern
 
 ```php
-// State classes
-final class DraftOrderState extends OrderState
+final class OrderStatusStateMachine extends StateMachine
 {
-    public function canBeSubmitted(): bool
+    public function transitions(): array
     {
-        return true;
+        return [
+            'draft' => ['pending'],
+            'pending' => ['processing', 'cancelled'],
+            'processing' => ['completed', 'cancelled'],
+        ];
+    }
+
+    public function defaultState(): ?string
+    {
+        return 'draft';
+    }
+
+    public function recordHistory(): bool
+    {
+        return true; // audit trail — who/when changed the order status
+    }
+
+    public function afterTransitionHooks(): array
+    {
+        return [
+            'completed' => [
+                fn ($from, $order) => OrderCompleted::dispatch($order),
+            ],
+        ];
     }
 }
 
-final class PendingOrderState extends OrderState
+class Order extends Model
 {
-    public function canBeSubmitted(): bool
-    {
-        return false;
-    }
-}
+    use HasStateMachines;
 
-// Transition class
-final class SubmitOrderTransition extends Transition
-{
-    public function handle(): OrderState
-    {
-        // Validation and side effects
-
-        return new PendingOrderState($this->order);
-    }
+    public $stateMachines = [
+        'status' => OrderStatusStateMachine::class,
+    ];
 }
 
 // Usage
-$order->status->transitionTo(PendingOrderState::class);
+$order->status()->transitionTo('pending', ['note' => 'Paid'], auth()->user());
+$order->status()->canBe('processing');
+$order->status()->is('pending');
+$order->status()->history()->get(); // requires recordHistory() === true
 ```
 
-Use state machines for complex state with validation, side effects, or state-specific behavior. Use simple enums for basic status fields.
+Use state machines for transitions with validation, side effects, or when an audit trail of changes is needed. Use simple enums for basic status fields without transition rules.

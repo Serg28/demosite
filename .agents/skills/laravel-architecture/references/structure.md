@@ -56,14 +56,13 @@ app/
 ├── Services/             # External service integrations
 │   └── [ServiceName]/
 │       ├── [ServiceName]Manager.php
-│       ├── Connectors/   # Saloon connectors
+│       ├── Gateways/     # Http::-facade *Client classes
 │       ├── Contracts/
 │       ├── Drivers/
 │       ├── Exceptions/
 │       └── Requests/
-├── States/               # State machines (Spatie Model States)
-│   └── [Model]/
-│       └── Transitions/
+├── StateMachines/        # State machines (laravel-eloquent-state-machines)
+│   └── [Model][Field]StateMachine.php
 ├── Support/
 ├── Values/               # Value objects
 └── helpers.php

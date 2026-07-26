@@ -70,9 +70,9 @@ Overview of all architectural patterns used in the Laravel architecture.
 ### State Machines
 **When:** Complex state transitions
 
-Uses Spatie Model States for dedicated state classes with transition logic.
+Uses laravel-eloquent-state-machines (asantibanez) — one `StateMachine` class per field, array-defined transitions.
 
-**Location:** `app/States/{Model}/`
+**Location:** `app/StateMachines/`
 
 ### Service Layer
 **When:** External API integrations

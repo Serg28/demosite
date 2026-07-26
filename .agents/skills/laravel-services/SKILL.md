@@ -1,15 +1,19 @@
 ---
 name: laravel-services
-description: Service layer for external API integration using manager pattern and Saloon. Use when integrating external APIs or third-party services.
+description: Service layer for external API integration using manager pattern and Http::-facade HTTP clients. Use when integrating external APIs or third-party services.
 ---
 
 # Laravel Services
 
 External services use Laravel's **Manager pattern** with multiple drivers.
 
+HTTP calls go through a dedicated `*Client` class using `Illuminate\Support\Facades\Http` —
+this is the project's existing, working convention (see `app/Services/Payment/Gateways/*/*.php`,
+`app/Services/Sms/Drivers/*.php`). **Not Saloon** — see [Packages](../laravel-packages/SKILL.md#not-used-in-this-project)
+for why a second HTTP client style isn't introduced.
+
 **Related guides:**
 - [Actions](../laravel-actions/SKILL.md) - Actions use services
-- [Packages](../laravel-packages/SKILL.md) - Saloon for HTTP clients
 - [Testing](../laravel-testing/SKILL.md) - Testing with null drivers
 
 ## When to Use
@@ -26,8 +30,9 @@ External services use Laravel's **Manager pattern** with multiple drivers.
 Services/
 └── Payment/
     ├── PaymentManager.php          # Manager (extends Laravel Manager)
-    ├── Connectors/
-    │   └── StripeConnector.php     # Saloon HTTP connector
+    ├── Gateways/
+    │   └── Stripe/
+    │       └── StripeClient.php    # Http::-facade HTTP client
     ├── Contracts/
     │   └── PaymentDriver.php       # Driver interface
     ├── Drivers/
@@ -36,12 +41,8 @@ Services/
     │   └── NullDriver.php          # For testing
     ├── Exceptions/
     │   └── PaymentException.php
-    ├── Facades/
-    │   └── Payment.php             # Facade
-    └── Requests/
-        └── Stripe/
-            ├── CreatePaymentIntentRequest.php
-            └── RefundPaymentRequest.php
+    └── Facades/
+        └── Payment.php             # Facade
 ```
 
 ## Manager Class
@@ -67,7 +68,9 @@ class PaymentManager extends Manager
     public function createStripeDriver(): StripeDriver
     {
         return new StripeDriver(
-            apiKey: $this->config->get('payment.drivers.stripe.api_key'),
+            client: new StripeClient(
+                apiKey: $this->config->get('payment.drivers.stripe.api_key'),
+            ),
             webhookSecret: $this->config->get('payment.drivers.stripe.webhook_secret'),
         );
     }
@@ -110,123 +113,64 @@ declare(strict_types=1);
 namespace App\Services\Payment\Drivers;
 
 use App\Data\PaymentIntentData;
-use App\Services\Payment\Connectors\StripeConnector;
+use App\Services\Payment\Gateways\Stripe\StripeClient;
 use App\Services\Payment\Contracts\PaymentDriver;
-use App\Services\Payment\Exceptions\PaymentException;
-use App\Services\Payment\Requests\Stripe\CreatePaymentIntentRequest;
-use Saloon\Http\Response;
 
 class StripeDriver implements PaymentDriver
 {
-    private static ?StripeConnector $connector = null;
-
     public function __construct(
-        private readonly string $apiKey,
+        private readonly StripeClient $client,
         private readonly string $webhookSecret,
     ) {}
 
     public function createPaymentIntent(int $amount, string $currency): PaymentIntentData
     {
-        $response = $this->sendRequest(
-            new CreatePaymentIntentRequest($amount, $currency)
-        );
+        $response = $this->client->createPaymentIntent($amount, $currency);
 
-        return PaymentIntentData::from($response->json());
+        return PaymentIntentData::from($response);
     }
 
     public function refundPayment(string $paymentIntentId, ?int $amount = null): bool
     {
         // Implementation...
     }
+}
+```
 
-    private function sendRequest(Request $request): Response
+## HTTP Client
+
+One `*Client` class per external gateway, using `Illuminate\Support\Facades\Http` — same shape as
+`app/Services/Payment/Gateways/LiqPay/LiqPayClient.php` and the other existing gateway clients:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Payment\Gateways\Stripe;
+
+use App\Services\Payment\Exceptions\PaymentException;
+use Illuminate\Support\Facades\Http;
+
+class StripeClient
+{
+    public function __construct(private readonly string $apiKey) {}
+
+    public function createPaymentIntent(int $amount, string $currency): array
     {
-        $response = $this->getConnector()->send($request);
+        $response = Http::baseUrl('https://api.stripe.com')
+            ->withToken($this->apiKey)
+            ->asJson()
+            ->post('/v1/payment_intents', [
+                'amount' => $amount,
+                'currency' => $currency,
+            ]);
 
         if ($response->failed()) {
             throw PaymentException::failedRequest($response);
         }
 
-        return $response;
-    }
-
-    private function getConnector(): StripeConnector
-    {
-        if (static::$connector === null) {
-            static::$connector = new StripeConnector($this->apiKey);
-        }
-
-        return static::$connector;
-    }
-}
-```
-
-## Saloon Connector
-
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Services\Payment\Connectors;
-
-use Saloon\Http\Connector;
-
-class StripeConnector extends Connector
-{
-    public function __construct(private readonly string $apiKey) {}
-
-    public function resolveBaseUrl(): string
-    {
-        return 'https://api.stripe.com';
-    }
-
-    protected function defaultHeaders(): array
-    {
-        return [
-            'Authorization' => "Bearer {$this->apiKey}",
-            'Content-Type' => 'application/json',
-        ];
-    }
-}
-```
-
-## Saloon Request
-
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Services\Payment\Requests\Stripe;
-
-use Saloon\Contracts\Body\HasBody;
-use Saloon\Enums\Method;
-use Saloon\Http\Request;
-use Saloon\Traits\Body\HasJsonBody;
-
-class CreatePaymentIntentRequest extends Request implements HasBody
-{
-    use HasJsonBody;
-
-    protected Method $method = Method::POST;
-
-    public function __construct(
-        private readonly int $amount,
-        private readonly string $currency,
-    ) {}
-
-    public function resolveEndpoint(): string
-    {
-        return '/v1/payment_intents';
-    }
-
-    protected function defaultBody(): array
-    {
-        return [
-            'amount' => $this->amount,
-            'currency' => $this->currency,
-        ];
+        return $response->json();
     }
 }
 ```

@@ -155,33 +155,17 @@ jobs:
         run: ./vendor/bin/pest --coverage --min=80
 ```
 
-## Pre-commit Hooks
+## Pre-commit Hooks — Not Used In This Project
 
-### Installation
-```bash
-composer require brainmaestro/composer-git-hooks --dev
-```
+`brainmaestro/composer-git-hooks` is a **git commit hook runner** (pre-commit/pre-push), not
+package-level hooks — it wires `./vendor/bin/pint`/`phpstan`/`pest` to run automatically via
+`composer.json`'s `extra.hooks`, replacing `.git/hooks/*` with a versioned config.
 
-### Configuration
+Not needed here:
+- **linecore-demo** already has a native slot for this — `composer.json` → `post-install-cmd: "git config core.hooksPath .githooks"`, and a `pre-commit` script exists (runs `composer run style` i.e. Pint, then `git add .`). **Currently non-functional**: the hook file lives at `.git/.githooks/pre-commit`, but git resolves `core.hooksPath` relative to the repo root, so it looks for `.githooks/pre-commit` there — which doesn't exist (verified: `git rev-parse --git-path hooks/pre-commit` → `.githooks/pre-commit`, missing). Fix is to move the file to `<repo-root>/.githooks/pre-commit` (and commit it, it's currently untracked) — not to add a second package on top of a broken native one.
+- **demo.loc** has no existing commit-time gate, and none has been requested; `.claude/hooks/check-rules.sh` already checks style/rules at edit-time in Claude Code sessions (a different layer — not a git hook).
 
-`composer.json`
-```json
-{
-    "extra": {
-        "hooks": {
-            "pre-commit": [
-                "./vendor/bin/pint",
-                "./vendor/bin/phpstan analyse",
-                "./vendor/bin/pest"
-            ]
-        }
-    },
-    "scripts": {
-        "post-install-cmd": "vendor/bin/cghooks add --ignore-lock",
-        "post-update-cmd": "vendor/bin/cghooks update"
-    }
-}
-```
+Reconsider only if the user explicitly asks for automated commit-time quality gates.
 
 ## Quality Metrics
 

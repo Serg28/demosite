@@ -214,12 +214,11 @@ enum OrderStatus: string
 }
 ```
 
-**State machines** (Spatie Model States) for complex transitions:
-- Type-safe state transitions
+**State machines** (laravel-eloquent-state-machines) for complex transitions:
+- Array-defined transition rules
 - Transition validation
 - Transition hooks/side effects
-- State-specific behavior
-- History tracking
+- Built-in history tracking (audit trail)
 
 Use state machines when you need workflow management, not just status tracking.
 
